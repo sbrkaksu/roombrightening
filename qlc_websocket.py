@@ -5,3 +5,9 @@ qlcsocket = await connect_qlc()
 await qlcsocket.send("CH|{ch}|{v}".format(ch=10, v=5))
 await qlcsocket.send("CH|{ch}|{v}".format(ch=5, v=10))
 qlcsocket.close()
+
+# Load Project File
+
+import requests
+with open('Sample.qxw', 'rb') as f:
+    r = requests.post('http://127.0.0.1:9999/loadProject', files={'qlcprj': f})
