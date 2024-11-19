@@ -26,13 +26,17 @@ class App(ctk.CTk, AsyncCTk):
         super().__init__()
         ######## Setup the Window ########
         self.title("Studie Raumaufhellung")
-        self.geometry("1200x900")
+        self.geometry("750x700")
         ##################################
         
         ######## Settings ########
         self.settings = {
             "szene_duration": 2.7, # seconds
-            "inter-stimulus-interval": 2.0 #seconds
+            "inter-stimulus-interval": 2.0, #seconds
+            "maxE_spot1": 143,
+            "maxE_spot2": 92.2,
+            "maxE_spot3": 164.6,
+            "maxE_spot4": 72.2,
         }
 
         #self.grid_columnconfigure((0, 1), weight=1)
@@ -103,11 +107,11 @@ class App(ctk.CTk, AsyncCTk):
         self.scene_countdown_timer.trace_add('write', self.print_scene_countdown)
         self.scene_countdown_finished = asyncio.Event()
         self.scene_countdown_label = ctk.CTkLabel(self, text="", font=("Helvetica", 30))
-        self.scene_countdown_label.grid(row=3, column=3, padx=10, pady=20)
+        self.scene_countdown_label.grid(row=2, column=3, padx=10, pady=20)
         
         self.qlc_queue = asyncio.Queue(maxsize = 100)
-        self.connect_qlc_button = ctk.CTkButton(self, text="Connect to QLC+", command=self.connect_qlc)
-        self.connect_qlc_button.grid(row=1, column=3, padx=10, pady=10, sticky="nw")
+        self.button_connect_qlc = ctk.CTkButton(self, text="Connect & Initialize", command=self.connect_qlc)
+        self.button_connect_qlc.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
 
         self.dmx_channel = ctk.CTkEntry(self, placeholder_text="DMX Channel")
         self.dmx_channel.grid(row=2, column=0, padx=10, pady=10, sticky="w")
@@ -119,8 +123,8 @@ class App(ctk.CTk, AsyncCTk):
                                                                                           int(self.dmx_value.get())))
         self.button_set_dmx_channel.grid(row=2, column=2, padx=10, pady=10, sticky="w")
         
-        self.button_load_qlc_project = ctk.CTkButton(self, text="Load QLC+ Project", command= self.load_qlc_project)
-        self.button_load_qlc_project.grid(row=3, column=2, padx=10, pady=10, sticky="w")
+       # self.button_load_qlc_project = ctk.CTkButton(self, text="Load QLC+ Project", command= self.load_qlc_project)
+       # self.button_load_qlc_project.grid(row=3, column=2, padx=10, pady=10, sticky="w")
 
     def load_qlc_project(self):
         filename = tk.filedialog.askopenfilename(filetypes=[("QLC+ files", "*.qxw"),("All files", "*.*")])
@@ -193,13 +197,16 @@ class App(ctk.CTk, AsyncCTk):
                     self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
                     # highlight scene row in table
                     # set scene DMX values
-                    print("setting scene...")
+                    self.set_scene(scene)
                     # wait for scene duration
                     
                     await self.await_countdown_timer(self.settings["szene_duration"])
 
                     # set inter-stimulus lighting
                     print("setting inter-stimulus lighting...")
+                    self.isi_red_all()
+
+
                     # wait for inter-stimulus interval
                     await self.await_countdown_timer(self.settings["inter-stimulus-interval"])
                     if self.sequence_stop_event.is_set(): # if stopped, keep interstimulus lighting
@@ -257,16 +264,16 @@ class App(ctk.CTk, AsyncCTk):
         self.scene_countdown_timer.set(0)
         
 
-    @async_handler
-    async def set_dmx_channel(self,channel,value):
+    def set_dmx_channel(self,channel,value):
         self.qlc_queue.put_nowait("CH|{ch}|{v}".format(ch=channel, v=value))
+        #print("habe DMX Wert gesetzt")
     
-    @async_handler
-    async def set_qlc_widget(self,id,value):
+
+    def set_qlc_widget(self,id,value):
         self.qlc_queue.put_nowait("{id}|{val}".format(id=id, val=value))
+        print("Moving Heads Positionen gesetzt")
     
-    @async_handler
-    async def step_cue_list(self,id,index):
+    def step_cue_list(self,id,index):
         self.qlc_queue.put_nowait("{id}|STEP|{idx}".format(id=id, idx=index))
     
     @async_handler
@@ -276,6 +283,8 @@ class App(ctk.CTk, AsyncCTk):
             self.button_connect_qlc.configure(fg_color="green")
             self.button_connect_qlc.configure(state="disabled")
             print("connected to QLC+")
+            self.load_qlc_project()
+            self.set_qlc_widget(0,255) #Initialize Movingheads positions
             try:
                 while True:
                     msg = await self.qlc_queue.get()
@@ -283,7 +292,98 @@ class App(ctk.CTk, AsyncCTk):
             except ExceptionConnectionClosed:
                 continue
             
+    def set_scene(self, scene):
+        self.blackout_all()
+        dmx_max = 65535
+        spot = scene["Spot"]
+        if spot == 1:
+            maxE = self.settings["maxE_spot1"]
+            dmx_channel_grob = 5
+            dmx_channel_fein = 6
+            dmx_channel_green = 13
+            dmx_channel_blue = 14
+            dmx_channel_lime = 15
+            print("Spot1")
 
+        elif spot == 2: 
+            maxE = self.settings["maxE_spot2"]
+            dmx_channel_grob = 517
+            dmx_channel_fein = 518
+            dmx_channel_green = 525
+            dmx_channel_blue = 526
+            dmx_channel_lime = 527
+            print("Spot2")
+
+        elif spot == 3:
+            maxE = self.settings["maxE_spot3"]
+            dmx_channel_grob = 1029
+            dmx_channel_fein = 1030
+            dmx_channel_green = 1037
+            dmx_channel_blue = 1038
+            dmx_channel_lime = 1039
+            print("Spot3")
+
+        elif spot == 4:
+            maxE = self.settings["maxE_spot4"]
+            dmx_channel_grob = 1541
+            dmx_channel_fein = 1542
+            dmx_channel_green = 1549
+            dmx_channel_blue = 1550
+            dmx_channel_lime = 1551
+            print("Spot4")
+
+        dmx_val = np.round((scene["E"] / maxE) * dmx_max).astype('int')
+        dmx_val_fein = dmx_val & 0xFF
+        dmx_val_grob = dmx_val >> 8
+
+        print(scene["E"])
+        print(f"Grober DMX-Wert: {dmx_val_grob}, Feiner DMX-Wert: {dmx_val_fein}")
+
+        self.set_dmx_channel(dmx_channel_green, 255)
+        self.set_dmx_channel(dmx_channel_blue, 255)
+        self.set_dmx_channel(dmx_channel_lime, 255)
+        self.set_dmx_channel(dmx_channel_grob, dmx_val_grob)
+        self.set_dmx_channel(dmx_channel_fein, dmx_val_fein)
+
+
+    def blackout_all(self):
+        self.set_dmx_channel(5, 0)
+        self.set_dmx_channel(6, 0)
+        self.set_dmx_channel(517, 0)
+        self.set_dmx_channel(518, 0)
+        self.set_dmx_channel(1029, 0)
+        self.set_dmx_channel(1030, 0)
+        self.set_dmx_channel(1541, 0)
+        self.set_dmx_channel(1542, 0)
+        print("Alle Schweinwerfer Helligkeit 0")
+
+    def isi_red_all(self):
+        brightness = 10
+
+        self.set_dmx_channel(5, brightness)
+        self.set_dmx_channel(6, 0)
+        self.set_dmx_channel(13, 0)
+        self.set_dmx_channel(14, 0)
+        self.set_dmx_channel(15, 0)
+
+        self.set_dmx_channel(517, brightness)
+        self.set_dmx_channel(518, 0)
+        self.set_dmx_channel(525, 0)
+        self.set_dmx_channel(526, 0)
+        self.set_dmx_channel(527, 0)
+
+        self.set_dmx_channel(1029, brightness)
+        self.set_dmx_channel(1030, 0)
+        self.set_dmx_channel(1037, 0)
+        self.set_dmx_channel(1038, 0)
+        self.set_dmx_channel(1039, 0)
+
+        self.set_dmx_channel(1541, brightness)
+        self.set_dmx_channel(1542, 0)
+        self.set_dmx_channel(1549, 0)
+        self.set_dmx_channel(1550, 0)
+        self.set_dmx_channel(1551, 0)
+        print("Alle Schweinwerfer Rot Helligkeit 10")
 
 app = App()
 app.async_mainloop()
