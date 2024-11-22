@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE InputProfile>
+<InputProfile xmlns="http://www.qlcplus.org/InputProfile">
+ <Creator>
+  <Name>Q Light Controller Plus</Name>
+  <Version>4.13.1</Version>
+  <Author>Dudzik</Author>
+ </Creator>
+ <Manufacturer>Input</Manufacturer>
+ <Model>Versuchsraum</Model>
+ <Type>DMX</Type>
+ <Channel Number="0">
+  <Name>Spot 0:0 Intensität Grob</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="1">
+  <Name>Spot 0:0 Intensität Fein</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="2">
+  <Name>Spot 0:47 Intensität Grob</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="3">
+  <Name>Spot 0:47 Intensität Fein</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="4">
+  <Name>Spot 47:0 Intensität Grob</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="5">
+  <Name>Spot 47:0 Intensität Fein</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="6">
+  <Name>Spot 47:47 Intensität Grob</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="7">
+  <Name>Spot 47:47 Intensität Fein</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="8">
+  <Name>Master Intensität Rot</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="9">
+  <Name>Master Intensität Grün</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="10">
+  <Name>Master Intensität Blau</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="11">
+  <Name>Master Intensität Lime</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="12">
+  <Name>Master CTC</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="13">
+  <Name>Initialisieren</Name>
+  <Type>Button</Type>
+ </Channel>
+</InputProfile>
