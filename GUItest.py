@@ -254,9 +254,14 @@ class App(ctk.CTk, AsyncCTk):
         self.spot2_intensity = self.qlc_input.add_channel(start=3, width=2) #  0:47
         self.spot3_intensity = self.qlc_input.add_channel(start=5, width=2) # 47:0
         self.spot4_intensity = self.qlc_input.add_channel(start=7, width=2) # 47:47
-        self.spot_color      = self.qlc_input.add_channel(start=9, width=4) # R,G,B,L
-        self.spot_ctc        = self.qlc_input.add_channel(start=13, width=1) # CTC
-        self.qlc_init        = self.qlc_input.add_channel(start=14, width=1) # Init-Button
+        self.isi_intensity   = self.qlc_input.add_channel(start=9, width=2) # 47:47
+        self.spot_color      = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
+        self.isi_color       = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
+        self.spot_ctc        = self.qlc_input.add_channel(start=19, width=1) # CTC
+        self.isi_ctc         = self.qlc_input.add_channel(start=20, width=1) # CTC
+        self.qlc_init        = self.qlc_input.add_channel(start=21, width=1) # Init-Button
+        self.activate_szene  = self.qlc_input.add_channel(start=22, width=1) # Activate Szene - Button
+        self.activate_isi    = self.qlc_input.add_channel(start=23, width=1) # Activate ISI - Button
         await asyncio.sleep(0.3) # wait for project to load
         self.qlc_init.set_values([255])
         await asyncio.sleep(0.1)
