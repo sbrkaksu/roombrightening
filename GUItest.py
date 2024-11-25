@@ -187,12 +187,9 @@ class App(ctk.CTk, AsyncCTk):
                     self.sequence_table.select_row(scene_idx)
                     # set scene label
                     self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
-                    # set scene DMX values
-                    await self.set_scene(scene)
-                    await self.await_countdown_timer(self.settings["szene_duration"])
-
+                    
                     # set inter-stimulus lighting
-                    await self.isi_red_all()
+                    self.activate_isi()
                     await self.await_countdown_timer(self.settings["inter-stimulus-interval"])
                     if self.sequence_stop_event.is_set(): # if stopped, keep interstimulus lighting
                         await self.sequence_continue_event.wait() # wait for continue event
@@ -200,11 +197,26 @@ class App(ctk.CTk, AsyncCTk):
                         self.sequence_stop_event.clear()
                         continue
                     
+                    self.set_scene(scene)
+                    self.fade_isi()
+                    await self.await_countdown_timer(0.4)
+                    if self.sequence_stop_event.is_set(): # if stopped, back to ISI lighting
+                        continue
+                    
+                    # set scene DMX values
+                    self.activate_scene()
+                    await self.await_countdown_timer(self.settings["szene_duration"])
+                    if self.sequence_stop_event.is_set(): # if stopped, back to ISI lighting
+                        continue
+                    
+                    
+                    
                     next_scene = True
                     self.sequence_table.deselect_row(scene_idx)
                     # evaluate if button was pressed
                     # use a asyncio Event
         finally:
+            self.activate_isi()
             self.deselect_table()
             self.sequence_start_reset_button.configure(text="Durchgang starten", command=self.run_sequence)
             self.sequence_stop_continue_button.configure(text="Durchgang anhalten", command=self.stop_sequence,
@@ -212,6 +224,7 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_stop_event.clear()
             self.scene_label.configure(text="Szene")
             self.scene_countdown_timer.set(0)
+            
 
     @async_handler
     async def run_sequence(self):
@@ -250,30 +263,34 @@ class App(ctk.CTk, AsyncCTk):
         self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
         self.qlc_input = self.qlc_node.add_universe(10)
 
-        self.spot1_intensity = self.qlc_input.add_channel(start=1, width=2) #  0:0
-        self.spot2_intensity = self.qlc_input.add_channel(start=3, width=2) #  0:47
-        self.spot3_intensity = self.qlc_input.add_channel(start=5, width=2) # 47:0
-        self.spot4_intensity = self.qlc_input.add_channel(start=7, width=2) # 47:47
-        self.isi_intensity   = self.qlc_input.add_channel(start=9, width=2) # 47:47
-        self.spot_color      = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
-        self.isi_color       = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
-        self.spot_ctc        = self.qlc_input.add_channel(start=19, width=1) # CTC
-        self.isi_ctc         = self.qlc_input.add_channel(start=20, width=1) # CTC
-        self.qlc_init        = self.qlc_input.add_channel(start=21, width=1) # Init-Button
-        self.activate_szene  = self.qlc_input.add_channel(start=22, width=1) # Activate Szene - Button
-        self.activate_isi    = self.qlc_input.add_channel(start=23, width=1) # Activate ISI - Button
+        self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) #  0:0
+        self.spot2_intensity    = self.qlc_input.add_channel(start=3, width=2) #  0:47
+        self.spot3_intensity    = self.qlc_input.add_channel(start=5, width=2) # 47:0
+        self.spot4_intensity    = self.qlc_input.add_channel(start=7, width=2) # 47:47
+        self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # 47:47
+        self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
+        self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
+        self.spot_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
+        self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
+        self.qlc_init_button    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
+        self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
         await asyncio.sleep(0.3) # wait for project to load
-        self.qlc_init.set_values([255])
-        await asyncio.sleep(0.1)
-        self.qlc_init.set_values([0])
+        self.qlc_init_button.set_values([255])
+        self.set_isi()
     
-    @async_handler
-    async def test_qlc(self):
-        
-        self.qlc_init.set_values([255])
+
     
-    async def set_scene(self, scene):
-        await self.set_all_intensities(0)
+    def activate_isi(self):
+        self.sequence_control.set_values([0])
+    
+    def fade_isi(self):
+        self.sequence_control.set_values([127])
+    
+    def activate_scene(self):
+        self.sequence_control.set_values([255])
+    
+    def set_scene(self, scene):
+        self.set_all_intensities(0)
         self.spot_color.set_values([255,255,255,255])
         dmx_max = 2**16 - 1
         
@@ -303,16 +320,16 @@ class App(ctk.CTk, AsyncCTk):
             i = round((E / maxE) * dmx_max)
             self.spot4_intensity.set_values(i.to_bytes(2,'big'))
 
-    async def set_all_intensities(self,i):
+    def set_all_intensities(self,i):
         self.spot1_intensity.set_values(i.to_bytes(2,'big'))
         self.spot2_intensity.set_values(i.to_bytes(2,'big'))
         self.spot3_intensity.set_values(i.to_bytes(2,'big'))
         self.spot4_intensity.set_values(i.to_bytes(2,'big'))
 
-    async def isi_red_all(self):
+    def set_isi(self):
         brightness = 2500
-        await self.set_all_intensities(brightness)
-        self.spot_color.set_values([255,0,0,0])
+        self.isi_intensity.set_values(brightness.to_bytes(2,'big'))
+        self.isi_color.set_values([255,0,0,0])
 
 app = App()
 app.async_mainloop()
