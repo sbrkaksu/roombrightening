@@ -42,27 +42,63 @@
   <Type>Slider</Type>
  </Channel>
  <Channel Number="8">
-  <Name>Master Intensität Rot</Name>
+  <Name>ISI Intensität Grob</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="9">
-  <Name>Master Intensität Grün</Name>
+  <Name>ISI Intensität Fein</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="10">
-  <Name>Master Intensität Blau</Name>
+  <Name>Szene Intensität Rot</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="11">
-  <Name>Master Intensität Lime</Name>
+  <Name>Szene Intensität Grün</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="12">
-  <Name>Master CTC</Name>
+  <Name>Szene Intensität Blau</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="13">
+  <Name>Szene Intensität Lime</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="14">
+  <Name>ISI Intensität Rot</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="15">
+  <Name>ISI Intensität Grün</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="16">
+  <Name>ISI Intensität Blau</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="17">
+  <Name>ISI Intensität Lime</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="18">
+  <Name>Szene CTC</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="19">
+  <Name>ISI CTC</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="20">
   <Name>Initialisieren</Name>
+  <Type>Button</Type>
+ </Channel>
+ <Channel Number="21">
+  <Name>Szene Aktivieren</Name>
+  <Type>Button</Type>
+ </Channel>
+ <Channel Number="22">
+  <Name>ISI Aktivieren</Name>
   <Type>Button</Type>
  </Channel>
 </InputProfile>
