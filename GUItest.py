@@ -1,4 +1,6 @@
 import ast
+import itertools
+from collections import deque
 
 import tkinter as tk
 import customtkinter as ctk
@@ -22,14 +24,15 @@ class App(ctk.CTk, AsyncCTk):
         super().__init__()
         ######## Setup the Window ########
         self.title("Studie Raumaufhellung")
-        self.geometry("750x700")
+        self.geometry("750x600")
         ##################################
         
         ######## Settings ########
         self.settings = {
             "qlc_address": 'localhost:9999',
-            "szene_duration": 2.7, # seconds
-            "inter-stimulus-interval": 2.0, #seconds
+            "szene_duration": 4.5, # seconds
+            "inter-stimulus-interval": 2.5, #seconds
+            "isi-fade-duration" : 0.6, # seconds. QLC fades in 300 ms
             "maxE_spot1": 143.0,
             "maxE_spot2": 92.2,
             "maxE_spot3": 164.6,
@@ -49,11 +52,15 @@ class App(ctk.CTk, AsyncCTk):
         self.stoer_button = ctk.CTkButton(self.inquery_frame, text="Jo", command=lambda: self.stoer_var.set("Ja"))
         self.stoer_button.grid(row=1, column=0, padx=10, pady=10, sticky="w")
         ###########################################################################
-                
+            
+        self.proband = None
+        self.active_scene = None
+        self.active_scene_idx = None
+        self.active_sequence = None
+        
         ######## Frame to display the sequences in a table ########
         self.sequence_frame = ctk.CTkFrame(self)
         self.sequence_frame.grid(row=1, column=1, padx=10, pady=10, sticky="w")
-        
         
         self.sequence_label = ctk.CTkLabel(self.sequence_frame, text="Durchgang", anchor="nw")
         self.sequence_label.grid(row=0, column=0, padx=0, pady=0)
@@ -64,9 +71,14 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table_header = CTkTable(self.sequence_frame, row=1, column=4, header_color='white', corner_radius=0, height =12, width=60)
         self.sequence_table_header.grid(row=1, column=0, padx=10, pady=0, sticky="n")
         self.sequence_table_header.update_values([["Szene", "Spot", "E","Störend"]])
-        self.scene_rows = 16
+        self.scene_rows = 10
         self.sequence_table = CTkTable(self.sequence_frame, row=self.scene_rows, column=4, corner_radius=0, height =12, width=60)
         self.sequence_table.grid(row=2, column=0, padx=10, pady=(0,10), sticky="n")
+        hover_color = ctk.ThemeManager.theme["CTkButton"]["hover_color"]
+        for i in range(self.sequence_table.rows):
+            self.sequence_table.edit_row(row=i,hover_color = hover_color,
+                                         command = lambda i=i: self.row_click(i))
+
         
         self.sequence_progressbar = ctk.CTkProgressBar(self.sequence_frame, orientation="vertical", mode = "determinate", width = 6)
         self.sequence_progressbar.grid(row=2, column=1, padx=0, pady=(0,1), sticky="nsw")
@@ -75,8 +87,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_progressbar.configure(progress_color=ctk.ThemeManager.theme["CTkProgressBar"]["fg_color"])
         self.sequence_progressbar.configure(fg_color=ctk.ThemeManager.theme["CTkProgressBar"]["progress_color"])
         self.sequence_progressbar.set(1)
-        
-        
+
         ######## Frame to control the sequence ########
         self.seq_crtl_frame = ctk.CTkFrame(self)
         self.seq_crtl_frame.grid(row=1, column=0, padx=10, pady=10, sticky="wn")
@@ -98,19 +109,33 @@ class App(ctk.CTk, AsyncCTk):
         self.prev_seq_button = ctk.CTkButton(self.seq_switch_frame, text="<", width=60, command=self.prev_sequence)
         self.prev_seq_button.grid(row=0, column=0, padx=10, pady=10, sticky="w")
         
-        
         ########   Countdown Timer  ########
         self.scene_countdown_timer =  tk.DoubleVar()
         self.scene_countdown_timer.trace_add('write', self.print_scene_countdown)
+        self.scene_countdown_end = 0.0
         self.scene_countdown_finished = asyncio.Event()
         self.scene_countdown_label = ctk.CTkLabel(self, text="", font=("Helvetica", 30))
-        self.scene_countdown_label.grid(row=2, column=3, padx=10, pady=20)
-        
+        self.scene_countdown_label.grid(row=1, column=3, padx=10, pady=20)
         
         ########    QLC+ Control    ########
         self.button_connect_qlc = ctk.CTkButton(self, text="QLC initialisieren", command=self.init_qlc)
         self.button_connect_qlc.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
-        self.project_loaded = False        
+        self.project_loaded = False
+
+        ########    User Input Key  ########
+        self.szene_disturbing_key_event = asyncio.Event()
+        self.bind("y", self.disturbing_key_pressed)
+        
+    def disturbing_key_pressed(self):
+        self.szene_disturbing_key_event.set()
+        if self.active_scene is not None:
+            self.active_scene["Stoert"] = "Ja"
+
+    def row_click(self,row_idx):
+        if self.sequence_stop_event.is_set():
+            self.sequence_table.deselect_row(self.active_scene_idx)
+            self.active_scene_idx = row_idx
+            self.sequence_table.select_row(self.active_scene_idx)
 
     def load_qlc_project(self):
         r = False
@@ -146,11 +171,13 @@ class App(ctk.CTk, AsyncCTk):
 
     def set_sequence(self):
         if self.proband is not None:
-            self.sequence = self.proband["Durchgange"][self.seq_idx]
-        seq_values = [[s["ID"],s["Spot"],s["E"]] for s in self.sequence["Szenen"]]
+            self.active_sequence = self.proband["Durchgange"][self.seq_idx]
+        seq_values = [[s["ID"],s["Spot"],s["E"]] for s in self.active_sequence["Szenen"]]
         
+        # setup table: fill with values
         self.sequence_table.update_values(seq_values)
-        self.sequence_label.configure(text="Durchgang {id}".format(id=self.sequence["ID"]))
+        
+        self.sequence_label.configure(text="Durchgang {id}".format(id=self.active_sequence["ID"]))
     
     
     def stop_sequence(self):
@@ -170,51 +197,67 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_task.cancel()
     
     def deselect_table(self):
-        for i in range(len(self.sequence["Szenen"])):
+        for i in range(self.sequence_table.rows):
             self.sequence_table.deselect_row(i)
-    
+    # evaluate if button was pressed (for previous scene)
+    #self.sequence_stop_event.is_set() 
+    #self.szene_disturbing_key_event.is_set():
+    #self.sequence_table.insert(scene_idx, 3, "Ja")
+    #self.szene_disturbing_key_event.clear()
+    #self.sequence_table.insert(scene_idx, 3, "Nein")
     async def run_sequence_task(self):
         try:
             # switch button to stop sequence
             self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
             self.sequence_start_reset_button.configure(text="Durchgang zurücksetzen", command=self.reset_sequence)
-            scene_num = len(self.sequence["Szenen"])
+
+            scenes = self.active_sequence["Szenen"]
+            scene_num = len(scenes)
             
-            for scene_idx, scene in enumerate(self.sequence["Szenen"]):
-                next_scene = False
-                while not next_scene:
-                    # select scene in table
-                    self.sequence_table.select_row(scene_idx)
-                    # set scene label
-                    self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
-                    
-                    # set inter-stimulus lighting
-                    self.activate_isi()
-                    await self.await_countdown_timer(self.settings["inter-stimulus-interval"])
-                    if self.sequence_stop_event.is_set(): # if stopped, keep interstimulus lighting
-                        await self.sequence_continue_event.wait() # wait for continue event
-                        self.sequence_continue_event.clear()
-                        self.sequence_stop_event.clear()
-                        continue
-                    
+            # prepare first scene
+            isi_duration = self.settings["inter-stimulus-interval"]
+            isi_fade_duration = self.settings["isi-fade-duration"]
+
+            self.set_scene(scenes[0])
+            self.sequence_table.select_row(0)
+            #self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
+            self.fade_isi()
+            await asyncio.sleep(isi_fade_duration)
+
+            cur_next_scenes = [cur_next for cur_next in itertools.pairwise([*scenes,None])]
+            self.active_scene_idx = 0
+            while self.active_scene_idx < (scene_num):
+                scene,next_scene  = cur_next_scenes[self.active_scene_idx]
+                #self.active_scene = scene
+                self.sequence_table.select_row(self.active_scene_idx)
+                self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
+
+                self.activate_scene()
+                self.szene_disturbing_key_event.clear()
+                await self.await_countdown_timer(self.settings["szene_duration"])
+                
+                # set inter-stimulus lighting
+                self.activate_isi()
+                
+                await self.await_countdown_timer(isi_duration,isi_fade_duration)
+                if self.sequence_stop_event.is_set(): # if stopped, keep interstimulus lighting
+                    await self.sequence_continue_event.wait() # wait for continue event
+                    self.sequence_continue_event.clear()
+                    self.sequence_stop_event.clear()
+                    scene,_  = cur_next_scenes[self.active_scene_idx] # update scene, in case different index was chosen
                     self.set_scene(scene)
                     self.fade_isi()
-                    await self.await_countdown_timer(0.4)
-                    if self.sequence_stop_event.is_set(): # if stopped, back to ISI lighting
-                        continue
-                    
-                    # set scene DMX values
-                    self.activate_scene()
-                    await self.await_countdown_timer(self.settings["szene_duration"])
-                    if self.sequence_stop_event.is_set(): # if stopped, back to ISI lighting
-                        continue
-                    
-                    
-                    
-                    next_scene = True
-                    self.sequence_table.deselect_row(scene_idx)
-                    # evaluate if button was pressed
-                    # use a asyncio Event
+                    await asyncio.sleep(isi_fade_duration)
+                    continue
+
+                self.set_scene(next_scene) # prepare scene values
+                self.fade_isi()
+                await self.await_countdown_timer() # count down rest of the timer
+                if self.sequence_stop_event.is_set():
+                    print("continue from isi fade")
+                    continue
+                self.sequence_table.deselect_row(self.active_scene_idx)
+                self.active_scene_idx += 1
         finally:
             self.activate_isi()
             self.deselect_table()
@@ -234,25 +277,32 @@ class App(ctk.CTk, AsyncCTk):
 
     def print_scene_countdown(self, *args):
         self.scene_countdown_label.configure(text="{:04.1f}".format(self.scene_countdown_timer.get()))
-        
-    def countdown_timer(self):
-        timer_value = self.scene_countdown_timer.get()
-        timer_value -= 0.1
-        if timer_value > 0:
-            self.scene_countdown_timer.set(round(timer_value,1))
-            self.after(100, self.countdown_timer)  # Countdown alle 100ms dekrementieren
-        else:
-            self.scene_countdown_finished.set()
-
-    async def await_countdown_timer(self, time):
+    
+    async def await_countdown_timer(self, start_time = None, end_time = None):
+        if(end_time == None):
+            end_time = 0
+        self.scene_countdown_end = end_time
         self.scene_countdown_finished.clear()
-        self.scene_countdown_timer.set(time)
-        self.after(100, self.countdown_timer) # starts the timer
+        if(start_time != None):
+            self.scene_countdown_timer.set(start_time)
+        self.after(100, self.countdown_timer_cb) # starts the timer
         await asyncio.wait(
             [asyncio.create_task(self.scene_countdown_finished.wait()),
              asyncio.create_task(self.sequence_stop_event.wait())],return_when=asyncio.FIRST_COMPLETED)
-        self.scene_countdown_timer.set(0)
-        
+        if self.sequence_stop_event.is_set():
+            self.scene_countdown_timer.set(0) # reset to zero
+        else:
+            self.scene_countdown_timer.set(self.scene_countdown_end) # leave it at end_time
+
+    def countdown_timer_cb(self):
+        timer_value = self.scene_countdown_timer.get()
+        timer_value -= 0.1
+        if timer_value > self.scene_countdown_end:
+            self.scene_countdown_timer.set(round(timer_value,1))
+            self.after(100, self.countdown_timer_cb)  # Countdown alle 100ms dekrementieren
+        else:
+            self.scene_countdown_finished.set()
+
     @async_handler
     async def init_qlc(self):
         if self.project_loaded == False:
@@ -267,34 +317,36 @@ class App(ctk.CTk, AsyncCTk):
         self.spot2_intensity    = self.qlc_input.add_channel(start=3, width=2) #  0:47
         self.spot3_intensity    = self.qlc_input.add_channel(start=5, width=2) # 47:0
         self.spot4_intensity    = self.qlc_input.add_channel(start=7, width=2) # 47:47
-        self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # 47:47
+        self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
         self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
         self.spot_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
         self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
         self.qlc_init_button    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
-        await asyncio.sleep(0.3) # wait for project to load
+        await asyncio.sleep(1) # wait for project to load
         self.qlc_init_button.set_values([255])
+        self.set_all_intensities(0)
         self.set_isi()
-    
-
+        self.spot_color.set_values([255,255,255,255])
+        await asyncio.sleep(1) # wait for project to load
+        self.activate_isi()
     
     def activate_isi(self):
-        self.sequence_control.set_values([0])
+        self.sequence_control.set_values([255])
     
     def fade_isi(self):
         self.sequence_control.set_values([127])
     
     def activate_scene(self):
-        self.sequence_control.set_values([255])
+        self.sequence_control.set_values([0])
     
     def set_scene(self, scene):
         self.set_all_intensities(0)
-        self.spot_color.set_values([255,255,255,255])
         dmx_max = 2**16 - 1
         
         spot = scene["Spot"]
+        print("setting spot", spot)
         E = scene["E"] 
         if spot == 1:
             maxE = self.settings["maxE_spot1"]
@@ -330,6 +382,24 @@ class App(ctk.CTk, AsyncCTk):
         brightness = 2500
         self.isi_intensity.set_values(brightness.to_bytes(2,'big'))
         self.isi_color.set_values([255,0,0,0])
+
+class QLCArtNetInterface:
+    def __init__(self):
+        self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
+        self.qlc_input = self.qlc_node.add_universe(10)
+
+        self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) #  0:0
+        self.spot2_intensity    = self.qlc_input.add_channel(start=3, width=2) #  0:47
+        self.spot3_intensity    = self.qlc_input.add_channel(start=5, width=2) # 47:0
+        self.spot4_intensity    = self.qlc_input.add_channel(start=7, width=2) # 47:47
+        self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
+        self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
+        self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
+        self.spot_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
+        self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
+        self.qlc_init_button    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
+        self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
+
 
 app = App()
 app.async_mainloop()
@@ -375,3 +445,4 @@ proband = {
                 }
             ]
         }
+
