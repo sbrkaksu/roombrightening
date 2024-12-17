@@ -94,11 +94,11 @@
   <Type>Button</Type>
  </Channel>
  <Channel Number="21">
-  <Name>Szene Aktivieren</Name>
-  <Type>Button</Type>
+  <Name>Ablauf Szene ISI</Name>
+  <Type>Slider</Type>
  </Channel>
  <Channel Number="22">
-  <Name>ISI Aktivieren</Name>
-  <Type>Button</Type>
+  <Name>Intensität Pixel 2-7</Name>
+  <Type>Slider</Type>
  </Channel>
 </InputProfile>
