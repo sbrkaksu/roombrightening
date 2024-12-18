@@ -1,6 +1,7 @@
 import ast
 import itertools
-from collections import deque
+from timeit import default_timer as timer
+from os.path import splitext
 
 import tkinter as tk
 import customtkinter as ctk
@@ -19,24 +20,104 @@ import pyartnet as pan
 
 import requests
 
+class ClickableTable(ctk.CTkFrame):
+    def __init__(self, *args, header_labels, row_num, callback = None, **kwargs):
+        super().__init__(*args, **kwargs)
+                ######## Frame to display the sequences in a table ########
+        self.sequence_frame = ctk.CTkFrame(self)
+
+        self.proband_label = ctk.CTkLabel(self, text="Proband", anchor="n")
+        self.proband_label.grid(row=0, column=0, padx=0, pady=(5,0))
+        self.durchgang_label = ctk.CTkLabel(self, text="", anchor="n")
+        self.durchgang_label.grid(row=1, column=0, padx=0, pady=0)
+        self.row_num = row_num
+        self.col_num = len(header_labels)
+        self.table_header = CTkTable(self, row=1, column=self.col_num, header_color='white', corner_radius=0, height=10, width=85)
+        self.table_header.grid(row=2, column=0, padx=10, pady=0, sticky="n")
+        self.table_header.update_values([header_labels])
+        self.header_dict = dict(zip(header_labels, range(len(header_labels))))
+        self.table = CTkTable(self, row=self.row_num, column=self.col_num, corner_radius=0, height=10, width=85)
+        self.table.grid(row=3, column=0, padx=10, pady=(0,10), sticky="n")
+        hover_color = ctk.ThemeManager.theme["CTkButton"]["hover_color"]
+        for i in range(self.table.rows):
+            self.table.edit_row(row=i,hover_color = hover_color)
+        
+        if callback is not None:
+            self.set_callback(callback)
+        
+        self.selected_row = None
+        #self.sequence_progressbar = ctk.CTkProgressBar(self, orientation="vertical", mode = "determinate", width = 6)
+        #self.sequence_progressbar.grid(row=2, column=1, padx=0, pady=(0,1), sticky="nsw")
+        #self.sequence_progressbar.configure(corner_radius=0)
+        # swap progressbar colors, so it "fills" from top to bottom
+        #self.sequence_progressbar.configure(progress_color=ctk.ThemeManager.theme["CTkProgressBar"]["fg_color"])
+        #self.sequence_progressbar.configure(fg_color=ctk.ThemeManager.theme["CTkProgressBar"]["progress_color"])
+        #self.sequence_progressbar.set(1)
+    
+    def set_callback(self, callback):
+        for i in range(self.table.rows):
+                self.table.edit_row(row=i, command = lambda i=i: callback(i))
+    
+    def select_row(self, row_idx):
+        self.deselect_row()
+        self.selected_row = row_idx
+        self.table.select_row(self.selected_row)
+            
+    def deselect_row(self):
+        if self.selected_row is not None:
+            self.table.deselect_row(self.selected_row)
+
+    def update_table(self, values):
+        self.table.update_values(values)
+        
+    def update_cell(self,value, col, row_idx=None):
+        if row_idx is None:
+            row_idx = self.selected_row
+        if isinstance(col, str):
+            col = self.header_dict[col]
+        self.table.insert(row_idx, col, value)
+        
+    def update_title_proband(self, text):
+        self.proband_label.configure(text=text)
+        
+    def update_title_durchgang(self, text):
+        self.durchgang_label.configure(text=text)
+
+class CheckWindow(ctk.CTkToplevel):
+    def __init__(self, parent, title, label, *args, **kwargs):
+        super().__init__(parent,*args, **kwargs)
+        super().transient(parent) # always on top of parent window
+        super().grab_set() # block parent window
+        
+        self.geometry("300x200")
+        self.title(title)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.confirm_button = ctk.CTkButton(self, text=label, command=self.destroy)
+        self.confirm_button.grid(row=0, column=0, padx=20, pady=30, sticky="nsew")
+
 class App(ctk.CTk, AsyncCTk):
     def __init__(self):
         super().__init__()
         ######## Setup the Window ########
         self.title("Studie Raumaufhellung")
-        self.geometry("750x600")
+        self.geometry("1200x1000")
+        self.resizable(False, False)
         ##################################
         
         ######## Settings ########
         self.settings = {
-            "qlc_address": 'localhost:9999',
-            "szene_duration": 4.5, # seconds
-            "inter-stimulus-interval": 2.5, #seconds
-            "isi-fade-duration" : 0.6, # seconds. QLC fades in 300 ms
+            "qlc_address":          'localhost:9999',
+            "qlc_project":          'VersuchsraumLeo.qxw',
+            "serial_port_monitor":  'COM4',
+            "szene_duration":           4.5, # seconds
+            "inter-stimulus-interval":  2.5, #seconds
+            "isi-fade-duration" :       0.6, # seconds. QLC fades in 300 ms
             "maxE_spot1": 143.0,
             "maxE_spot2": 92.2,
             "maxE_spot3": 164.6,
             "maxE_spot4": 72.2,
+            "maxE_diffus": 200
         }
 
         #self.grid_columnconfigure((0, 1), weight=1)
@@ -45,69 +126,49 @@ class App(ctk.CTk, AsyncCTk):
 
         ######## Frame to simulate Input on Light Szene, bothering or not? ########
         self.inquery_frame = ctk.CTkFrame(self)
-        self.inquery_frame.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.inquery_frame.grid(row=0, column=2, padx=10, pady=10, sticky="nw")
 
         self.inquery_label = ctk.CTkLabel(self.inquery_frame, text="Ist die Szene störend?").grid(row=0, column=0, padx=10, pady=10, sticky="w")
-        self.stoer_var = tk.StringVar(value="Nein")
-        self.stoer_button = ctk.CTkButton(self.inquery_frame, text="Jo", command=lambda: self.stoer_var.set("Ja"))
+
+        self.stoer_button = ctk.CTkButton(self.inquery_frame, text="Jo", command=lambda: self.set_scene_reaction(disturbing=True))
         self.stoer_button.grid(row=1, column=0, padx=10, pady=10, sticky="w")
         ###########################################################################
             
         self.proband = None
         self.active_scene = None
-        self.active_scene_idx = None
+        self.scene_start_timestamp = None
+        self.current_scene_idx = None
         self.active_sequence = None
         
-        ######## Frame to display the sequences in a table ########
-        self.sequence_frame = ctk.CTkFrame(self)
-        self.sequence_frame.grid(row=1, column=1, padx=10, pady=10, sticky="w")
-        
-        self.sequence_label = ctk.CTkLabel(self.sequence_frame, text="Durchgang", anchor="nw")
-        self.sequence_label.grid(row=0, column=0, padx=0, pady=0)
-        
-        self.scene_label = ctk.CTkLabel(self, text="Szene")
-        self.scene_label.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
-        
-        self.sequence_table_header = CTkTable(self.sequence_frame, row=1, column=4, header_color='white', corner_radius=0, height =12, width=60)
-        self.sequence_table_header.grid(row=1, column=0, padx=10, pady=0, sticky="n")
-        self.sequence_table_header.update_values([["Szene", "Spot", "E","Störend"]])
-        self.scene_rows = 10
-        self.sequence_table = CTkTable(self.sequence_frame, row=self.scene_rows, column=4, corner_radius=0, height =12, width=60)
-        self.sequence_table.grid(row=2, column=0, padx=10, pady=(0,10), sticky="n")
-        hover_color = ctk.ThemeManager.theme["CTkButton"]["hover_color"]
-        for i in range(self.sequence_table.rows):
-            self.sequence_table.edit_row(row=i,hover_color = hover_color,
-                                         command = lambda i=i: self.row_click(i))
-
-        
-        self.sequence_progressbar = ctk.CTkProgressBar(self.sequence_frame, orientation="vertical", mode = "determinate", width = 6)
-        self.sequence_progressbar.grid(row=2, column=1, padx=0, pady=(0,1), sticky="nsw")
-        self.sequence_progressbar.configure(corner_radius=0)
-        # swap progressbar colors, so it "fills" from top to bottom
-        self.sequence_progressbar.configure(progress_color=ctk.ThemeManager.theme["CTkProgressBar"]["fg_color"])
-        self.sequence_progressbar.configure(fg_color=ctk.ThemeManager.theme["CTkProgressBar"]["progress_color"])
-        self.sequence_progressbar.set(1)
+        self.sequence_task = None
 
         ######## Frame to control the sequence ########
-        self.seq_crtl_frame = ctk.CTkFrame(self)
-        self.seq_crtl_frame.grid(row=1, column=0, padx=10, pady=10, sticky="wn")
+        self.seq_crtl_frame = ctk.CTkFrame(self, width=120)
+        self.seq_crtl_frame.grid(row=0, column=0, padx=10, pady=10, sticky="wn")
         self.load_proband_button = ctk.CTkButton(self.seq_crtl_frame, text="Proband laden", command=self.load_proband)
         self.load_proband_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
         self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Durchgang starten", command=self.run_sequence, state="disabled")
-        self.sequence_start_reset_button.grid(row=2, column=0, padx=10, pady=10, sticky="s")
+        self.sequence_start_reset_button.grid(row=3, column=0, padx=10, pady=10, sticky="s")
         
         self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Durchgang anhalten", command=self.stop_sequence, state="disabled")
-        self.sequence_stop_continue_button.grid(row=3, column=0, padx=10, pady=10, sticky="s")
+        self.sequence_stop_continue_button.grid(row=4, column=0, padx=10, pady=10, sticky="s")
+        
+        self.seq_switch_label = ctk.CTkLabel(self.seq_crtl_frame, text="Durchgang wählen")
+        self.seq_switch_label.grid(row=1, column=0, padx=0, pady=0, sticky="we")
+        self.seq_switch_frame = ctk.CTkFrame(self.seq_crtl_frame, fg_color="transparent")
+        self.seq_switch_frame.grid(row=2, column=0, padx=10, pady=0, sticky="wn")
+
+        self.next_seq_button = ctk.CTkButton(self.seq_switch_frame, text=">", width=60, command=self.next_sequence, state="disabled")
+        self.next_seq_button.grid(row=1, column=1, padx=10, pady=5, sticky="e")
+        self.prev_seq_button = ctk.CTkButton(self.seq_switch_frame, text="<", width=60, command=self.prev_sequence, state="disabled")
+        self.prev_seq_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
         
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
-
-        self.seq_switch_frame = ctk.CTkFrame(self.seq_crtl_frame, fg_color="transparent")
-        self.seq_switch_frame.grid(row=1, column=0, padx=0, pady=0, sticky="wn")
-        self.next_seq_button = ctk.CTkButton(self.seq_switch_frame, text=">", width=60, command=self.next_sequence)
-        self.next_seq_button.grid(row=0, column=1, padx=10, pady=10, sticky="e")
-        self.prev_seq_button = ctk.CTkButton(self.seq_switch_frame, text="<", width=60, command=self.prev_sequence)
-        self.prev_seq_button.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        
+        self.sequence_table = ClickableTable(self, header_labels=["Szene", "Spot", "E","E Monitor","Störend", "Reaktionszeit"], row_num=40)
+        self.sequence_table.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+        self.sequence_table.set_callback(self.row_click)
         
         ########   Countdown Timer  ########
         self.scene_countdown_timer =  tk.DoubleVar()
@@ -117,45 +178,86 @@ class App(ctk.CTk, AsyncCTk):
         self.scene_countdown_label = ctk.CTkLabel(self, text="", font=("Helvetica", 30))
         self.scene_countdown_label.grid(row=1, column=3, padx=10, pady=20)
         
+        #self.scene_label = ctk.CTkLabel(self, text="Szene")
+        #self.scene_label.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
+        
         ########    QLC+ Control    ########
-        self.button_connect_qlc = ctk.CTkButton(self, text="QLC initialisieren", command=self.init_qlc)
-        self.button_connect_qlc.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
+        # automatically connect to QLC+ on startup / start the program if necessary
+        self.qlc_init_button = ctk.CTkButton(self, text="QLC+ initialisieren", command=self.init_qlc)
+        self.qlc_init_button.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
+        
+        self.artnet_interface_helperbutton = ctk.CTkButton(self, text="ArtNet Interface laden", command=self.create_artnet_interface)
         self.project_loaded = False
+        
+        self.after(100,self.artnet_interface_helperbutton.invoke) # workaround, because async does not work in __init__
 
         ########    User Input Key  ########
-        self.szene_disturbing_key_event = asyncio.Event()
-        self.bind("y", self.disturbing_key_pressed)
+        self.bind("<F20>", lambda e: self.set_scene_reaction(disturbing=True))
+        self.scene_disturbing = asyncio.Event()
         
-    def disturbing_key_pressed(self):
-        self.szene_disturbing_key_event.set()
-        if self.active_scene is not None:
-            self.active_scene["Stoert"] = "Ja"
-
+        ########    Check Window    ########
+        self.diffuse_window = None
+        self.position_window = None
+        self.diffuse_status = None
+        self.position_status = None
+        
+    def open_check_window(self,diffuse = None, position = None):
+        if diffuse is not None:
+            if diffuse == True:
+                title="Diffuse Scheibe einsetzen"
+                label="Diffuse Scheibe ist eingesetzt"
+            if diffuse == False:
+                title="Diffuse Scheibe entfernen"
+                label="Diffuse Scheibe ist entfernt"
+            if self.diffuse_window is None or not self.diffuse_window.winfo_exists():
+                self.diffuse_window = CheckWindow(self,title=title,label=label)  # create window if its None or destroyed
+            else:
+                self.diffuse_window.focus()  # if window exists focus it
+            self.wait_window(self.diffuse_window)
+        if position is not None:
+            if position == "Sitzen":
+                title="Probandenposition sitzend"
+                label="Proband sitzt"
+            if position == "Liegen":
+                title="Probandenposition liegend"
+                label="Proband liegt"
+            if self.position_window is None or not self.position_window.winfo_exists():
+                self.position_window = CheckWindow(self,title=title,label=label)
+            else:
+                self.position_window.focus()  # if window exists focus it
+            self.wait_window(self.position_window)
+    
     def row_click(self,row_idx):
-        if self.sequence_stop_event.is_set():
-            self.sequence_table.deselect_row(self.active_scene_idx)
-            self.active_scene_idx = row_idx
-            self.sequence_table.select_row(self.active_scene_idx)
-
-    def load_qlc_project(self):
-        r = False
-        try:
-            filename = tk.filedialog.askopenfilename(filetypes=[("QLC+ files", "*.qxw"),("All files", "*.*")])
-            with open(filename, 'rb') as f:
-                r = requests.post("http://{add}/loadProject".format(add = self.settings["qlc_address"]), files={'qlcprj': f})
-            r = True
-        finally:
-            return r
-
+        if self.sequence_task is not None: # if task exists
+            if self.sequence_task.done() is False: # if Task is running
+                if not self.sequence_stop_event.is_set(): # if Task not stopped
+                    print("Task is not stopped")
+                    return
+        else: # task does not exist
+            if self.proband is None: # if proband not loaded
+                print("Proband not loaded")
+                return
+        self.current_scene_idx = row_idx
+        self.sequence_table.select_row(self.current_scene_idx)
+    
     def load_proband(self):
-        filename = tk.filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")])
-        with open(filename, 'r') as f:
+        self.filename = tk.filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")])
+        with open(self.filename, 'r') as f:
             s = f.read()
             self.proband = ast.literal_eval(s)
         self.seq_num = len(self.proband["Durchgange"])
         self.seq_idx = 0
         self.set_sequence()
         self.sequence_start_reset_button.configure(state="normal")
+        self.next_seq_button.configure(state="normal")
+        self.prev_seq_button.configure(state="normal")
+        
+        self.sequence_table.update_title_proband("Proband {id}: {stufung}".format(id=self.proband["ID"], stufung=self.proband["Abstufung"]))
+        
+    def save_proband(self):
+        filename_base = splitext(self.filename)[0]
+        with open(filename_base + '_result.txt', 'w') as f:
+            print(self.proband, file=f)
         
     def next_sequence(self):
         self.seq_idx += 1
@@ -172,13 +274,10 @@ class App(ctk.CTk, AsyncCTk):
     def set_sequence(self):
         if self.proband is not None:
             self.active_sequence = self.proband["Durchgange"][self.seq_idx]
-        seq_values = [[s["ID"],s["Spot"],s["E"]] for s in self.active_sequence["Szenen"]]
+        seq_values = [[s.get("ID"),s.get("Spot"),"{:6.3f}".format(s.get("E")), s.get("E_monitor"),s.get("Stoert"),s.get("Reaktionszeit")] for s in self.active_sequence["Szenen"]]
+        self.sequence_table.update_table(seq_values)
         
-        # setup table: fill with values
-        self.sequence_table.update_values(seq_values)
-        
-        self.sequence_label.configure(text="Durchgang {id}".format(id=self.active_sequence["ID"]))
-    
+        #self.sequence_label.configure(text="Durchgang {id}".format(id=self.active_sequence["ID"]))
     
     def stop_sequence(self):
         self.sequence_stop_continue_button.configure(text="Durchgang fortsetzen",
@@ -195,45 +294,36 @@ class App(ctk.CTk, AsyncCTk):
         
     def reset_sequence(self):
         self.sequence_task.cancel()
-    
-    def deselect_table(self):
-        for i in range(self.sequence_table.rows):
-            self.sequence_table.deselect_row(i)
-    # evaluate if button was pressed (for previous scene)
-    #self.sequence_stop_event.is_set() 
-    #self.szene_disturbing_key_event.is_set():
-    #self.sequence_table.insert(scene_idx, 3, "Ja")
-    #self.szene_disturbing_key_event.clear()
-    #self.sequence_table.insert(scene_idx, 3, "Nein")
+
     async def run_sequence_task(self):
         try:
-            # switch button to stop sequence
-            self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
-            self.sequence_start_reset_button.configure(text="Durchgang zurücksetzen", command=self.reset_sequence)
-
             scenes = self.active_sequence["Szenen"]
             scene_num = len(scenes)
             
             # prepare first scene
             isi_duration = self.settings["inter-stimulus-interval"]
             isi_fade_duration = self.settings["isi-fade-duration"]
-
-            self.set_scene(scenes[0])
-            self.sequence_table.select_row(0)
-            #self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
+            if self.current_scene_idx is None:
+                self.current_scene_idx = 0
+            
+            self.set_scene(scenes[self.current_scene_idx])
+            self.sequence_table.select_row(self.current_scene_idx)
             self.fade_isi()
             await asyncio.sleep(isi_fade_duration)
 
             cur_next_scenes = [cur_next for cur_next in itertools.pairwise([*scenes,None])]
-            self.active_scene_idx = 0
-            while self.active_scene_idx < (scene_num):
-                scene,next_scene  = cur_next_scenes[self.active_scene_idx]
-                #self.active_scene = scene
-                self.sequence_table.select_row(self.active_scene_idx)
-                self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
+            
+            while self.current_scene_idx < (scene_num):
+                scene,next_scene  = cur_next_scenes[self.current_scene_idx]
+                
+                self.sequence_table.select_row(self.current_scene_idx)
+                #self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
 
                 self.activate_scene()
-                self.szene_disturbing_key_event.clear()
+                self.active_scene = scene
+                self.clear_scene_reaction()
+                self.scene_disturbing.clear() # reset disturbing flag, ready for new input
+                self.scene_start_timestamp = timer()
                 await self.await_countdown_timer(self.settings["szene_duration"])
                 
                 # set inter-stimulus lighting
@@ -241,39 +331,64 @@ class App(ctk.CTk, AsyncCTk):
                 
                 await self.await_countdown_timer(isi_duration,isi_fade_duration)
                 if self.sequence_stop_event.is_set(): # if stopped, keep interstimulus lighting
+                    self.active_scene = None # No scene is active
+                    
                     await self.sequence_continue_event.wait() # wait for continue event
                     self.sequence_continue_event.clear()
                     self.sequence_stop_event.clear()
-                    scene,_  = cur_next_scenes[self.active_scene_idx] # update scene, in case different index was chosen
+                    
+                    scene,_  = cur_next_scenes[self.current_scene_idx] # update scene, in case different index was chosen
                     self.set_scene(scene)
                     self.fade_isi()
                     await asyncio.sleep(isi_fade_duration)
                     continue
 
-                self.set_scene(next_scene) # prepare scene values
+                if next_scene is not None:
+                    self.set_scene(next_scene) 
                 self.fade_isi()
                 await self.await_countdown_timer() # count down rest of the timer
                 if self.sequence_stop_event.is_set():
-                    print("continue from isi fade")
                     continue
-                self.sequence_table.deselect_row(self.active_scene_idx)
-                self.active_scene_idx += 1
+                
+                self.set_scene_reaction(disturbing=False)
+                self.sequence_table.deselect_row()
+                self.current_scene_idx += 1
         finally:
             self.activate_isi()
-            self.deselect_table()
+            self.sequence_table.deselect_row()
+            self.sequence_stop_event.clear()
+            #self.scene_disturbing.clear()
+            self.scene_countdown_timer.set(0)
+            self.active_scene = None
+            self.current_scene_idx = None
             self.sequence_start_reset_button.configure(text="Durchgang starten", command=self.run_sequence)
             self.sequence_stop_continue_button.configure(text="Durchgang anhalten", command=self.stop_sequence,
                                                         state="disabled", fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
-            self.sequence_stop_event.clear()
-            self.scene_label.configure(text="Szene")
-            self.scene_countdown_timer.set(0)
+            #self.scene_label.configure(text="Szene")
+            self.next_seq_button.configure(state="normal")
+            self.prev_seq_button.configure(state="normal")
             
 
     @async_handler
     async def run_sequence(self):
-        self.sequence_task = asyncio.create_task(self.run_sequence_task(), name="run_sequence")
-        await self.sequence_task
+        # open check windows for current sequence: window diffusor and subject position
+        if self.diffuse_status is not self.active_sequence["Diffus"]:
+            self.diffuse_status = self.active_sequence["Diffus"]
+            self.open_check_window(diffuse=self.diffuse_status)
             
+        if self.position_status is not self.active_sequence["Position"]:
+            self.position_status = self.active_sequence["Position"]
+            self.open_check_window(position=self.position_status)
+
+        self.sequence_task = asyncio.create_task(self.run_sequence_task(), name="run_sequence")
+        # switch button to stop sequence
+        self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
+        self.sequence_start_reset_button.configure(text="Durchgang zurücksetzen", command=self.reset_sequence)
+        
+        self.next_seq_button.configure(state="disabled")
+        self.prev_seq_button.configure(state="disabled")
+        await self.sequence_task
+    
 
     def print_scene_countdown(self, *args):
         self.scene_countdown_label.configure(text="{:04.1f}".format(self.scene_countdown_timer.get()))
@@ -302,14 +417,71 @@ class App(ctk.CTk, AsyncCTk):
             self.after(100, self.countdown_timer_cb)  # Countdown alle 100ms dekrementieren
         else:
             self.scene_countdown_finished.set()
+    
+    def set_scene_reaction(self, disturbing):
+        if self.active_scene is None: # are we even running a scene?
+            print("No scene running")
+            return
+        if disturbing is True:
+            if self.scene_disturbing.is_set():
+                print("Already set to disturbing")
+                return
+            self.scene_disturbing.set()
+            stoert = "Ja"
+            reaction_timestamp = timer()
+            reaction_time = round(reaction_timestamp - self.scene_start_timestamp,3)
+        else:
+            # only set default not disturbing, if not already set to disturbing
+            if self.scene_disturbing.is_set():
+                #self.scene_disturbing.clear()
+                return
+            stoert = "Nein"
+            reaction_time = ""
+            
+        self.active_scene["Stoert"] = stoert
+        self.sequence_table.update_cell(stoert, "Störend")
+        self.active_scene["Reaktionszeit"] = reaction_time
+        self.sequence_table.update_cell(reaction_time,"Reaktionszeit")
+        # save current results to file
+        self.save_proband()
+            
+    def clear_scene_reaction(self):
+        if self.active_scene is not None: # are we even running a scene?
+            self.active_scene["Stoert"] = ""
+            self.sequence_table.update_cell("", "Störend")
+            self.active_scene["Reaktionszeit"] = ""
+            self.sequence_table.update_cell("","Reaktionszeit")
+    
 
+    def load_qlc_project(self):
+        r = False
+        try:
+            #filename = tk.filedialog.askopenfilename(filetypes=[("QLC+ files", "*.qxw"),("All files", "*.*")])
+            filename = self.settings["qlc_project"]
+            with open(filename, 'rb') as f:
+                r = requests.post("http://{addr}/loadProject".format(addr = self.settings["qlc_address"]), files={'qlcprj': f})
+            r = True
+        finally:
+            return r
+    
     @async_handler
     async def init_qlc(self):
-        if self.project_loaded == False:
-            self.project_loaded = self.load_qlc_project()
-        if self.project_loaded == False:
-            return
+        if self.load_qlc_project() == True:
+            self.qlc_init_button.configure(text="QLC+ initialisiert", fg_color="green", state="disabled")
+            await asyncio.sleep(0.2) # wait for project to load
+            # wiggle submaster for Pixel 2-7 (workaround for QLC bug ignoring submaster)
+            self.pixel2_7_intensity.set_values([1])
+            await asyncio.sleep(0.2) 
+            self.pixel2_7_intensity.set_values([0])
+            
+            self.qlc_init_channel.set_values([255])
+            self.set_all_intensities(0)
+            self.set_isi()
+            self.spot_color.set_values([255,255,255,255])
+            self.activate_isi()
         
+    @async_handler
+    async def create_artnet_interface(self):
         self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
         self.qlc_input = self.qlc_node.add_universe(10)
 
@@ -322,16 +494,10 @@ class App(ctk.CTk, AsyncCTk):
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
         self.spot_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
         self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
-        self.qlc_init_button    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
+        self.qlc_init_channel    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
-        await asyncio.sleep(1) # wait for project to load
-        self.qlc_init_button.set_values([255])
-        self.set_all_intensities(0)
-        self.set_isi()
-        self.spot_color.set_values([255,255,255,255])
-        await asyncio.sleep(1) # wait for project to load
-        self.activate_isi()
-    
+        self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
+        
     def activate_isi(self):
         self.sequence_control.set_values([255])
     
@@ -343,10 +509,9 @@ class App(ctk.CTk, AsyncCTk):
     
     def set_scene(self, scene):
         self.set_all_intensities(0)
+        self.pixel2_7_intensity.set_values([0])
         dmx_max = 2**16 - 1
-        
         spot = scene["Spot"]
-        print("setting spot", spot)
         E = scene["E"] 
         if spot == 1:
             maxE = self.settings["maxE_spot1"]
@@ -371,6 +536,13 @@ class App(ctk.CTk, AsyncCTk):
             E = min( E, maxE )
             i = round((E / maxE) * dmx_max)
             self.spot4_intensity.set_values(i.to_bytes(2,'big'))
+        elif spot == "diffus":
+            maxE = self.settings["maxE_diffus"]
+            E = min( E, maxE )
+            i = round((E / maxE) * dmx_max)
+            self.spot1_intensity.set_values(i.to_bytes(2,'big'))
+            # also enable Pixel 2-7
+            self.pixel2_7_intensity.set_values([255])
 
     def set_all_intensities(self,i):
         self.spot1_intensity.set_values(i.to_bytes(2,'big'))
@@ -397,52 +569,12 @@ class QLCArtNetInterface:
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
         self.spot_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
         self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
-        self.qlc_init_button    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
+        self.qlc_init_channel   = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
-
+        self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
 
 app = App()
 app.async_mainloop()
 
-proband = {
-            "ID": 1,
-            "Durchgange":[
-                {
-                    "ID" : 1,
-                    "Matt": False,
-                    "Szenen" : [
-                        {"ID": 1, "Spot" : 1, "E" : 30},
-                        {"ID": 2, "Spot" : 2, "E" : 1},
-                        {"ID": 3, "Spot" : 1, "E" : 6},
-                        {"ID": 4, "Spot" : 2, "E" : 0.1},
-                        {"ID": 5, "Spot" : 4, "E" : 30},
-                        {"ID": 6, "Spot" : 4, "E" : 100}
-                        ]
-                },
-                {
-                    "ID" : 2,
-                    "Matt": False,
-                    "Szenen" : [
-                        {"ID": 1, "Spot" : 1, "E" : 30},
-                        {"ID": 2, "Spot" : 3, "E" : 1},
-                        {"ID": 3, "Spot" : 4, "E" : 6},
-                        {"ID": 4, "Spot" : 2, "E" : 0.3},
-                        {"ID": 5, "Spot" : 4, "E" : 10},
-                        {"ID": 6, "Spot" : 3, "E" : 60}
-                        ]
-                },
-                {
-                    "ID" : 3,
-                    "Matt": True,
-                    "Szenen" : [
-                        {"ID": 1, "Spot" : 4, "E" : 30},
-                        {"ID": 2, "Spot" : 2, "E" : 1},
-                        {"ID": 3, "Spot" : 4, "E" : 6},
-                        {"ID": 4, "Spot" : 2, "E" : 0.1},
-                        {"ID": 5, "Spot" : 4, "E" : 30},
-                        {"ID": 6, "Spot" : 1, "E" : 100}
-                        ]
-                }
-            ]
-        }
+
 
