@@ -71,6 +71,7 @@ erzeuge_probanden_grob(nr_probanden = 50)
 
 E_vals_grob = E_vals_fein[::3]
 stoer_E_spots = E_vals_grob[2:6] # for testing the fine generator
+stoer_E_spots = [E_vals_grob[3],E_vals_grob[4],E_vals_grob[3],E_vals_grob[3]]
 erzeuge_proband_fein(1,stoer_E_spots,1)
 
 proband = {

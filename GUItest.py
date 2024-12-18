@@ -113,11 +113,11 @@ class App(ctk.CTk, AsyncCTk):
             "szene_duration":           4.5, # seconds
             "inter-stimulus-interval":  2.5, #seconds
             "isi-fade-duration" :       0.6, # seconds. QLC fades in 300 ms
-            "maxE_spot1": 143.0,
-            "maxE_spot2": 92.2,
-            "maxE_spot3": 164.6,
-            "maxE_spot4": 72.2,
-            "maxE_diffus": 200
+            "maxE_spot1": 168.9,
+            "maxE_spot2": 116.9,
+            "maxE_spot3": 192.4,
+            "maxE_spot4": 88,
+            "maxE_diffus": 610
         }
 
         #self.grid_columnconfigure((0, 1), weight=1)
@@ -320,6 +320,7 @@ class App(ctk.CTk, AsyncCTk):
                 #self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
 
                 self.activate_scene()
+                #self.set_isi()
                 self.active_scene = scene
                 self.clear_scene_reaction()
                 self.scene_disturbing.clear() # reset disturbing flag, ready for new input
@@ -469,11 +470,8 @@ class App(ctk.CTk, AsyncCTk):
         if self.load_qlc_project() == True:
             self.qlc_init_button.configure(text="QLC+ initialisiert", fg_color="green", state="disabled")
             await asyncio.sleep(0.2) # wait for project to load
-            # wiggle submaster for Pixel 2-7 (workaround for QLC bug ignoring submaster)
-            self.pixel2_7_intensity.set_values([1])
-            await asyncio.sleep(0.2) 
             self.pixel2_7_intensity.set_values([0])
-            
+    
             self.qlc_init_channel.set_values([255])
             self.set_all_intensities(0)
             self.set_isi()
@@ -554,6 +552,7 @@ class App(ctk.CTk, AsyncCTk):
         brightness = 2500
         self.isi_intensity.set_values(brightness.to_bytes(2,'big'))
         self.isi_color.set_values([255,0,0,0])
+        self.pixel2_7_intensity.set_values([0])
 
 class QLCArtNetInterface:
     def __init__(self):
