@@ -68,7 +68,17 @@ class ClickableTable(ctk.CTkFrame):
             self.table.deselect_row(self.selected_row)
 
     def update_table(self, values):
-        self.table.update_values(values)
+        #for button in self.table.frame.values():
+            #button.configure(text=" ")
+        for i in range(self.table.rows):
+            for j in range(self.table.columns):
+                try:
+                    value = values[i][j]
+                    if value == None: value = " "
+                except IndexError: value = " "
+                self.table.frame[i,j].configure(text=str(value),require_redraw=True)
+
+        #self.table.update_values(values)
         
     def update_cell(self,value, col, row_idx=None):
         if row_idx is None:
@@ -96,6 +106,48 @@ class CheckWindow(ctk.CTkToplevel):
         self.confirm_button = ctk.CTkButton(self, text=label, command=self.destroy)
         self.confirm_button.grid(row=0, column=0, padx=20, pady=30, sticky="nsew")
 
+class SwitchButton(ctk.CTkButton):
+    def __init__(self , *args, on_color, command=None, toggleable=False, **kwargs):
+        super().__init__(*args, command=self.on_click, hover=False, **kwargs)
+        self.on_color = on_color
+        self.off_color = super().cget("fg_color")
+        self.border_color = super().cget("border_color")
+        self.border_width = super().cget("border_width")
+        self.is_selected = False
+        self.toggleable = toggleable
+        self.command = command
+        
+        super().bind("<Enter>", self.on_enter, add='+')
+        super().bind("<Leave>", self.on_leave, add='+')
+    def on_enter(self, event):
+        print("Enter")
+        super().configure(border_color="white")
+    def on_leave(self, event):
+        print("Leave")
+        super().configure(border_color=self.border_color)
+    def on_click(self):
+        if self.is_selected == False:
+            self.select()
+            if self.command is not None:
+                self.command()
+        elif self.toggleable:
+            self.turn_off()
+    def turn_on(self):
+        super().configure(fg_color=self.on_color)
+    def turn_off(self):
+        super().configure(fg_color=self.off_color)
+    def enalbe(self):
+        super().configure(state="normal", border_color=self.border_color)
+    def disable(self):
+        super().configure(state="disabled", border_color="gray")
+    def select(self):
+        self.is_selected = True
+        super().configure(border_color="white", border_width=self.border_width*2)
+    def deselect(self):
+        self.is_selected = False
+        super().configure(border_color=self.border_color, border_width=self.border_width)
+
+
 class App(ctk.CTk, AsyncCTk):
     def __init__(self):
         super().__init__()
@@ -110,9 +162,10 @@ class App(ctk.CTk, AsyncCTk):
             "qlc_address":          'localhost:9999',
             "qlc_project":          'VersuchsraumLeo.qxw',
             "serial_port_monitor":  'COM4',
-            "szene_duration":           4.5, # seconds
+            "scene_duration":           4.5, # seconds
+            "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
             "inter-stimulus-interval":  2.5, #seconds
-            "isi-fade-duration" :       0.6, # seconds. QLC fades in 300 ms
+            "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
             "maxE_spot1": 168.9,
             "maxE_spot2": 116.9,
             "maxE_spot3": 192.4,
@@ -145,18 +198,37 @@ class App(ctk.CTk, AsyncCTk):
         ######## Frame to control the sequence ########
         self.seq_crtl_frame = ctk.CTkFrame(self, width=120)
         self.seq_crtl_frame.grid(row=0, column=0, padx=10, pady=10, sticky="wn")
+        
         self.load_proband_button = ctk.CTkButton(self.seq_crtl_frame, text="Proband laden", command=self.load_proband)
         self.load_proband_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
+        
+        on_enter = lambda e: print("Enter")
+        on_leave = lambda e: print("Leave")
+        self.load_proband_button.bind("<Enter>", on_enter, add='+')
+        self.load_proband_button.bind("<Leave>", on_leave, add='+')
+        
+        sequence_buttons_settings = {"height":90, "anchor":"n", "border_width":2, "text_color":"black", "border_color":"black",
+                                     "fg_color":"transparent", "hover_color":"light blue"}
+        
+        self.test_sequence_button = SwitchButton(self.seq_crtl_frame, on_color="green", text="Testdurchgang", **sequence_buttons_settings, command=lambda:self.set_sequence("Test"))
+        self.test_sequence_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
+        
+        self.grob_sequence_button = SwitchButton(self.seq_crtl_frame, on_color="green", text="Grobe Durchgänge", **sequence_buttons_settings, command=lambda:self.set_sequence("Grob"))
+        self.grob_sequence_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
+        
+        self.fein_sequence_button = SwitchButton(self.seq_crtl_frame, on_color="green", text="Feine Durchgänge", **sequence_buttons_settings, command=lambda:self.set_sequence("Fein"))
+        self.fein_sequence_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
+        
         self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Durchgang starten", command=self.run_sequence, state="disabled")
-        self.sequence_start_reset_button.grid(row=3, column=0, padx=10, pady=10, sticky="s")
+        self.sequence_start_reset_button.grid(row=6, column=0, padx=10, pady=10, sticky="s")
         
         self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Durchgang anhalten", command=self.stop_sequence, state="disabled")
-        self.sequence_stop_continue_button.grid(row=4, column=0, padx=10, pady=10, sticky="s")
+        self.sequence_stop_continue_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
         
         self.seq_switch_label = ctk.CTkLabel(self.seq_crtl_frame, text="Durchgang wählen")
-        self.seq_switch_label.grid(row=1, column=0, padx=0, pady=0, sticky="we")
+        self.seq_switch_label.grid(row=4, column=0, padx=0, pady=0, sticky="we")
         self.seq_switch_frame = ctk.CTkFrame(self.seq_crtl_frame, fg_color="transparent")
-        self.seq_switch_frame.grid(row=2, column=0, padx=10, pady=0, sticky="wn")
+        self.seq_switch_frame.grid(row=5, column=0, padx=10, pady=0, sticky="wn")
 
         self.next_seq_button = ctk.CTkButton(self.seq_switch_frame, text=">", width=60, command=self.next_sequence, state="disabled")
         self.next_seq_button.grid(row=1, column=1, padx=10, pady=5, sticky="e")
@@ -301,8 +373,11 @@ class App(ctk.CTk, AsyncCTk):
             scene_num = len(scenes)
             
             # prepare first scene
+            scene_duration = self.settings["scene_duration"]
+            scene_fade_duration = self.settings["scene_fade_duration"]
             isi_duration = self.settings["inter-stimulus-interval"]
-            isi_fade_duration = self.settings["isi-fade-duration"]
+            isi_fade_duration = self.settings["isi_fade_duration"]
+            
             if self.current_scene_idx is None:
                 self.current_scene_idx = 0
             
@@ -310,9 +385,8 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_table.select_row(self.current_scene_idx)
             self.fade_isi()
             await asyncio.sleep(isi_fade_duration)
-
+            # loop over all scenes. only advances scene if run to completion
             cur_next_scenes = [cur_next for cur_next in itertools.pairwise([*scenes,None])]
-            
             while self.current_scene_idx < (scene_num):
                 scene,next_scene  = cur_next_scenes[self.current_scene_idx]
                 
@@ -320,17 +394,22 @@ class App(ctk.CTk, AsyncCTk):
                 #self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
 
                 self.activate_scene()
-                #self.set_isi()
                 self.active_scene = scene
                 self.clear_scene_reaction()
                 self.scene_disturbing.clear() # reset disturbing flag, ready for new input
                 self.scene_start_timestamp = timer()
-                await self.await_countdown_timer(self.settings["szene_duration"])
+                await self.await_countdown_timer(start_time=scene_duration,
+                                                 end_time=scene_fade_duration,
+                                                 stop_event=self.sequence_stop_event)
                 
                 # set inter-stimulus lighting
+                self.fade_scene()
+                await self.await_countdown_timer() # rest is fade duration, not interruptable to prevent flashing
                 self.activate_isi()
                 
-                await self.await_countdown_timer(isi_duration,isi_fade_duration)
+                await self.await_countdown_timer(start_time=isi_duration,
+                                                 end_time=isi_fade_duration,
+                                                 stop_event=self.sequence_stop_event)
                 if self.sequence_stop_event.is_set(): # if stopped, keep interstimulus lighting
                     self.active_scene = None # No scene is active
                     
@@ -347,7 +426,7 @@ class App(ctk.CTk, AsyncCTk):
                 if next_scene is not None:
                     self.set_scene(next_scene) 
                 self.fade_isi()
-                await self.await_countdown_timer() # count down rest of the timer
+                await self.await_countdown_timer(stop_event=self.sequence_stop_event) # count down rest of the timer
                 if self.sequence_stop_event.is_set():
                     continue
                 
@@ -394,7 +473,7 @@ class App(ctk.CTk, AsyncCTk):
     def print_scene_countdown(self, *args):
         self.scene_countdown_label.configure(text="{:04.1f}".format(self.scene_countdown_timer.get()))
     
-    async def await_countdown_timer(self, start_time = None, end_time = None):
+    async def await_countdown_timer(self, start_time = None, end_time = None, stop_event = None):
         if(end_time == None):
             end_time = 0
         self.scene_countdown_end = end_time
@@ -402,13 +481,18 @@ class App(ctk.CTk, AsyncCTk):
         if(start_time != None):
             self.scene_countdown_timer.set(start_time)
         self.after(100, self.countdown_timer_cb) # starts the timer
-        await asyncio.wait(
-            [asyncio.create_task(self.scene_countdown_finished.wait()),
-             asyncio.create_task(self.sequence_stop_event.wait())],return_when=asyncio.FIRST_COMPLETED)
-        if self.sequence_stop_event.is_set():
-            self.scene_countdown_timer.set(0) # reset to zero
+        if stop_event is not None:
+            await asyncio.wait(
+                [asyncio.create_task(self.scene_countdown_finished.wait()),
+                asyncio.create_task(stop_event.wait())],return_when=asyncio.FIRST_COMPLETED)
+            if stop_event.is_set():
+                self.scene_countdown_timer.set(0) # reset to zero
+                return
         else:
-            self.scene_countdown_timer.set(self.scene_countdown_end) # leave it at end_time
+            await self.scene_countdown_finished.wait()
+            
+        self.scene_countdown_timer.set(self.scene_countdown_end) # leave it at end_time
+
 
     def countdown_timer_cb(self):
         timer_value = self.scene_countdown_timer.get()
@@ -500,11 +584,14 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_control.set_values([255])
     
     def fade_isi(self):
-        self.sequence_control.set_values([127])
+        self.sequence_control.set_values([160])
     
     def activate_scene(self):
-        self.sequence_control.set_values([0])
+        self.sequence_control.set_values([96])
     
+    def fade_scene(self):
+        self.sequence_control.set_values([0])
+
     def set_scene(self, scene):
         self.set_all_intensities(0)
         self.pixel2_7_intensity.set_values([0])

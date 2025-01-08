@@ -49,18 +49,18 @@ spooots_test = np.repeat(spots,len(E_vals_test)).tolist()
 szenen_spots_test = [{"ID":-(i+1), "Spot":s, "Farbe":"W1", "E":e} for i,(s,e) in enumerate(zip(spooots_test,E_vals_test_repeated))]
 
 def erzeuge_test_durchgang():
-    durchgang = {"ID":-1 , "Typ":"Test", "Diffus": False, "Position": "Sitzen"}
+    durchgang = {"ID":-1, "Diffus": False, "Position": "Sitzen"}
     durchgang["Szenen"] = rng.permutation(szenen_spots_test).tolist()
     return durchgang
 
-def erzeuge_durchgange(proband_id, nr_wdh, szenen_diffus, szenen_spots, typ):
+def erzeuge_durchgange(proband_id, nr_wdh, szenen_diffus, szenen_spots):
     durchgange = []
     # Reihenfolge von Diffus und Position ist deterministisch, 4 Varianten gleich häufig
     for diffus in[False, True] if proband_id & 2 else [True, False]:
         for position in ["Sitzen", "Liegen"] if proband_id & 1 else ["Liegen", "Sitzen"]:
             for w in range(1, nr_wdh+1):
                 duchgang_id = 1 + (position == "Sitzen") + diffus * 2 # 1,2,3,4
-                durchgang = {"ID":duchgang_id , "Typ":typ, "Diffus": diffus, "Position": position}
+                durchgang = {"ID":duchgang_id, "Diffus": diffus, "Position": position}
                 durchgang["Szenen"] = rng.permutation(szenen_diffus if diffus == True else szenen_spots).tolist()
                 durchgange.append(durchgang)
     return durchgange
@@ -68,15 +68,15 @@ def erzeuge_durchgange(proband_id, nr_wdh, szenen_diffus, szenen_spots, typ):
 # grob enthält test-run mit 
 def erzeuge_probanden_grob(nr_probanden):
     for i in range(1, nr_probanden+1): 
-        proband = {"ID": i, "Abstufung":'grob', "Durchgange": []}
-        proband["Durchgange"].append(erzeuge_test_durchgang())
-        proband["Durchgange"].extend(erzeuge_durchgange(i,nr_wdh_grob, szenen_diffus_grob, szenen_spots_grob,"Grob"))
+        proband = {"ID": i, "Abstufung":'grob'}
+        proband["TestDurchgang"] = erzeuge_test_durchgang()
+        proband["Durchgange"] = erzeuge_durchgange(i,nr_wdh_grob, szenen_diffus_grob, szenen_spots_grob)
         with open("Proband{}_grob.txt".format(i),"w") as file:
             file.write(printer.pformat(proband))
             #pprint.pp(proband, file)
 
 def erzeuge_proband_fein(proband_id, stoer_E_spots, stoer_E_diffus): # stoer_E_grob ist die erste Beleuchtungsstärke die störend war
-    proband = {"ID": proband_id, "Abstufung":'fein', "Durchgange": []}
+    proband = {"ID": proband_id, "Abstufung":'fein'}
     stoer_E_spots_idxes = np.searchsorted(E_vals_fein, stoer_E_spots)
     E_range_spots_high_idx = np.minimum(stoer_E_spots_idxes + suchbereich_fein + 1, len(E_vals_fein) - 1) # +1 wegen list slicing
     E_range_spots_low_idx = np.maximum(stoer_E_spots_idxes - suchbereich_fein - 2 , 0) # -2, ist nicht störende E in grober skala
@@ -90,7 +90,7 @@ def erzeuge_proband_fein(proband_id, stoer_E_spots, stoer_E_diffus): # stoer_E_g
     E_range_diffus_low_idx = np.maximum(stoer_E_diffus_idx - suchbereich_fein - 2 , 0) # -2, ist nicht störende E in grober skala
     szenen_diffus_custom = szenen_diffus_fein[E_range_diffus_low_idx:E_range_diffus_high_idx]
     
-    proband["Durchgange"] = erzeuge_durchgange(proband_id,nr_wdh_fein, szenen_diffus_custom, szenen_spots_custom,"Fein")
+    proband["Durchgange"] = erzeuge_durchgange(proband_id,nr_wdh_fein, szenen_diffus_custom, szenen_spots_custom)
     with open("Proband{}_fein.txt".format(proband_id),"w") as file:
         file.write(printer.pformat(proband))
         #pprint.pp(proband, file)
