@@ -12,7 +12,6 @@ from async_tkinter_loop.mixins import AsyncCTk
 import async_timer
 # maybe use uvloop (fast / more time-accurate event loop)
 
-
 from CTkMenuBar import CTkTitleMenu
 from CTkTable import CTkTable
 
@@ -369,6 +368,17 @@ class App(ctk.CTk, AsyncCTk):
 
     async def run_sequence_task(self):
         try:
+            # open check windows for current sequence: window diffusor and subject position
+            if self.diffuse_status is not self.active_sequence["Diffus"]:
+                self.diffuse_status = self.active_sequence["Diffus"]
+                self.open_check_window(diffuse=self.diffuse_status)
+                
+            if self.position_status is not self.active_sequence["Position"]:
+                self.position_status = self.active_sequence["Position"]
+                self.open_check_window(position=self.position_status)
+                # turn the lamp on or off for this run
+                reading_light_intensity
+            
             scenes = self.active_sequence["Szenen"]
             scene_num = len(scenes)
             
@@ -451,15 +461,6 @@ class App(ctk.CTk, AsyncCTk):
 
     @async_handler
     async def run_sequence(self):
-        # open check windows for current sequence: window diffusor and subject position
-        if self.diffuse_status is not self.active_sequence["Diffus"]:
-            self.diffuse_status = self.active_sequence["Diffus"]
-            self.open_check_window(diffuse=self.diffuse_status)
-            
-        if self.position_status is not self.active_sequence["Position"]:
-            self.position_status = self.active_sequence["Position"]
-            self.open_check_window(position=self.position_status)
-
         self.sequence_task = asyncio.create_task(self.run_sequence_task(), name="run_sequence")
         # switch button to stop sequence
         self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
@@ -579,7 +580,7 @@ class App(ctk.CTk, AsyncCTk):
         self.qlc_init_channel    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
         self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
-        
+        self.reading_light_intensity = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
     def activate_isi(self):
         self.sequence_control.set_values([255])
     
