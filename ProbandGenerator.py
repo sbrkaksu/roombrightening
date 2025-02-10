@@ -95,7 +95,7 @@ def erzeuge_proband_fein(proband_id, stoer_E_spots, stoer_E_diffus): # stoer_E_g
         file.write(printer.pformat(proband))
         #pprint.pp(proband, file)
 
-erzeuge_probanden_grob(nr_probanden = 50)
+erzeuge_probanden_grob(nr_probanden = 1)
 
 E_vals_grob = E_vals_fein[::3]
 stoer_E_spots = E_vals_grob[2:6] # for testing the fine generator
