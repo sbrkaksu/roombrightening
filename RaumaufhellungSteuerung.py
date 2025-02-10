@@ -169,7 +169,9 @@ class App(ctk.CTk, AsyncCTk):
             "maxE_spot2": 116.9,
             "maxE_spot3": 192.4,
             "maxE_spot4": 88,
-            "maxE_diffus": 610
+            "maxE_diffus": 610,
+            "DMX_brightness_reading": 255,
+            "DMX_roomlight": 255
         }
 
         #self.grid_columnconfigure((0, 1), weight=1)
@@ -261,6 +263,12 @@ class App(ctk.CTk, AsyncCTk):
         self.project_loaded = False
         
         self.after(100,self.artnet_interface_helperbutton.invoke) # workaround, because async does not work in __init__
+
+        ######## Room light ########
+        self.room_light_on = False
+        self.room_light_button = ctk.CTkButton(self.seq_crtl_frame, text="Raumlicht", command=self.toggle_roomlight)
+        self.room_light_button.grid(row=9, column=0, padx=10, pady=10, sticky="s")
+
 
         ########    User Input Key  ########
         self.bind("<F20>", lambda e: self.set_scene_reaction(disturbing=True))
@@ -355,6 +363,7 @@ class App(ctk.CTk, AsyncCTk):
                                                   command=self.continue_sequence,
                                                   fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
         self.sequence_stop_event.set()
+        self.room_light_button.configure(state="normal")
     
 
     def continue_sequence(self):
@@ -362,9 +371,13 @@ class App(ctk.CTk, AsyncCTk):
                                                   command=self.stop_sequence,
                                                   fg_color="red")
         self.sequence_continue_event.set()
+        self.room_light_button.configure(state="disabled")
+        self.set_roomlight(False)
+        
         
     def reset_sequence(self):
         self.sequence_task.cancel()
+        self.room_light_button.configure(state="normal")
 
     async def run_sequence_task(self):
         try:
@@ -377,7 +390,11 @@ class App(ctk.CTk, AsyncCTk):
                 self.position_status = self.active_sequence["Position"]
                 self.open_check_window(position=self.position_status)
                 # turn the lamp on or off for this run
-                reading_light_intensity
+                # leselicht einschalten
+
+            self.light_intensity_reading.set_values([self.settings["DMX_brightness_reading"] if self.position_status == "Sitzen" else 0])
+                #self.light_intensity_reading.set_values([120])
+                
             
             scenes = self.active_sequence["Szenen"]
             scene_num = len(scenes)
@@ -468,7 +485,13 @@ class App(ctk.CTk, AsyncCTk):
         
         self.next_seq_button.configure(state="disabled")
         self.prev_seq_button.configure(state="disabled")
+        self.room_light_button.configure(state="disabled")
+        self.set_roomlight(False)
+        #self.room_light_on = False  # Schaltet das Raumlicht aus
+        #self.roomlight(self.room_light_on)  # Aktualisiert den Zustand basierend auf der Variable
         await self.sequence_task
+
+
     
 
     def print_scene_countdown(self, *args):
@@ -562,7 +585,29 @@ class App(ctk.CTk, AsyncCTk):
             self.set_isi()
             self.spot_color.set_values([255,255,255,255])
             self.activate_isi()
-        
+
+
+    def toggle_roomlight(self):
+        self.room_light_on = not self.room_light_on
+        self.set_roomlight(self.room_light_on)
+
+
+    def set_roomlight(self,state):
+        if state == True:
+            # Turn on the light
+            self.room_light.set_values([self.settings["DMX_roomlight"]])
+            # Set button color to green
+            self.room_light_button.configure(fg_color="green")
+            self.room_light_button.hover = False       
+        else:
+            # Turn off the light
+            self.room_light.set_values([0])
+            # Set button color to blue
+            self.room_light_button.configure(fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
+            self.room_light_button.hover = True
+
+
+
     @async_handler
     async def create_artnet_interface(self):
         self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
@@ -580,7 +625,9 @@ class App(ctk.CTk, AsyncCTk):
         self.qlc_init_channel    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
         self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
-        self.reading_light_intensity = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
+        self.light_intensity_reading = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
+        self.room_light = self.qlc_input.add_channel(start=25, width=1) # Room light
+
     def activate_isi(self):
         self.sequence_control.set_values([255])
     
@@ -659,6 +706,8 @@ class QLCArtNetInterface:
         self.qlc_init_channel   = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
         self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
+        self.light_intensity_reading = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
+        self.room_light = self.qlc_input.add_channel(start=25, width=1) # Room light
 
 app = App()
 app.async_mainloop()
