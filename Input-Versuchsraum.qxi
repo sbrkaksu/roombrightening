@@ -101,4 +101,12 @@
   <Name>Intensität Pixel 2-7</Name>
   <Type>Slider</Type>
  </Channel>
+<Channel Number="23">
+  <Name>Intensität Leselicht</Name>
+  <Type>Slider</Type>
+ </Channel>
+<Channel Number="24">
+  <Name>Intensität Raumlicht</Name>
+  <Type>Slider</Type>
+ </Channel>
 </InputProfile>
