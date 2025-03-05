@@ -3,7 +3,7 @@ import time
 import re
 
 # Einstellungen für den seriellen Port
-port = 'COM4'
+port = 'COM3'
 baudrate = 9600
 
 # Regulärer Ausdruck für gültige Werte (Exponent muss E-0x sein)

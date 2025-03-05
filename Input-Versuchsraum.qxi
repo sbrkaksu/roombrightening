@@ -4,7 +4,7 @@
  <Creator>
   <Name>Q Light Controller Plus</Name>
   <Version>4.13.1</Version>
-  <Author>Dudzik</Author>
+  <Author>Admin</Author>
  </Creator>
  <Manufacturer>Input</Manufacturer>
  <Model>Versuchsraum</Model>
@@ -101,12 +101,16 @@
   <Name>Intensität Pixel 2-7</Name>
   <Type>Slider</Type>
  </Channel>
-<Channel Number="23">
+ <Channel Number="23">
   <Name>Intensität Leselicht</Name>
   <Type>Slider</Type>
  </Channel>
-<Channel Number="24">
+ <Channel Number="24">
   <Name>Intensität Raumlicht</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="25">
+  <Name>Zwischenlicht</Name>
   <Type>Slider</Type>
  </Channel>
 </InputProfile>
