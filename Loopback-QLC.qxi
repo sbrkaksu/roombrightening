@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE InputProfile>
+<InputProfile xmlns="http://www.qlcplus.org/InputProfile">
+ <Creator>
+  <Name>Q Light Controller Plus</Name>
+  <Version>4.13.1</Version>
+  <Author>Dudzik</Author>
+ </Creator>
+ <Manufacturer>Loopback</Manufacturer>
+ <Model>QLC</Model>
+ <Type>DMX</Type>
+ <Channel Number="0">
+  <Name>Master Szene</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="1">
+  <Name>Master ISI</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="2">
+  <Name>Pixel 2-7 Rot</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="3">
+  <Name>Pixel 2-7 Grün</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="4">
+  <Name>Pixel 2-7 Blau</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="5">
+  <Name>Pixel 2-7 Lime</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="6">
+  <Name>Pixel 2-7 Master</Name>
+  <Type>Slider</Type>
+ </Channel>
+ <Channel Number="8">
+  <Name>Play Raumlicht Stufen</Name>
+  <Type>Button</Type>
+ </Channel>
+ <Channel Number="9">
+  <Name>Play Ablaufsteuerung</Name>
+  <Type>Button</Type>
+ </Channel>
+</InputProfile>
