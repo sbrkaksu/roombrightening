@@ -17,6 +17,7 @@ printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
 #printer = FormatPrinter({},sort_dicts=False)
 
 def broadcast_stack(arr,num): # stacks arrays
+    arr = np.asarray(arr)
     return np.broadcast_to(arr,(num,)+arr.shape)
 
 seed = int.from_bytes(os.urandom(128),sys.byteorder)
@@ -45,10 +46,15 @@ szenen_spots_nacht = [{"ID":i+1+szenen_spots_abend[-1]['ID'], "Zeit":"Nacht", "S
 szenen_diffus_abend = [{"ID":i+1+szenen_spots_nacht[-1]['ID'], "Zeit":"Abend", "Spot":"diffus", "Farbe":"W1", "E":e} for i,e in enumerate(E_stufen_abend)]
 szenen_diffus_nacht = [{"ID":i+1+szenen_diffus_abend[-1]['ID'], "Zeit":"Nacht", "Spot":"diffus", "Farbe":"W1", "E":e} for i,e in enumerate(E_stufen_nacht)]
 # need same IDs for szenen in both lists: generate fein first, grob is subset
-szenen_spots_abend_grob = szenen_spots_abend[::3]
-szenen_spots_nacht_grob = szenen_spots_nacht[::3]
-szenen_diffus_abend_grob = szenen_diffus_abend[::3]
-szenen_diffus_nacht_grob = szenen_diffus_nacht[::3]
+grob_indizes_abend = np.arange(0,len(E_stufen_abend),3)
+grob_indizes_abend_repeated = np.hstack([grob_indizes_abend + i * (num_E_stufen_abend) for i in range(num_spots)]).tolist()
+grob_indizes_nacht = np.arange(0,len(E_stufen_nacht),3)
+grob_indizes_nacht_repeated = np.hstack([grob_indizes_nacht + i * (num_E_stufen_nacht) for i in range(num_spots)]).tolist()
+
+szenen_spots_abend_grob = [szenen_spots_abend[i]  for i in grob_indizes_abend_repeated]
+szenen_spots_nacht_grob = [szenen_spots_nacht[i]  for i in grob_indizes_nacht_repeated]
+szenen_diffus_abend_grob =[szenen_diffus_abend[i] for i in grob_indizes_abend]
+szenen_diffus_nacht_grob =[szenen_diffus_nacht[i] for i in grob_indizes_nacht]
 
 nr_wdh_grob = 1
 nr_wdh_fein = 3
@@ -164,8 +170,3 @@ def erzeuge_proband_fein(proband_id, stoer_E_spots_abend, stoer_E_spots_nacht, s
 
 if __name__ == "__main__":
     erzeuge_probanden_grob(nr_probanden = 4)
-
-    E_vals_grob = E_vals_fein[::3]
-    stoer_E_spots = E_vals_grob[2:6] # for testing the fine generator
-    stoer_E_spots = [E_vals_grob[3],E_vals_grob[4],E_vals_grob[3],E_vals_grob[3]]
-    erzeuge_proband_fein(1,stoer_E_spots,1)
