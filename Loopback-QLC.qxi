@@ -42,7 +42,15 @@
   <Type>Button</Type>
  </Channel>
  <Channel Number="9">
+  <Name>Stop Raumlicht Stufen</Name>
+  <Type>Button</Type>
+ </Channel>
+ <Channel Number="10">
   <Name>Play Ablaufsteuerung</Name>
+  <Type>Button</Type>
+ </Channel>
+ <Channel Number="11">
+  <Name>Stop Ablaufsteuerung</Name>
   <Type>Button</Type>
  </Channel>
 </InputProfile>

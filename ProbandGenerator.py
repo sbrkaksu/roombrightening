@@ -30,10 +30,12 @@ E_dekaden_nacht = (-2,-1,0,1) # 10^...
 num_E_stufen_pro_dekade = 6
 E_stufen_abend = np.hstack([np.logspace(0,1,num=num_E_stufen_pro_dekade+1)[:-1] * i for i in np.logspace(E_dekaden_abend[0],E_dekaden_abend[-1],len(E_dekaden_abend))]).tolist()[:-2]
 num_E_stufen_abend = len(E_stufen_abend)
+max_E_abend = E_stufen_abend[-1]
 E_stufen_abend_repeated = np.tile(E_stufen_abend,num_spots).tolist()
 
 E_stufen_nacht = np.hstack([np.logspace(0,1,num=num_E_stufen_pro_dekade+1)[:-1] * i for i in np.logspace(E_dekaden_nacht[0],E_dekaden_nacht[-1],len(E_dekaden_nacht))]).tolist()[:-2]
 num_E_stufen_nacht = len(E_stufen_nacht)
+max_E_nacht = E_stufen_nacht[-1]
 E_stufen_nacht_repeated = np.tile(E_stufen_nacht,num_spots).tolist()
 
 spots = np.arange(1,num_spots+1)
@@ -120,16 +122,23 @@ def erzeuge_probanden_grob(nr_probanden):
             file.write(printer.pformat(proband))
 
 def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
-    num = max_idx - min_idx
+    num = max_idx - min_idx + 1
     window_size = 2 * window_half_size
-    high_idx = np.minimum(middle_idx + window_half_size, num - 1)
+    assert window_size <= num
+    high_idx = np.minimum(middle_idx + window_half_size, max_idx + 1)
     low_idx  = high_idx - window_size
-    low_idx  = np.maximum(low_idx, 0)
+    low_idx  = np.maximum(low_idx, min_idx)
     high_idx  = low_idx + window_size
     return low_idx, high_idx
     
 def erzeuge_proband_fein(proband_id, stoer_E_spots_abend, stoer_E_spots_nacht, stoer_E_diffus_abend, stoer_E_diffus_nacht): # stoer_E_grob ist die erste Beleuchtungsstärke die störend war
     proband = {"ID": proband_id, "Abstufung":'fein'}
+    # sanetize input: arrays for stoer_E spots and stoer E diffus inputs can be None. Take max E if None
+    stoer_E_spots_abend = [max_E_abend if e is None else e for e in stoer_E_spots_abend]
+    stoer_E_spots_nacht = [max_E_nacht if e is None else e for e in stoer_E_spots_nacht]
+    stoer_E_diffus_abend = max_E_abend if stoer_E_diffus_abend is None else stoer_E_diffus_abend
+    stoer_E_diffus_nacht = max_E_nacht if stoer_E_diffus_nacht is None else stoer_E_diffus_nacht
+    
     # Create Spot Durchgange
     szenen_spots_abend_custom = []
     szenen_spots_nacht_custom = []

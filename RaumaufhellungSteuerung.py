@@ -231,7 +231,7 @@ class Phase(dict):
                     spot = sz.get("Spot")                  
                     if spot in [1, 2, 3, 4]:
                         key = ("Spots", s.get("Zeit"))
-                        bothering_scenes[key][spot-1] = min(E_value, bothering_scenes.setdefault(key, [1000] * 4)[spot-1])
+                        bothering_scenes[key][spot-1] = min(E_value, bothering_scenes.setdefault(key, [None] * 4)[spot-1])
                     else:
                         key = (spot, s.get("Zeit"))
                         if (key not in bothering_scenes):
@@ -242,6 +242,10 @@ class Phase(dict):
     
     def save(self):
         filename_base = splitext(self.filename)[0]
+        fname = self.filename
+        with open(fname, 'w') as f:
+            print(self, file=f)
+        
         if self.check_completion() == True:
             self.complete = True
             fname = f"{filename_base}_result_complete.txt"
@@ -249,8 +253,6 @@ class Phase(dict):
             while exists(fname):
                 fname = f"{filename_base}_result_complete_{counter}.txt"
                 counter += 1
-        else:
-            fname = self.filename
         with open(fname, 'w') as f:
             print(self, file=f)
 
@@ -435,19 +437,27 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.select_row(self.current_scene_idx)
 
     def load_proband(self):
-        self.lern_phase_button.enable()
         phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
         if phase.phase_type == "grob":
             self.phase_grob = phase
+            if self.phase_grob["Lerndurchgang"] == True:
+                self.lern_phase_button.turn_on()
+                self.grob_phase_button.enable()
             if self.phase_grob.check_completion() == True:
+                self.grob_phase_button.turn_on()
                 self.generate_and_load_phase_fein()
+            
+            self.lern_phase_button.enable()
         if phase.phase_type == "fein":
             pass # maybe implement later
         
     def generate_and_load_phase_fein(self):
         prid = self.phase_grob["ID"]
         th = self.phase_grob.check_lowest_bothering_scenes()
-        fein_file = erzeuge_proband_fein(prid, th['Spots','Abend'],th['Spots','Nacht'],th['diffus','Abend'],th['diffus','Nacht'])
+        fein_file = erzeuge_proband_fein(prid, th.get('Spots','Abend'),
+                                               th.get('Spots','Nacht'),
+                                               th.get('diffus','Abend'),
+                                               th.get('diffus','Nacht'))
         self.phase_fein = Phase(fein_file)
         self.fein_phase_button.enable()
         
@@ -468,14 +478,23 @@ class App(ctk.CTk, AsyncCTk):
         self.set_sequence()
         self.proband_label.configure(text="Proband {id}: {stufung}".format(id=self.active_phase["ID"], stufung=self.active_phase["Abstufung"]))
     
+    def set_sequence_scene_label(self):
+        if self.active_sequence is None:
+            return
+        progress = sum(s.get("Stoert") is not None for s in self.active_sequence["Szenen"])
+        label = "Durchgang {did}: {Zeit} | {diffus}, Fortschritt {pgr}/{num}".format(did=self.active_sequence["ID"],
+                                                                                Zeit=self.active_sequence["Zeit"],
+                                                                                diffus="Diffus" if self.active_sequence["Diffus"] else "Gerichtet",
+                                                                                pgr=progress,
+                                                                                num=len(self.active_sequence["Szenen"]))
+        self.sequence_scene_label.configure(text=label)
+        
     def set_sequence(self):
         self.active_sequence = self.active_phase.get_current_sequence()
         seq_values = [[s.get("ID"),s.get("Spot"),"{:6.3f}".format(s.get("E")), s.get("E_monitor"),s.get("Stoert"),s.get("Reaktionszeit")] for s in self.active_sequence["Szenen"]]
-        self.sequence_table.update_table(seq_values) 
-        label = "Durchgang {did}: {Zeit} | {diffus}".format(did=self.active_sequence["ID"],
-                                                            Zeit=self.active_sequence["Zeit"],
-                                                            diffus="Diffus" if self.active_sequence["Diffus"] else "Gerichtet")
-        self.sequence_scene_label.configure(text=label)
+        self.sequence_table.update_table(seq_values)
+
+        self.set_sequence_scene_label()
         #self.sequence_label.configure(text="Durchgang {id}".format(id=self.active_sequence["ID"]))
         #self.sequence_table.update_title_proband("Proband {id}: {stufung}".format(id=self.proband["ID"], stufung=self.proband["Abstufung"]))
         self.sequence_start_reset_button.configure(state="normal")
@@ -542,16 +561,9 @@ class App(ctk.CTk, AsyncCTk):
                 
                 self.sequence_table.select_row(self.current_scene_idx)
                 
-                # configure labels
-                progress = sum(s.get("Stoert") is not None for s in scenes)
+                # configure label
+                self.set_sequence_scene_label()
 
-                #self.scene_label.configure(text="Szene {id}/{num}".format(id=scene["ID"], num=scene_num))
-                label = "Durchgang {did}: {Zeit} | {diffus}, Fortschritt {pgr}/{num}".format(did=self.active_sequence["ID"],
-                                                                                             Zeit=self.active_sequence["Zeit"],
-                                                                                             diffus="Diffus" if self.active_sequence["Diffus"] else "Gerichtet",
-                                                                                             pgr=progress,
-                                                                                             num=scene_num)
-                self.sequence_scene_label.configure(text=label)
                 self.activate_scene()
                 self.active_scene = scene
                 #self.clear_scene_reaction()
@@ -606,7 +618,8 @@ class App(ctk.CTk, AsyncCTk):
             self.countdown_timer_var.set(0)
             self.active_scene = None
             self.current_scene_idx = None
-            #self.scene_label.configure(text="Szene")
+            
+            self.set_sequence_scene_label()
             
             # if phase is complete, enable next phase
             self.lern_phase_button.enable()
@@ -737,15 +750,11 @@ class App(ctk.CTk, AsyncCTk):
         if self.load_qlc_project() == True:
             self.qlc_init_button.configure(text="QLC+ initialisiert", fg_color="green", state="disabled")
             await asyncio.sleep(0.2) # wait for project to load
-            self.pixel2_7_intensity.set_values([1])
-    
             self.qlc_init_channel.set_values([255])
             self.set_all_intensities(0)
             self.set_isi()
+            self.szene_ctc.set_values([245])
             self.spot_color.set_values([255,255,255,255])
-            self.set_roomlight_level(1)
-            await asyncio.sleep(0.2)
-            self.pixel2_7_intensity.set_values([0])
 
     def set_roomlight_level(self,lvl):
         if lvl == 2:
@@ -783,7 +792,7 @@ class App(ctk.CTk, AsyncCTk):
         self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
         self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
-        self.spot_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
+        self.szene_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
         self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
         self.qlc_init_channel    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
@@ -792,16 +801,16 @@ class App(ctk.CTk, AsyncCTk):
         self.room_light_level = self.qlc_input.add_channel(start=25, width=1) # Room light
 
     def activate_isi(self):
-        self.sequence_control.set_values([255])
+        self.sequence_control.set_values([0])
     
     def fade_isi(self):
-        self.sequence_control.set_values([160])
+        self.sequence_control.set_values([255])
     
     def activate_scene(self):
-        self.sequence_control.set_values([96])
+        self.sequence_control.set_values([160])
     
     def fade_scene(self):
-        self.sequence_control.set_values([0])
+        self.sequence_control.set_values([96])
 
     def set_scene(self, scene):
         self.set_all_intensities(0)
