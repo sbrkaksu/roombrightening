@@ -228,10 +228,11 @@ class Phase(dict):
             for sz in s["Szenen"]:
                 if sz.get("Stoert") == "Ja":
                     E_value = sz.get("E")
-                    spot = sz.get("Spot")                  
+                    spot = sz.get("Spot")
                     if spot in [1, 2, 3, 4]:
                         key = ("Spots", s.get("Zeit"))
-                        bothering_scenes[key][spot-1] = min(E_value, bothering_scenes.setdefault(key, [None] * 4)[spot-1])
+                        current_minimum = bothering_scenes.setdefault(key, [None] * 4)[spot-1]
+                        bothering_scenes[key][spot-1] = E_value if current_minimum is None else min(E_value,current_minimum)
                     else:
                         key = (spot, s.get("Zeit"))
                         if (key not in bothering_scenes):
@@ -454,10 +455,10 @@ class App(ctk.CTk, AsyncCTk):
     def generate_and_load_phase_fein(self):
         prid = self.phase_grob["ID"]
         th = self.phase_grob.check_lowest_bothering_scenes()
-        fein_file = erzeuge_proband_fein(prid, th.get('Spots','Abend'),
-                                               th.get('Spots','Nacht'),
-                                               th.get('diffus','Abend'),
-                                               th.get('diffus','Nacht'))
+        fein_file = erzeuge_proband_fein(prid, th.get(('Spots','Abend')),
+                                               th.get(('Spots','Nacht')),
+                                               th.get(('diffus','Abend')),
+                                               th.get(('diffus','Nacht')))
         self.phase_fein = Phase(fein_file)
         self.fein_phase_button.enable()
         

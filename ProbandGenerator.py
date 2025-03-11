@@ -133,9 +133,13 @@ def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
     
 def erzeuge_proband_fein(proband_id, stoer_E_spots_abend, stoer_E_spots_nacht, stoer_E_diffus_abend, stoer_E_diffus_nacht): # stoer_E_grob ist die erste Beleuchtungsstärke die störend war
     proband = {"ID": proband_id, "Abstufung":'fein'}
+    print(stoer_E_spots_abend)
+    print(stoer_E_spots_nacht)
+    print(stoer_E_diffus_abend)
+    print(stoer_E_diffus_nacht)
     # sanetize input: arrays for stoer_E spots and stoer E diffus inputs can be None. Take max E if None
-    stoer_E_spots_abend = [max_E_abend if e is None else e for e in stoer_E_spots_abend]
-    stoer_E_spots_nacht = [max_E_nacht if e is None else e for e in stoer_E_spots_nacht]
+    stoer_E_spots_abend = [max_E_abend] * 4 if stoer_E_spots_abend is None else [max_E_abend if e is None else e for e in stoer_E_spots_abend]
+    stoer_E_spots_nacht = [max_E_nacht] * 4 if stoer_E_spots_nacht is None else [max_E_nacht if e is None else e for e in stoer_E_spots_nacht]
     stoer_E_diffus_abend = max_E_abend if stoer_E_diffus_abend is None else stoer_E_diffus_abend
     stoer_E_diffus_nacht = max_E_nacht if stoer_E_diffus_nacht is None else stoer_E_diffus_nacht
     
