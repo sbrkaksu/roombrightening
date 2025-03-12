@@ -3,6 +3,8 @@ from requests import post
 from itertools import pairwise
 from timeit import default_timer as timer
 from os.path import splitext, exists
+import serial
+from re import compile
 
 from tkinter import filedialog, font, DoubleVar
 import customtkinter as ctk
@@ -268,9 +270,15 @@ class App(ctk.CTk, AsyncCTk):
         
         ######## Settings ########
         self.settings = {
-            "qlc_address":          'localhost:9999',
-            "qlc_project":          'VersuchsraumLeo.qxw',
-            "serial_port_monitor":  'COM4',
+            "qlc_address":              'localhost:9999',
+            "qlc_project":              'VersuchsraumLeo.qxw',
+            "monitor_serial_port":      'COM3',
+            "monitor_baud_rate":        9600,
+            "monitor_E_factor_spot_1":  1,
+            "monitor_E_factor_spot_2":  1,
+            "monitor_E_factor_spot_3":  1,
+            "monitor_E_factor_spot_4":  1,
+            "monitor_E_factor_diffus":  1,
             "scene_duration":           1.2, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
             "inter-stimulus-interval":  1, #2.5, #seconds
@@ -285,6 +293,8 @@ class App(ctk.CTk, AsyncCTk):
             "DMX_brightness_roomlight": 255,
             "learn_proband_file": "ProbandLernen.txt" 
         }
+        self.monitor_I = None
+
         self.scene_start_timestamp = None
         self.current_scene_idx = None
         
@@ -378,7 +388,7 @@ class App(ctk.CTk, AsyncCTk):
         self.qlc_init_button = ctk.CTkButton(self, text="QLC+ initialisieren", command=self.init_qlc)
         self.qlc_init_button.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
         
-        self.artnet_interface_helperbutton = ctk.CTkButton(self, text="ArtNet Interface laden", command=self.create_artnet_interface)
+        self.artnet_interface_helperbutton = ctk.CTkButton(self, command=self.create_artnet_interface)
         self.project_loaded = False
         
         self.after(100,self.artnet_interface_helperbutton.invoke) # workaround, because async does not work in __init__
@@ -387,17 +397,52 @@ class App(ctk.CTk, AsyncCTk):
         self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Raumlicht", command=lambda:self.set_roomlight_level(2))
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
 
-
-        ########    User Input Key  ########
+        ######## E_Monitor ########
+        self.read_monitor_button = ctk.CTkButton(self, command=self.read_monitor_continuosly)
+        self.after(100,self.read_monitor_button.invoke)
+        ######## User Input Key ########
         self.bind("<F20>", lambda e: self.set_scene_reaction(disturbing=True))
         self.scene_disturbing = asyncio.Event()
         
-        ########    Check Window    ########
+        ######## Check Window ########
         self.diffus_window = None
         self.position_window = None
         self.diffus_status = None
         self.time_position_status = None
-        
+
+    @async_handler
+    async def read_monitor_continuosly(self):
+        port = self.settings["monitor_serial_port"]
+        baud = self.settings["monitor_baud_rate"]
+        try:
+            with serial.Serial(port, baud, timeout=1) as ser:
+                value_pattern = compile(r'[+-]\d+\.\d+ E[+-]\d\d')
+                ser.dtr = True
+                raw_text = ''
+                while True:
+                    if ser.in_waiting > 0:  # Prüfen, ob Daten verfügbar sind
+                        raw_text += ser.read(ser.in_waiting).decode('ascii')  # Alle verfügbaren Bytes 
+                        while True:
+                            match = value_pattern.search(raw_text)
+                            if match:
+                                raw_text = raw_text[match.end():]
+                                photocurrent = float(match.group().replace(' ', ''))
+                                self.monitor_I = photocurrent
+                            else:
+                                break
+                    await asyncio.sleep(0.2)
+        except serial.SerialException as e:
+            print(f"Fehler beim Zugriff auf {port}: {e}")
+        except KeyboardInterrupt:
+            print("\nProgramm beendet.")
+
+    def set_scene_monitor(self):
+        if self.monitor_I and self.active_scene is not None:
+            spot = self.active_scene.get("Spot")
+            factor = self.settings.get("monitor_E_factor_spot_{}".format(spot)) if spot in [1,2,3,4] else self.settings.get("monitor_E_factor_diffus")
+            E = self.monitor_I * factor
+            self.sequence_table.update_cell(E, "E Monitor")
+    
     def open_check_window(self,diffus = None, zeit = None):
         if diffus is not None:
             if diffus == True:
@@ -506,6 +551,7 @@ class App(ctk.CTk, AsyncCTk):
                                                   fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
         self.sequence_stop_event.set()
         self.roomlight_button.configure(state="normal")
+        self.set_roomlight_level(1)
         
     def continue_sequence(self):
         self.sequence_stop_continue_button.configure(text="Durchgang anhalten", command=self.stop_sequence, fg_color="red")
@@ -544,7 +590,7 @@ class App(ctk.CTk, AsyncCTk):
             cur_next_scenes = [cur_next for cur_next in pairwise([*scenes,None])]
             
             # setup the lighting for the room
-            self.set_reading_light(self.time_position_status == "Sitzen")
+            self.set_reading_light(self.time_position_status == "Abend")
             self.set_roomlight_level(0) # turn off dim pause light
             # display isi light for twice the duration before a sequence starts
             # time for the proband to get accustomed to the light
@@ -603,6 +649,7 @@ class App(ctk.CTk, AsyncCTk):
                     continue
                 
                 self.set_scene_reaction(disturbing=False)
+                self.set_scene_monitor()
                 self.sequence_table.deselect_row()
                 self.current_scene_idx += 1
         finally:
@@ -691,7 +738,6 @@ class App(ctk.CTk, AsyncCTk):
         self.timer_running = False
         self.countdown_timer_var.set(self.scene_countdown_end) # leave it at end_time
 
-
     def countdown_timer_cb(self):
         timer_value = self.countdown_timer_var.get()
         timer_value -= 0.1
@@ -754,18 +800,22 @@ class App(ctk.CTk, AsyncCTk):
             self.qlc_init_channel.set_values([255])
             self.set_all_intensities(0)
             self.set_isi()
+            self.fade_isi()
             self.szene_ctc.set_values([245])
             self.spot_color.set_values([255,255,255,255])
+            self.room_light_level.set_values([255])
 
     def set_roomlight_level(self,lvl):
         if lvl == 2:
             # Turn on the bright ceiling light
             self.room_light_level.set_values([255])
+
             # Set button color to green
-            self.roomlight_button.configure(fg_color="green",command=lambda:self.set_roomlight_level(0))
+            self.roomlight_button.configure(fg_color="green",hover_color="green",command=lambda:self.set_roomlight_level(1))
             self.roomlight_button.hover = False
         else:
             self.roomlight_button.configure(fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"],
+                                            hover_color=ctk.ThemeManager.theme["CTkButton"]["hover_color"],
                                             command=lambda:self.set_roomlight_level(2))
             self.roomlight_button.hover = True
             if lvl == 1:
