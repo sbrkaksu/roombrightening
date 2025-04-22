@@ -1,4 +1,4 @@
-import serial
+import serial,time
 import re
 
 # Einstellungen für den seriellen Port
@@ -28,7 +28,7 @@ try:
                         print(match.string)
                     else:
                         break
-                
+            time.sleep(2)
 
 except serial.SerialException as e:
     print(f"Fehler beim Zugriff auf {port}: {e}")

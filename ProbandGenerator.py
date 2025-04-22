@@ -182,4 +182,4 @@ def erzeuge_proband_fein(proband_id, stoer_E_spots_abend, stoer_E_spots_nacht, s
     return fname
 
 if __name__ == "__main__":
-    erzeuge_probanden_grob(nr_probanden = 4)
+    erzeuge_probanden_grob(nr_probanden = 55)

@@ -10,7 +10,7 @@ from tkinter import filedialog, font, DoubleVar
 import customtkinter as ctk
 from CTkMenuBar import CTkTitleMenu
 from CTkTable import CTkTable
-
+from pprint import PrettyPrinter
 import asyncio
 from async_tkinter_loop import async_handler
 from async_tkinter_loop.mixins import AsyncCTk
@@ -19,6 +19,21 @@ import async_timer
 
 import pyartnet as pan
 from ProbandGenerator import erzeuge_proband_fein
+
+class FormatPrinter(PrettyPrinter):
+
+    def __init__(self, formats, *args, **kwargs):
+        super(FormatPrinter, self).__init__(*args, **kwargs)
+        self.formats = formats
+
+    def format(self, obj, ctx, maxlvl, lvl):
+        if type(obj) in self.formats:
+            return self.formats[type(obj)].format(obj), 1, 0
+        return PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
+
+printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
+
+table_printer = FormatPrinter({float: "{:.4e}", str: "{}"} )
 
 def all_children(wid, finList=None):
     finList = finList or []
@@ -77,7 +92,7 @@ class ClickableTable(ctk.CTkFrame):
                     value = values[i][j]
                     if value == None: value = " "
                 except IndexError: value = " "
-                self.table.frame[i,j].configure(text=str(value),require_redraw=True)
+                self.table.frame[i,j].configure(text=str(table_printer.pformat(value)),require_redraw=True)
 
         #self.table.update_values(values)
         
@@ -247,7 +262,8 @@ class Phase(dict):
         filename_base = splitext(self.filename)[0]
         fname = self.filename
         with open(fname, 'w') as f:
-            print(self, file=f)
+            f.write(printer.pformat(self))
+
         
         if self.check_completion() == True:
             self.complete = True
@@ -257,14 +273,14 @@ class Phase(dict):
                 fname = f"{filename_base}_result_complete_{counter}.txt"
                 counter += 1
         with open(fname, 'w') as f:
-            print(self, file=f)
+            f.write(printer.pformat(self))
 
 class App(ctk.CTk, AsyncCTk):
     def __init__(self):
         super().__init__()
         ######## Setup the Window ########
         self.title("Studie Raumaufhellung")
-        self.geometry("1200x1000")
+        self.geometry("1200x800") 
         self.resizable(False, False)
         ##################################
         
@@ -274,16 +290,16 @@ class App(ctk.CTk, AsyncCTk):
             "qlc_project":              'VersuchsraumLeo.qxw',
             "monitor_serial_port":      'COM3',
             "monitor_baud_rate":        9600,
-            "monitor_E_factor_spot_1":  1,
-            "monitor_E_factor_spot_2":  1,
-            "monitor_E_factor_spot_3":  1,
-            "monitor_E_factor_spot_4":  1,
-            "monitor_E_factor_diffus":  1,
-            "scene_duration":           1.2, #4.5, # seconds
+            "monitor_E_factor_spot_1":  2.41e7,
+            "monitor_E_factor_spot_2":  2.41e7,
+            "monitor_E_factor_spot_3":  3.63e7,
+            "monitor_E_factor_spot_4":  2.70e7,
+            "monitor_E_factor_diffus":  1.26e7,
+            "scene_duration":           4.5, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
-            "inter-stimulus-interval":  1, #2.5, #seconds
+            "inter-stimulus-interval":  2.5, #2.5, #seconds
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
-            "sequence_pause_duration":  5.0, # seconds
+            "sequence_pause_duration":  45.0, # 45 seconds
             "maxE_spot1": 168.9,
             "maxE_spot2": 116.9,
             "maxE_spot3": 192.4,
@@ -368,7 +384,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Durchgang", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.sequence_scene_label.grid(row=1, column=0, padx=10, pady=0, sticky='w')
         
-        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Szene", "Spot", "E","E Monitor","Störend", "Reaktionszeit"], row_num=40)
+        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Szene", "Spot", "E","E Monitor","Störend", "Reaktionszeit"], row_num=25)
         self.sequence_table.grid(row=2, column=0, padx=0, pady=10, sticky="w")
         self.sequence_table.set_callback(self.row_click)
         
@@ -438,10 +454,13 @@ class App(ctk.CTk, AsyncCTk):
 
     def set_scene_monitor(self):
         if self.monitor_I and self.active_scene is not None:
+            print(self.monitor_I)
             spot = self.active_scene.get("Spot")
             factor = self.settings.get("monitor_E_factor_spot_{}".format(spot)) if spot in [1,2,3,4] else self.settings.get("monitor_E_factor_diffus")
-            E = self.monitor_I * factor
-            self.sequence_table.update_cell(E, "E Monitor")
+            EM = self.monitor_I * factor
+            EM = f"{EM:.2e}" #E Monitor anpassen auf exponentielle Schreibweise für die Tabelle
+            print(EM)
+            self.sequence_table.update_cell(EM, "E Monitor")
     
     def open_check_window(self,diffus = None, zeit = None):
         if diffus is not None:
@@ -620,7 +639,8 @@ class App(ctk.CTk, AsyncCTk):
                                                  end_time=scene_fade_duration,
                                                  stop_event=self.sequence_stop_event,
                                                  label="Szene")
-                
+                if not self.sequence_stop_event.is_set():
+                    self.set_scene_monitor()
                 # set inter-stimulus lighting
                 self.fade_scene()
                 await self.await_countdown_timer(label="Szene") # rest is fade duration, not interruptable to prevent flashing
@@ -649,12 +669,13 @@ class App(ctk.CTk, AsyncCTk):
                     continue
                 
                 self.set_scene_reaction(disturbing=False)
-                self.set_scene_monitor()
+                
                 self.sequence_table.deselect_row()
                 self.current_scene_idx += 1
         finally:
             #self.activate_isi() No ISI inbetween sequences
             self.set_roomlight_level(1) # turn on dim pause light
+            self.reading_light_intensity.set_values([0]) #turn off reading light during pause
             self.sequence_table.deselect_row()
             self.sequence_stop_event.clear()
             self.sequence_start_reset_button.configure(text="Durchgang starten", command=self.run_sequence)
@@ -765,7 +786,7 @@ class App(ctk.CTk, AsyncCTk):
                 return
             stoert = "Nein"
             reaction_time = ""
-            
+
         self.active_scene["Stoert"] = stoert
         self.sequence_table.update_cell(stoert, "Störend")
         self.active_scene["Reaktionszeit"] = reaction_time
@@ -798,6 +819,7 @@ class App(ctk.CTk, AsyncCTk):
             self.qlc_init_button.configure(text="QLC+ initialisiert", fg_color="green", state="disabled")
             await asyncio.sleep(0.2) # wait for project to load
             self.qlc_init_channel.set_values([255])
+            await asyncio.sleep(0.2)
             self.set_all_intensities(0)
             self.set_isi()
             self.fade_isi()
