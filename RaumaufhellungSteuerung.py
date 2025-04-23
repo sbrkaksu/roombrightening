@@ -4,7 +4,11 @@ from itertools import pairwise
 from timeit import default_timer as timer
 from os.path import splitext, exists
 import serial
+import string
+
 from re import compile
+
+import numpy as np
 
 from tkinter import filedialog, font, DoubleVar
 import customtkinter as ctk
@@ -28,13 +32,39 @@ class FormatPrinter(PrettyPrinter):
 
     def format(self, obj, ctx, maxlvl, lvl):
         if type(obj) in self.formats:
-            return self.formats[type(obj)].format(obj), 1, 0
+            fmt = self.formats[type(obj)]
+            if callable(fmt):
+                return fmt(obj), 1, 0
+            # else assume format string
+            return fmt.format(obj), 1, 0
         return PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
 
 printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
 
-table_printer = FormatPrinter({float: "{:.4e}", str: "{}"} )
+superscript_map = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵",
+                   "6": "⁶","7": "⁷", "8": "⁸", "9": "⁹","+": "⁺","-": "⁻"}
+superscript_trans = str.maketrans(
+    ''.join(superscript_map.keys()),
+    ''.join(superscript_map.values()))
+def pprint_scientific(f):
+    b,e = np.format_float_scientific(f, precision=2, min_digits=2, exp_digits=1).split('e', 1)
+    return "{} ⋅10{}".format(b, e.translate(superscript_trans))
+table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} )
+class CustomFormatter:
+    def __init__(self, bullet="•", exponent_char="^"):
+        self.bullet = bullet
+        self.exponent_char = exponent_char
 
+    def format(self, value):
+        if isinstance(value, float):
+            base, exponent = f"{value:.2e}".split("e")
+            exponent = int(exponent)
+            return f"{base} {self.bullet} 10{self.exponent_char}{exponent}"
+        return str(value)
+
+custom_formatter = CustomFormatter()
+formatted_float = custom_formatter.format(3.14e5)
+print(formatted_float)  # Example usage
 def all_children(wid, finList=None):
     finList = finList or []
     children = wid.winfo_children()
@@ -141,10 +171,8 @@ class SwitchButton(ctk.CTkButton):
         # create label
         
     def on_enter(self, event):
-        print("Enter")
         super().configure(border_color="white")
     def on_leave(self, event):
-        print("Leave")
         super().configure(border_color=self.border_color)
     def add_enter_leave_interaction(self):
         if self.on_enter_id is None and self.on_leave_id is None:
@@ -414,7 +442,7 @@ class App(ctk.CTk, AsyncCTk):
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
 
         ######## E_Monitor ########
-        self.read_monitor_button = ctk.CTkButton(self, command=self.read_monitor_continuosly)
+        self.read_monitor_button = ctk.CTkButton(self, command=self.read_monitor_continuously)
         self.after(100,self.read_monitor_button.invoke)
         ######## User Input Key ########
         self.bind("<F20>", lambda e: self.set_scene_reaction(disturbing=True))
@@ -427,12 +455,12 @@ class App(ctk.CTk, AsyncCTk):
         self.time_position_status = None
 
     @async_handler
-    async def read_monitor_continuosly(self):
+    async def read_monitor_continuously(self):
         port = self.settings["monitor_serial_port"]
         baud = self.settings["monitor_baud_rate"]
+        value_pattern = compile(r'[+-]\d+\.\d+ E[+-]\d\d')
         try:
             with serial.Serial(port, baud, timeout=1) as ser:
-                value_pattern = compile(r'[+-]\d+\.\d+ E[+-]\d\d')
                 ser.dtr = True
                 raw_text = ''
                 while True:
@@ -461,6 +489,7 @@ class App(ctk.CTk, AsyncCTk):
             EM = f"{EM:.2e}" #E Monitor anpassen auf exponentielle Schreibweise für die Tabelle
             print(EM)
             self.sequence_table.update_cell(EM, "E Monitor")
+            self.active_scene["E_monitor"] = EM
     
     def open_check_window(self,diffus = None, zeit = None):
         if diffus is not None:
@@ -556,7 +585,7 @@ class App(ctk.CTk, AsyncCTk):
         
     def set_sequence(self):
         self.active_sequence = self.active_phase.get_current_sequence()
-        seq_values = [[s.get("ID"),s.get("Spot"),"{:6.3f}".format(s.get("E")), s.get("E_monitor"),s.get("Stoert"),s.get("Reaktionszeit")] for s in self.active_sequence["Szenen"]]
+        seq_values = [[s.get("ID"),s.get("Spot"),s.get("E"), s.get("E_monitor"),s.get("Stoert"),s.get("Reaktionszeit")] for s in self.active_sequence["Szenen"]]
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
