@@ -25,7 +25,6 @@ import pyartnet as pan
 from ProbandGenerator import erzeuge_proband_fein
 
 class FormatPrinter(PrettyPrinter):
-
     def __init__(self, formats, *args, **kwargs):
         super(FormatPrinter, self).__init__(*args, **kwargs)
         self.formats = formats
@@ -49,29 +48,8 @@ superscript_trans = str.maketrans(
 def pprint_scientific(f):
     b,e = np.format_float_scientific(f, precision=2, min_digits=2, exp_digits=1).split('e', 1)
     return "{} ⋅10{}".format(b, e.translate(superscript_trans))
+
 table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} )
-class CustomFormatter:
-    def __init__(self, bullet="•", exponent_char="^"):
-        self.bullet = bullet
-        self.exponent_char = exponent_char
-
-    def format(self, value):
-        if isinstance(value, float):
-            base, exponent = f"{value:.2e}".split("e")
-            exponent = int(exponent)
-            return f"{base} {self.bullet} 10{self.exponent_char}{exponent}"
-        return str(value)
-
-custom_formatter = CustomFormatter()
-formatted_float = custom_formatter.format(3.14e5)
-print(formatted_float)  # Example usage
-def all_children(wid, finList=None):
-    finList = finList or []
-    children = wid.winfo_children()
-    for item in children:
-        finList.append(item)
-        all_children(item, finList)
-    return finList
 
 class ClickableTable(ctk.CTkFrame):
     def __init__(self, *args, header_labels, row_num, callback = None, **kwargs):
@@ -131,7 +109,7 @@ class ClickableTable(ctk.CTkFrame):
             row_idx = self.selected_row
         if isinstance(col, str):
             col = self.header_dict[col]
-        self.table.insert(row_idx, col, value)
+        self.table.insert(row_idx, col, str(table_printer.pformat(value)))
         
 class CheckWindow(ctk.CTkToplevel):
     def __init__(self, parent, title, label, *args, **kwargs):
