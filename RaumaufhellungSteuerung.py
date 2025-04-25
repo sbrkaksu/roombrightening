@@ -24,6 +24,14 @@ import async_timer
 import pyartnet as pan
 from ProbandGenerator import erzeuge_proband_fein
 
+def all_children(wid, finList=None):
+    finList = finList or []
+    children = wid.winfo_children()
+    for item in children:
+        finList.append(item)
+        all_children(item, finList)
+    return finList
+
 class FormatPrinter(PrettyPrinter):
     def __init__(self, formats, *args, **kwargs):
         super(FormatPrinter, self).__init__(*args, **kwargs)
@@ -586,6 +594,7 @@ class App(ctk.CTk, AsyncCTk):
         self.set_roomlight_level(0)
         
     def reset_sequence(self):
+        self.pause_stop_event.set()
         self.sequence_task.cancel()
 
     async def run_sequence_task(self):
@@ -711,10 +720,11 @@ class App(ctk.CTk, AsyncCTk):
                 if button.selected:
                     button.enable_children()
             
-            # wait for the pause duration here. stop event can be set from the run_sequence function, after aquisition of a popup
+            # wait for the pause duration here. stop event can be set from the run_sequence function, after aquitting a popup
             await self.await_countdown_timer(start_time=pause_duration,
                                              stop_event=self.pause_stop_event,
                                              label="Pause")
+            self.pause_stop_event.clear()
 
     @async_handler
     async def run_sequence(self):
