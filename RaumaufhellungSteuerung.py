@@ -22,7 +22,7 @@ import async_timer
 # maybe use uvloop (fast / more time-accurate event loop)
 
 import pyartnet as pan
-from ProbandGenerator import erzeuge_proband_fein
+from ProbandGenerator import erzeuge_proband_fein, get_E_idx
 
 def all_children(wid, finList=None):
     finList = finList or []
@@ -88,7 +88,7 @@ class ClickableTable(ctk.CTkFrame):
     
     def set_callback(self, callback):
         for i in range(self.table.rows):
-                self.table.edit_row(row=i, command = lambda i=i: callback(i))
+            self.table.edit_row(row=i, command = lambda i=i: callback(i))
     
     def select_row(self, row_idx):
         self.deselect_row()
@@ -110,7 +110,7 @@ class ClickableTable(ctk.CTkFrame):
                 except IndexError: value = " "
                 self.table.frame[i,j].configure(text=str(table_printer.pformat(value)),require_redraw=True)
 
-        #self.table.update_values(values)
+        #self.table.update_data()
         
     def update_cell(self,value, col, row_idx=None):
         if row_idx is None:
@@ -131,6 +131,46 @@ class CheckWindow(ctk.CTkToplevel):
         self.grid_rowconfigure(0, weight=1)
         self.confirm_button = ctk.CTkButton(self, text=label, command=self.destroy)
         self.confirm_button.grid(row=0, column=0, padx=20, pady=30, sticky="nsew")
+    
+class CheckWindowDropDown(ctk.CTkToplevel):
+    def __init__(self, parent, title, options_dictlist, callback, *args, **kwargs):
+        super().__init__(parent,*args, **kwargs)
+        super().transient(parent) # always on top of parent window
+        super().grab_set() # block parent window
+        self.options_dictlist = options_dictlist
+        self.geometry("600x400")
+        self.title(title)
+        self.dropdowns = []
+        for i,d in enumerate(self.options_dictlist):
+            # pop the title of the dropDown
+            title = d["Titel"]
+            options = d["Optionen"]
+            ctk.CTkLabel(self, text=title).grid(row=i*2, column=0, padx=10, pady=5, sticky="nw")
+            dropdown = ctk.CTkOptionMenu(self, values=options,command = self.check_set_options)
+            dropdown.grid(row=(i*2) + 1, column=0, padx=20, pady=(0,5), sticky="nw")
+            dropdown.set("")
+            d["Dropdown"] = dropdown
+            
+        self.confirm_button = ctk.CTkButton(self, text="bestätigen", state="disabled",
+                                            command=self.call_callback_and_selfdestruct)
+        self.confirm_button.grid(row=(i+1)*2, column=0, padx=10, pady=30, sticky="nsew")
+        self.callback = callback
+    
+    def check_set_options(self,val):
+        # check if all dropdowns have a value set
+        for dropdown in self.dropdowns:
+            if dropdown.get() == "" or None:
+                return
+        self.confirm_button.configure(state="normal")
+    
+    def call_callback_and_selfdestruct(self):
+        # call the callback function with the selected options
+        
+        selected_options = {d["Titel"]: d["Dropdown"].get() for d in self.options_dictlist}
+        if None in selected_options:
+            return
+        self.callback(selected_options)
+        self.destroy()
 
 class SwitchButton(ctk.CTkButton):
     button_groups = {}
@@ -202,9 +242,7 @@ class SwitchButton(ctk.CTkButton):
             self.disable_children()
     def disable_children(self):
         for child in all_children(self):
-            print(child)
             if isinstance(child, ctk.CTkButton):
-                print("is button!")
                 child.configure(state="disabled")
     def select(self):
         if self.enabled == True and self.selected == False:
@@ -251,27 +289,43 @@ class Phase(dict):
     def check_completion_test(self):
         return True
 
-    def check_lowest_bothering_scenes(self):
-        # loop over all scenes, filter them depending on the spot and the time of day
-        # return the lowest bothering E value for every category (spot, time of day)
+    def process_lowest_bothering_scenes_cb(self, lowest_bothering_scenes):
+        lowest_bothering_Es = {}
+        for dict_list in self.bothering_options_dict_list:
+            choice = lowest_bothering_scenes[dict_list["Titel"]]
+            E_choice = dict_list["Werte"][dict_list["Optionen"].index(choice)]
+            lowest_bothering_Es[dict_list["Titel"]] = E_choice
+
+        self.lowest_bothering_Es = lowest_bothering_Es
+
+    def query_lowest_bothering_scenes(self):
+        # get all bothering scenes in separate lists for different Spots, Time of Day, sorted by E value
         bothering_scenes = {}
         for s in self["Durchgange"]:
+            zeit = s.get("Zeit")
             for sz in s["Szenen"]:
                 if sz.get("Stoert") == "Ja":
-                    E_value = sz.get("E")
                     spot = sz.get("Spot")
                     if spot in [1, 2, 3, 4]:
-                        key = ("Spots", s.get("Zeit"))
-                        current_minimum = bothering_scenes.setdefault(key, [None] * 4)[spot-1]
-                        bothering_scenes[key][spot-1] = E_value if current_minimum is None else min(E_value,current_minimum)
+                        key = "Spot{idx} {zeit}".format(idx=spot,zeit=zeit)
                     else:
-                        key = (spot, s.get("Zeit"))
-                        if (key not in bothering_scenes):
-                            bothering_scenes[key] = E_value
-                        elif E_value < bothering_scenes[key]:
-                            bothering_scenes[key] = E_value
-        return bothering_scenes
-    
+                        key = "Diffus {zeit}".format(zeit=zeit)
+                    bothering_scenes.setdefault(key, []).append(sz)
+        self.bothering_options_dict_list = []
+        for k in ["Spot1 Abend","Spot2 Abend","Spot3 Abend","Spot4 Abend",
+                  "Spot1 Nacht","Spot2 Nacht","Spot3 Nacht","Spot4 Nacht",
+                  "Diffus Abend","Diffus Nacht"]: # combination of spot and time
+            d = {"Titel":k}
+            scene_list = bothering_scenes[k]
+            scene_list.sort(key=lambda sz: sz.get("E")) # sort for ascending illuminance
+            d["Werte"] = [sz.get("E") for sz in scene_list]
+            d["Optionen"] = ["E:{} Reaktionszeit:{}".format(table_printer.pformat(sz.get("E")), sz.get("Reaktionszeit")) for sz in scene_list]
+            self.bothering_options_dict_list.append(d)
+        
+        # create a window with dropdowns for each list
+        return self.bothering_options_dict_list
+        
+        
     def save(self):
         filename_base = splitext(self.filename)[0]
         fname = self.filename
@@ -372,7 +426,7 @@ class App(ctk.CTk, AsyncCTk):
         self.grob_prev_seq_button = ctk.CTkButton(self.grob_phase_button, **sequence_buttons_settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
         self.grob_prev_seq_button.place(relx=0.3, rely=0.6, anchor="center")
         
-        self.fein_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Phase feines Raster", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_fein), state="disabled")
+        self.fein_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Phase feines Raster", **phase_buttons_settings, command=self.generate_and_load_phase_fein , state="disabled")
         self.fein_phase_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
         
         self.fein_next_seq_button = ctk.CTkButton(self.fein_phase_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence,state="disabled")
@@ -525,7 +579,8 @@ class App(ctk.CTk, AsyncCTk):
                 self.grob_phase_button.enable()
             if self.phase_grob.check_completion() == True:
                 self.grob_phase_button.turn_on()
-                self.generate_and_load_phase_fein()
+                self.fein_phase_button.enable()
+                
             
             self.lern_phase_button.enable()
         if phase.phase_type == "fein":
@@ -533,13 +588,21 @@ class App(ctk.CTk, AsyncCTk):
         
     def generate_and_load_phase_fein(self):
         prid = self.phase_grob["ID"]
-        th = self.phase_grob.check_lowest_bothering_scenes()
-        fein_file = erzeuge_proband_fein(prid, th.get(('Spots','Abend')),
-                                               th.get(('Spots','Nacht')),
-                                               th.get(('diffus','Abend')),
-                                               th.get(('diffus','Nacht')))
+
+        bothering_options_dict_list = self.phase_grob.query_lowest_bothering_scenes()
+        cwindow = CheckWindowDropDown(self,title="Schwellen für Störende Szenen prüfen und auswählen",
+                            options_dictlist = bothering_options_dict_list,callback=self.phase_grob.process_lowest_bothering_scenes_cb)
+        self.wait_window(cwindow)
+        print(self.phase_grob.lowest_bothering_Es)
+        fein_file = erzeuge_proband_fein(prid,
+            [self.phase_grob.lowest_bothering_Es[k] for k in ["Spot1 Abend","Spot2 Abend","Spot3 Abend","Spot4 Abend"]],
+            [self.phase_grob.lowest_bothering_Es[k] for k in ["Spot1 Nacht","Spot2 Nacht","Spot3 Nacht","Spot4 Nacht"]],
+            self.phase_grob.lowest_bothering_Es["Diffus Abend"],
+            self.phase_grob.lowest_bothering_Es["Diffus Nacht"])
+        
         self.phase_fein = Phase(fein_file)
-        self.fein_phase_button.enable()
+        self.fein_phase_button.configure(command=lambda:self.set_phase(self.phase_fein))
+        self.set_phase(self.phase_fein)
         
     def set_next_sequence(self):
         if self.active_phase is None:
