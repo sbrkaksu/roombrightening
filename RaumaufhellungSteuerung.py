@@ -146,29 +146,25 @@ class CheckWindowDropDown(ctk.CTkToplevel):
             title = d["Titel"]
             options = d["Optionen"]
             ctk.CTkLabel(self, text=title).grid(row=i*2, column=0, padx=10, pady=5, sticky="nw")
-            dropdown = ctk.CTkOptionMenu(self, values=options,command = self.check_set_options)
+            dropdown = ctk.CTkOptionMenu(self, values=options)#,command = self.check_set_options)
             dropdown.grid(row=(i*2) + 1, column=0, padx=20, pady=(0,5), sticky="nw")
-            dropdown.set("")
             d["Dropdown"] = dropdown
             
-        self.confirm_button = ctk.CTkButton(self, text="bestätigen", state="disabled",
+        self.confirm_button = ctk.CTkButton(self, text="bestätigen", state="normal",
                                             command=self.call_callback_and_selfdestruct)
         self.confirm_button.grid(row=(i+1)*2, column=0, padx=10, pady=30, sticky="nsew")
         self.callback = callback
     
     def check_set_options(self,val):
         # check if all dropdowns have a value set
-        for dropdown in self.dropdowns:
-            if dropdown.get() == "" or None:
-                return
+        selected_options = [d["Dropdown"].get() for d in self.options_dictlist]
+        if '' in selected_options or None in selected_options:
+            return
         self.confirm_button.configure(state="normal")
     
     def call_callback_and_selfdestruct(self):
         # call the callback function with the selected options
-        
         selected_options = {d["Titel"]: d["Dropdown"].get() for d in self.options_dictlist}
-        if None in selected_options:
-            return
         self.callback(selected_options)
         self.destroy()
 
@@ -256,6 +252,8 @@ class SwitchButton(ctk.CTkButton):
             self.add_enter_leave_interaction()
             super().configure(border_color=self.border_color, border_width=self.border_width)
             self.disable_children()
+    def set_command(self, command):
+        self.command = command
 
 class Phase(dict):
     def __init__(self,proband_file, *args, **kwargs):
@@ -316,13 +314,14 @@ class Phase(dict):
                   "Spot1 Nacht","Spot2 Nacht","Spot3 Nacht","Spot4 Nacht",
                   "Diffus Abend","Diffus Nacht"]: # combination of spot and time
             d = {"Titel":k}
-            scene_list = bothering_scenes[k]
+            scene_list = bothering_scenes.setdefault(k, [])
             scene_list.sort(key=lambda sz: sz.get("E")) # sort for ascending illuminance
             d["Werte"] = [sz.get("E") for sz in scene_list]
+            d["Werte"].append(None)
             d["Optionen"] = ["E:{} Reaktionszeit:{}".format(table_printer.pformat(sz.get("E")), sz.get("Reaktionszeit")) for sz in scene_list]
+            d["Optionen"].append("Keine")
             self.bothering_options_dict_list.append(d)
         
-        # create a window with dropdowns for each list
         return self.bothering_options_dict_list
         
         
@@ -593,7 +592,6 @@ class App(ctk.CTk, AsyncCTk):
         cwindow = CheckWindowDropDown(self,title="Schwellen für Störende Szenen prüfen und auswählen",
                             options_dictlist = bothering_options_dict_list,callback=self.phase_grob.process_lowest_bothering_scenes_cb)
         self.wait_window(cwindow)
-        print(self.phase_grob.lowest_bothering_Es)
         fein_file = erzeuge_proband_fein(prid,
             [self.phase_grob.lowest_bothering_Es[k] for k in ["Spot1 Abend","Spot2 Abend","Spot3 Abend","Spot4 Abend"]],
             [self.phase_grob.lowest_bothering_Es[k] for k in ["Spot1 Nacht","Spot2 Nacht","Spot3 Nacht","Spot4 Nacht"]],
@@ -601,7 +599,7 @@ class App(ctk.CTk, AsyncCTk):
             self.phase_grob.lowest_bothering_Es["Diffus Nacht"])
         
         self.phase_fein = Phase(fein_file)
-        self.fein_phase_button.configure(command=lambda:self.set_phase(self.phase_fein))
+        self.fein_phase_button.set_command(lambda:self.set_phase(self.phase_fein))
         self.set_phase(self.phase_fein)
         
     def set_next_sequence(self):
