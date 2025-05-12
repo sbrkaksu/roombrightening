@@ -25,9 +25,13 @@ rng = np.random.default_rng(seed)
 
 ########################################## Szenen erzeugen ##########################################
 num_spots = 4
+num_E_stufen_pro_dekade = 6
+
 E_dekaden_abend = (-2,-1,0,1) # 10^...
 E_dekaden_nacht = (-2,-1,0,1) # 10^...
-num_E_stufen_pro_dekade = 6
+
+
+
 E_stufen_abend = np.hstack([np.logspace(0,1,num=num_E_stufen_pro_dekade+1)[:-1] * i for i in np.logspace(E_dekaden_abend[0],E_dekaden_abend[-1],len(E_dekaden_abend))]).tolist()[:-2]
 num_E_stufen_abend = len(E_stufen_abend)
 max_E_abend = E_stufen_abend[-1]
@@ -67,6 +71,15 @@ E_vals_test = np.array([ 0.031622777, 0.31622777, 10.]).tolist()
 E_vals_test_repeated = np.tile(E_vals_test,num_spots).tolist()
 spooots_test = np.repeat(spots,len(E_vals_test)).tolist()
 szenen_test = [{"ID":-(i+1), "Zeit":"Abend", "Spot":s, "Farbe":"W1", "E":e} for i,(s,e) in enumerate(zip(spooots_test,E_vals_test_repeated))]
+
+def get_E_idx(E_vals, Zeit):
+    if Zeit == "Abend":
+        E_idx = np.searchsorted(E_stufen_abend, E_vals)
+    elif Zeit == "Nacht":
+        E_idx = np.searchsorted(E_stufen_nacht, E_vals)
+    else:
+        raise ValueError("Invalid Zeit value. Must be 'Abend' or 'Nacht'.")
+    return E_idx
 
 def erzeuge_test_durchgang():
     durchgang = {"ID":-1, "Diffus": False, "Zeit": "Abend"}
