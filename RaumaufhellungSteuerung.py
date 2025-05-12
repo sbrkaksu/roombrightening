@@ -138,7 +138,7 @@ class CheckWindowDropDown(ctk.CTkToplevel):
         super().transient(parent) # always on top of parent window
         super().grab_set() # block parent window
         self.options_dictlist = options_dictlist
-        self.geometry("600x400")
+        self.geometry("400x1000")
         self.title(title)
         self.dropdowns = []
         for i,d in enumerate(self.options_dictlist):
