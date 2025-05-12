@@ -776,7 +776,7 @@ class App(ctk.CTk, AsyncCTk):
                 self.grob_phase_button.enable()
             if self.phase_grob.check_completion() == True:
                 self.grob_phase_button.turn_on()
-                self.generate_and_load_phase_fein()
+                self.fein_phase_button.enable()
             for button in [self.lern_phase_button, self.grob_phase_button,self.fein_phase_button]:
                 if button.selected:
                     button.enable_children()
