@@ -27,7 +27,7 @@ rng = np.random.default_rng(seed)
 num_spots = 4
 num_E_stufen_pro_dekade = 6
 
-E_dekaden_abend = (-2,-1,0,1) # 10^...
+E_dekaden_abend = (-1,0,1,2) # 10^...
 E_dekaden_nacht = (-2,-1,0,1) # 10^...
 
 
@@ -67,7 +67,7 @@ nr_wdh_fein = 3
 suchbereich_fein = 4 # in stufen +- um stoer E in feiner skala
 
 
-E_vals_test = np.array([ 0.031622777, 0.31622777, 10.]).tolist()
+E_vals_test = np.array([ 0.1, 3.1622777, 100]).tolist()
 E_vals_test_repeated = np.tile(E_vals_test,num_spots).tolist()
 spooots_test = np.repeat(spots,len(E_vals_test)).tolist()
 szenen_test = [{"ID":-(i+1), "Zeit":"Abend", "Spot":s, "Farbe":"W1", "E":e} for i,(s,e) in enumerate(zip(spooots_test,E_vals_test_repeated))]
@@ -196,3 +196,4 @@ def erzeuge_proband_fein(proband_id, stoer_E_spots_abend, stoer_E_spots_nacht, s
 
 if __name__ == "__main__":
     erzeuge_probanden_grob(nr_probanden = 5)
+    erzeuge_lern_proband()

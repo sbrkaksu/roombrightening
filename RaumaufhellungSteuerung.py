@@ -362,11 +362,11 @@ class App(ctk.CTk, AsyncCTk):
             "monitor_E_factor_spot_3":  3.63e7,
             "monitor_E_factor_spot_4":  2.70e7,
             "monitor_E_factor_diffus":  1.26e7,
-            "scene_duration":           4.5, #4.5, # seconds
+            "scene_duration":           1.5, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
-            "inter-stimulus-interval":  2.5, #2.5, #seconds
+            "inter-stimulus-interval":  1.5, #2.5, #seconds
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
-            "sequence_pause_duration":  45.0, # 45 seconds
+            "sequence_pause_duration":  2.0, # 45 seconds
             "maxE_spot1": 168.9,
             "maxE_spot2": 116.9,
             "maxE_spot3": 192.4,
@@ -962,44 +962,55 @@ class App(ctk.CTk, AsyncCTk):
     
     def fade_scene(self):
         self.sequence_control.set_values([96])
-
+    
     def set_scene(self, scene):
         self.set_all_intensities(0)
         self.pixel2_7_intensity.set_values([0])
-        dmx_max = 2**16 - 1
+        dmx8_max = 2**8 - 1
+        dmx16_max = 2**16 - 1
         spot = scene["Spot"]
-        E = scene["E"] 
-        if spot == 1:
-            maxE = self.settings["maxE_spot1"]
-            E = min( E, maxE )
-            i = round((E / maxE) * dmx_max)
-            self.spot1_intensity.set_values(i.to_bytes(2,'big'))
-
-        elif spot == 2: 
-            maxE = self.settings["maxE_spot2"]
-            E = min( E, maxE )
-            i = round((E / maxE) * dmx_max)
-            self.spot2_intensity.set_values(i.to_bytes(2,'big'))
-            
-        elif spot == 3:
-            maxE = self.settings["maxE_spot3"]
-            E = min( E, maxE )
-            i = round((E / maxE) * dmx_max)
-            self.spot3_intensity.set_values(i.to_bytes(2,'big'))
-            
-        elif spot == 4:
-            maxE = self.settings["maxE_spot4"]
-            E = min( E, maxE )
-            i = round((E / maxE) * dmx_max)
-            self.spot4_intensity.set_values(i.to_bytes(2,'big'))
-        elif spot == "diffus":
+        E = scene["E"]
+        # special case diffus, all pixels have the same intensity
+        if spot == "diffus": 
             maxE = self.settings["maxE_diffus"]
             E = min( E, maxE )
-            i = round((E / maxE) * dmx_max)
+            i = round((E / maxE) * dmx16_max)
             self.spot1_intensity.set_values(i.to_bytes(2,'big'))
             # also enable Pixel 2-7
             self.pixel2_7_intensity.set_values([255])
+            return
+        # all other spots
+        elif spot == 1:
+            maxE = self.settings["maxE_spot1"]
+            intensity_channel = self.spot1_intensity
+        elif spot == 2: 
+            maxE = self.settings["maxE_spot2"]
+            intensity_channel = self.spot2_intensity
+        elif spot == 3:
+            maxE = self.settings["maxE_spot3"]
+            intensity_channel = self.spot3_intensity
+        elif spot == 4:
+            maxE = self.settings["maxE_spot4"]
+            intensity_channel = self.spot4_intensity
 
+        E = min( E, maxE )
+        E_factor = E / maxE # E ( maxE can be bigger than one, i can be bigger than dmx16_max)
+        
+        one_pixel_max_factor = 0.6
+        
+        if E_factor > one_pixel_max_factor:
+            center_pixel_factor = one_pixel_max_factor
+            other_pixel_factor = (E_factor - center_pixel_factor) / one_pixel_max_factor / 6
+        else:
+            center_pixel_factor = E_factor
+            other_pixel_factor = 0
+        center_pixel_dmx = round(center_pixel_factor * dmx16_max)
+        other_pixel_dmx = round(other_pixel_factor * dmx8_max)
+        
+        intensity_channel.set_values(center_pixel_dmx.to_bytes(2,'big'))
+        
+        self.pixel2_7_intensity.set_values([other_pixel_dmx])
+        
     def set_all_intensities(self,i):
         self.spot1_intensity.set_values(i.to_bytes(2,'big'))
         self.spot2_intensity.set_values(i.to_bytes(2,'big'))
