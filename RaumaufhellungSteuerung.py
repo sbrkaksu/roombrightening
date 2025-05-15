@@ -372,6 +372,7 @@ class App(ctk.CTk, AsyncCTk):
             "maxE_spot3": 192.4,
             "maxE_spot4": 88,
             "maxE_diffus": 610,
+            "maxAussteuerung_faktor_pixel1": 0.7,
             "DMX_brightness_reading": 255,
             "DMX_brightness_roomlight": 255,
             "learn_proband_file": "ProbandLernen.txt" 
@@ -996,8 +997,7 @@ class App(ctk.CTk, AsyncCTk):
         E = min( E, maxE )
         E_factor = E / maxE # E ( maxE can be bigger than one, i can be bigger than dmx16_max)
         
-        one_pixel_max_factor = 0.6
-        
+        one_pixel_max_factor = self.settings["maxAussteuerung_faktor_pixel1"]
         if E_factor > one_pixel_max_factor:
             center_pixel_factor = one_pixel_max_factor
             other_pixel_factor = (E_factor - center_pixel_factor) / one_pixel_max_factor / 6
