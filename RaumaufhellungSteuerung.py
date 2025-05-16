@@ -994,9 +994,7 @@ class App(ctk.CTk, AsyncCTk):
             maxE = self.settings["maxE_spot4"]
             intensity_channel = self.spot4_intensity
 
-        E = min( E, maxE )
         E_factor = E / maxE # E ( maxE can be bigger than one, i can be bigger than dmx16_max)
-        
         one_pixel_max_factor = self.settings["maxAussteuerung_faktor_pixel1"]
         if E_factor > one_pixel_max_factor:
             center_pixel_factor = one_pixel_max_factor
@@ -1004,9 +1002,12 @@ class App(ctk.CTk, AsyncCTk):
         else:
             center_pixel_factor = E_factor
             other_pixel_factor = 0
+        print("center_pixel_factor",center_pixel_factor)
+        print("other_pixel_factor",other_pixel_factor)
         center_pixel_dmx = round(center_pixel_factor * dmx16_max)
         other_pixel_dmx = round(other_pixel_factor * dmx8_max)
-        
+        print("center_pixel_dmx",center_pixel_dmx)
+        print("other_pixel_dmx",other_pixel_dmx)
         intensity_channel.set_values(center_pixel_dmx.to_bytes(2,'big'))
         
         self.pixel2_7_intensity.set_values([other_pixel_dmx])
