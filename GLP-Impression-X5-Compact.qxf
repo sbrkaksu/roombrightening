@@ -173,10 +173,10 @@
   <Channel Number="38">Lime Pixel 07</Channel>
  </Mode>
  <Physical>
-  <Bulb Type="" Lumens="0" ColourTemperature="0"/>
-  <Dimensions Weight="0" Width="0" Height="0" Depth="0"/>
-  <Lens Name="Other" DegreesMin="0" DegreesMax="0"/>
-  <Focus Type="Head" PanMax="0" TiltMax="0"/>
-  <Technical PowerConsumption="0" DmxConnector="5-pin"/>
+  <Bulb Type="RGBL LED" Lumens="3980" ColourTemperature="6500"/>
+  <Dimensions Weight="7.5" Width="250" Height="337" Depth="183"/>
+  <Lens Name="Other" DegreesMin="3.5" DegreesMax="60"/>
+  <Focus Type="Head" PanMax="650" TiltMax="236"/>
+  <Technical PowerConsumption="40" DmxConnector="5-pin"/>
  </Physical>
 </FixtureDefinition>
