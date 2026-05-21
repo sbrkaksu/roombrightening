@@ -81,10 +81,11 @@ scenes_spots_evening = [
     {"ID": i + 1, "Zeit": "Abend", "Spot": s, "Farbe": "W1", "E": e} 
     for i, (s, e) in enumerate(zip(spooots_evening, E_steps_evening_repeated))
 ]
+#{"ID": 1..22, "Zeit": "Abend", "Spot":1, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
+#{"ID": 23..44, "Zeit": "Abend", "Spot":2, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
+#{"ID": 45..66, "Zeit": "Abend", "Spot":3, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
+#{"ID": 67..88, "Zeit": "Abend", "Spot":4, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
 
-#{"ID": 1..22, "Zeit": "Abend", "Spot":1, "Farbe": "W1", "E": e}
-
-print(scenes_spots_evening)
 
 szenen_spots_nacht = [
     {"ID": i + 1 + scenes_spots_evening[-1]["ID"],"Zeit": "Nacht","Spot": s,"Farbe": "W1","E": e,}
