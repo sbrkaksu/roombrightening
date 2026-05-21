@@ -29,7 +29,8 @@ def broadcast_stack(arr, num):  # stacks arrays (copying arrays per given shape)
 
 # create 128-byte integer for seed, everytime creates different seed to ensure randomness
 seed = int.from_bytes(os.urandom(128), sys.byteorder)
-# create random number generator with seed - same random numbers for same seed, different random numbers for different seeds
+# create random number generator with seed - same random numbers for same seed
+# different random numbers for different seeds to ensure randomness
 rng = np.random.default_rng(seed)
 
 ########################################## Create Scenes ##########################################
@@ -40,6 +41,7 @@ E_decades_Evening = (-1, 0, 1, 2)  # 10^...
 E_decades_Night = (-2, -1, 0, 1)  # 10^...
 
 
+# horizontal stack of logarithmically spaced E values for evening [0.1lx ... 316lx], repeated for each decade,
 E_steps_evening = np.hstack(
     [
         np.logspace(0, 1, num=num_E_steps_per_decade + 1)[:-1] * i
@@ -47,26 +49,35 @@ E_steps_evening = np.hstack(
             E_decades_Evening[0], E_decades_Evening[-1], len(E_decades_Evening)
         )
     ]
-).tolist()[:-2]
-num_E_steps_evening = len(E_steps_evening)
-max_E_abend = E_steps_evening[-1]
-E_steps_evening_repeated = np.tile(E_steps_evening, num_spots).tolist()
+).tolist()[:-2]  # excluding the last two values (464lx and 681lx)
 
-E_stufen_nacht = np.hstack(
+num_E_steps_evening = len(E_steps_evening)
+max_E_evening = E_steps_evening[-1]  # 316lx
+E_steps_evening_repeated = np.tile(
+    E_steps_evening, num_spots
+).tolist()  # repeat the E steps for evening and for 4 spots then make list
+
+# horizontal stack of logarithmically spaced E values for evening [0.01lx ... 31.6lx], repeated for each decade,
+E_steps_night = np.hstack(
     [
         np.logspace(0, 1, num=num_E_steps_per_decade + 1)[:-1] * i
         for i in np.logspace(
             E_decades_Night[0], E_decades_Night[-1], len(E_decades_Night)
         )
     ]
-).tolist()[:-2]
-num_E_stufen_nacht = len(E_stufen_nacht)
-max_E_nacht = E_stufen_nacht[-1]
-E_stufen_nacht_repeated = np.tile(E_stufen_nacht, num_spots).tolist()
+).tolist()[:-2]  # excluding the last two values (3.16lx and 4.64lx)
 
-spots = np.arange(1, num_spots + 1)
+num_E_steps_night = len(E_steps_night)
+max_E_night = E_steps_night[-1]  # 31.6lx
+E_steps_night_repeated = np.tile(E_steps_night, num_spots).tolist()  # repeat the E steps for night and for 4 spots then make list
+
+spots = np.arange(1, num_spots + 1)  # [1,2,3,4]
 spooots_abend = np.repeat(spots, num_E_steps_evening).tolist()
-spooots_nacht = np.repeat(spots, num_E_stufen_nacht).tolist()
+spooots_nacht = np.repeat(spots, num_E_steps_night).tolist()
+
+print(spooots_abend, num_E_steps_evening)
+print()
+print(spooots_nacht, num_E_steps_night)
 
 szenen_spots_abend = [
     {"ID": i + 1, "Zeit": "Abend", "Spot": s, "Farbe": "W1", "E": e}
@@ -80,7 +91,7 @@ szenen_spots_nacht = [
         "Farbe": "W1",
         "E": e,
     }
-    for i, (s, e) in enumerate(zip(spooots_nacht, E_stufen_nacht_repeated))
+    for i, (s, e) in enumerate(zip(spooots_nacht, E_steps_night_repeated))
 ]
 
 szenen_diffus_abend = [
@@ -101,16 +112,16 @@ szenen_diffus_nacht = [
         "Farbe": "W1",
         "E": e,
     }
-    for i, e in enumerate(E_stufen_nacht)
+    for i, e in enumerate(E_steps_night)
 ]
 # need same IDs for szenen in both lists: generate fein first, grob is subset
 grob_indizes_abend = np.arange(0, len(E_steps_evening), 3)
 grob_indizes_abend_repeated = np.hstack(
     [grob_indizes_abend + i * (num_E_steps_evening) for i in range(num_spots)]
 ).tolist()
-grob_indizes_nacht = np.arange(0, len(E_stufen_nacht), 3)
+grob_indizes_nacht = np.arange(0, len(E_steps_night), 3)
 grob_indizes_nacht_repeated = np.hstack(
-    [grob_indizes_nacht + i * (num_E_stufen_nacht) for i in range(num_spots)]
+    [grob_indizes_nacht + i * (num_E_steps_night) for i in range(num_spots)]
 ).tolist()
 
 szenen_spots_abend_grob = [szenen_spots_abend[i] for i in grob_indizes_abend_repeated]
@@ -136,7 +147,7 @@ def get_E_idx(E_vals, Zeit):
     if Zeit == "Abend":
         E_idx = np.searchsorted(E_steps_evening, E_vals)
     elif Zeit == "Nacht":
-        E_idx = np.searchsorted(E_stufen_nacht, E_vals)
+        E_idx = np.searchsorted(E_steps_night, E_vals)
     else:
         raise ValueError("Invalid Zeit value. Must be 'Abend' or 'Nacht'.")
     return E_idx
@@ -248,20 +259,20 @@ def erzeuge_proband_fein(
     print(stoer_E_diffus_nacht)
     # sanetize input: arrays for stoer_E spots and stoer E diffus inputs can be None. Take max E if None
     stoer_E_spots_abend = (
-        [max_E_abend] * 4
+        [max_E_evening] * 4
         if stoer_E_spots_abend is None
-        else [max_E_abend if e is None else e for e in stoer_E_spots_abend]
+        else [max_E_evening if e is None else e for e in stoer_E_spots_abend]
     )
     stoer_E_spots_nacht = (
-        [max_E_nacht] * 4
+        [max_E_night] * 4
         if stoer_E_spots_nacht is None
-        else [max_E_nacht if e is None else e for e in stoer_E_spots_nacht]
+        else [max_E_night if e is None else e for e in stoer_E_spots_nacht]
     )
     stoer_E_diffus_abend = (
-        max_E_abend if stoer_E_diffus_abend is None else stoer_E_diffus_abend
+        max_E_evening if stoer_E_diffus_abend is None else stoer_E_diffus_abend
     )
     stoer_E_diffus_nacht = (
-        max_E_nacht if stoer_E_diffus_nacht is None else stoer_E_diffus_nacht
+        max_E_night if stoer_E_diffus_nacht is None else stoer_E_diffus_nacht
     )
 
     # Create Spot Durchgange
@@ -272,10 +283,10 @@ def erzeuge_proband_fein(
             E_steps_evening, stoer_E_spots_abend[i]
         )
         stoer_szene_spots_nacht_idx = np.searchsorted(
-            E_stufen_nacht, stoer_E_spots_nacht[i]
+            E_steps_night, stoer_E_spots_nacht[i]
         )
         spot_offset_abend = i * num_E_steps_evening
-        spot_offset_nacht = i * num_E_stufen_nacht
+        spot_offset_nacht = i * num_E_steps_night
         spot_abend_low_idx, spot_abend_high_idx = sliding_window(
             0, num_E_steps_evening - 1, stoer_szene_spots_abend_idx, suchbereich_fein
         )
@@ -287,7 +298,7 @@ def erzeuge_proband_fein(
             ]
         )
         spot_nacht_low_idx, spot_nacht_high_idx = sliding_window(
-            0, num_E_stufen_nacht - 1, stoer_szene_spots_nacht_idx, suchbereich_fein
+            0, num_E_steps_night - 1, stoer_szene_spots_nacht_idx, suchbereich_fein
         )
         szenen_spots_nacht_custom.extend(
             szenen_spots_nacht[
@@ -305,7 +316,7 @@ def erzeuge_proband_fein(
     stoer_szene_diffus_abend_idx = np.searchsorted(
         E_steps_evening, stoer_E_diffus_abend
     )
-    stoer_szene_diffus_nacht_idx = np.searchsorted(E_stufen_nacht, stoer_E_diffus_nacht)
+    stoer_szene_diffus_nacht_idx = np.searchsorted(E_steps_night, stoer_E_diffus_nacht)
     diffus_abend_low_idx, diffus_abend_high_idx = sliding_window(
         0, num_E_steps_evening - 1, stoer_szene_diffus_abend_idx, suchbereich_fein
     )
@@ -313,7 +324,7 @@ def erzeuge_proband_fein(
         diffus_abend_low_idx:diffus_abend_high_idx
     ]
     diffus_nacht_low_idx, diffus_nacht_high_idx = sliding_window(
-        0, num_E_stufen_nacht - 1, stoer_szene_diffus_nacht_idx, suchbereich_fein
+        0, num_E_steps_night - 1, stoer_szene_diffus_nacht_idx, suchbereich_fein
     )
     szenen_diffus_nacht_custom = szenen_diffus_nacht[
         diffus_nacht_low_idx:diffus_nacht_high_idx
