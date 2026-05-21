@@ -87,19 +87,31 @@ scenes_spots_evening = [
 #{"ID": 67..88, "Zeit": "Abend", "Spot":4, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
 
 
-szenen_spots_nacht = [
+scenes_spots_night = [
     {"ID": i + 1 + scenes_spots_evening[-1]["ID"],"Zeit": "Nacht","Spot": s,"Farbe": "W1","E": e,}
     for i, (s, e) in enumerate(zip(spooots_night, E_steps_night_repeated))
 ]
 
-szenen_diffus_abend = [
-    {"ID": i + 1 + szenen_spots_nacht[-1]["ID"],"Zeit": "Abend","Spot": "diffus","Farbe": "W1","E": e,}
+#{"ID": 89..110, "Zeit": "Nacht", "Spot":1, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
+#{"ID": 111..132, "Zeit": "Nacht", "Spot":2, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
+#{"ID": 133..154, "Zeit": "Nacht", "Spot":3, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
+#{"ID": 155..176, "Zeit": "Nacht", "Spot":4, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
+
+scenes_diffuse_evening = [
+    {"ID": i + 1 + scenes_spots_night[-1]["ID"],"Zeit": "Abend","Spot": "diffus","Farbe": "W1","E": e,}
     for i, e in enumerate(E_steps_evening)
 ]
-szenen_diffus_nacht = [
-    {"ID": i + 1 + szenen_diffus_abend[-1]["ID"],"Zeit": "Nacht","Spot": "diffus","Farbe": "W1","E": e,}
+
+#{"ID": 177..198, "Zeit": "Abend", "Spot": "diffus", "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
+
+scenes_diffuse_night = [
+    {"ID": i + 1 + scenes_diffuse_evening[-1]["ID"],"Zeit": "Nacht","Spot": "diffus","Farbe": "W1","E": e,}
     for i, e in enumerate(E_steps_night)
 ]
+print(scenes_diffuse_night)
+#{"ID": 199..220, "Zeit": "Nacht", "Spot": "diffus", "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
+
+
 
 # need same IDs for szenen in both lists: generate fein first, grob is subset
 grob_indizes_abend = np.arange(0, len(E_steps_evening), 3)
@@ -112,9 +124,9 @@ grob_indizes_nacht_repeated = np.hstack(
 ).tolist()
 
 scenes_spots_evening_grob = [scenes_spots_evening[i] for i in grob_indizes_abend_repeated]
-szenen_spots_nacht_grob = [szenen_spots_nacht[i] for i in grob_indizes_nacht_repeated]
-szenen_diffus_abend_grob = [szenen_diffus_abend[i] for i in grob_indizes_abend]
-szenen_diffus_nacht_grob = [szenen_diffus_nacht[i] for i in grob_indizes_nacht]
+scenes_spots_night_grob = [scenes_spots_night[i] for i in grob_indizes_nacht_repeated]
+scenes_diffuse_evening_grob = [scenes_diffuse_evening[i] for i in grob_indizes_abend]
+scenes_diffuse_night_grob = [scenes_diffuse_night[i] for i in grob_indizes_nacht]
 
 nr_wdh_grob = 1
 nr_wdh_fein = 3
@@ -208,10 +220,10 @@ def erzeuge_probanden_grob(nr_probanden):
     for proband_id in range(1, nr_probanden + 1):
         proband = {"ID": proband_id, "Abstufung": "grob", "Lerndurchgang": False}
         durchgange_spots = erzeuge_durchgange_spots(
-            proband_id, nr_wdh_grob, scenes_spots_evening_grob, szenen_spots_nacht_grob
+            proband_id, nr_wdh_grob, scenes_spots_evening_grob, scenes_spots_night_grob
         )
         durchgange_diffus = erzeuge_durchgange_diffus(
-            proband_id, nr_wdh_grob, szenen_diffus_abend_grob, szenen_diffus_nacht_grob
+            proband_id, nr_wdh_grob, scenes_diffuse_evening_grob, scenes_diffuse_night_grob
         )
         if proband_id & 2:  # start with diffus
             proband["Durchgange"] = durchgange_spots + durchgange_diffus
@@ -264,7 +276,7 @@ def erzeuge_proband_fein(
 
     # Create Spot Durchgange
     scenes_spots_evening_custom = []
-    szenen_spots_nacht_custom = []
+    scenes_spots_night_custom = []
     for i in range(num_spots):
         stoer_szene_spots_abend_idx = np.searchsorted(
             E_steps_evening, stoer_E_spots_abend[i]
@@ -287,8 +299,8 @@ def erzeuge_proband_fein(
         spot_nacht_low_idx, spot_nacht_high_idx = sliding_window(
             0, num_E_steps_night - 1, stoer_szene_spots_nacht_idx, suchbereich_fein
         )
-        szenen_spots_nacht_custom.extend(
-            szenen_spots_nacht[
+        scenes_spots_night_custom.extend(
+            scenes_spots_night[
                 spot_nacht_low_idx
                 + spot_offset_nacht : spot_nacht_high_idx
                 + spot_offset_nacht
@@ -296,7 +308,7 @@ def erzeuge_proband_fein(
         )
 
     durchgange_spots = erzeuge_durchgange_spots(
-        proband_id, nr_wdh_fein, scenes_spots_evening_custom, szenen_spots_nacht_custom
+        proband_id, nr_wdh_fein, scenes_spots_evening_custom, scenes_spots_night_custom
     )
 
     # Create Diffus Durchgange
@@ -307,18 +319,18 @@ def erzeuge_proband_fein(
     diffus_abend_low_idx, diffus_abend_high_idx = sliding_window(
         0, num_E_steps_evening - 1, stoer_szene_diffus_abend_idx, suchbereich_fein
     )
-    szenen_diffus_abend_custom = szenen_diffus_abend[
+    scenes_diffuse_evening_custom = scenes_diffuse_evening[
         diffus_abend_low_idx:diffus_abend_high_idx
     ]
     diffus_nacht_low_idx, diffus_nacht_high_idx = sliding_window(
         0, num_E_steps_night - 1, stoer_szene_diffus_nacht_idx, suchbereich_fein
     )
-    szenen_diffus_nacht_custom = szenen_diffus_nacht[
+    scenes_diffuse_night_custom = scenes_diffuse_night[
         diffus_nacht_low_idx:diffus_nacht_high_idx
     ]
 
     durchgange_diffus = erzeuge_durchgange_diffus(
-        proband_id, nr_wdh_fein, szenen_diffus_abend_custom, szenen_diffus_nacht_custom
+        proband_id, nr_wdh_fein, scenes_diffuse_evening_custom, scenes_diffuse_night_custom
     )
 
     if proband_id & 2:  # start with diffus
