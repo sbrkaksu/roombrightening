@@ -76,7 +76,7 @@ spots = np.arange(1, num_spots + 1)  # [1,2,3,4]
 spooots_evening = np.repeat(spots, num_E_steps_evening).tolist() # ([1,2,3,4],22) = [1,1,1,...,2,2,2,...,3,3,3,...,4,4,4,...] 
 spooots_night = np.repeat(spots, num_E_steps_night).tolist() # ([1,2,3,4],22) = [1,1,1,...,2,2,2,...,3,3,3,...,4,4,4,...] 
 
-
+#scenes for 4 spots with every steps for evening
 scenes_spots_evening = [
     {"ID": i + 1, "Zeit": "Abend", "Spot": s, "Farbe": "W1", "E": e} 
     for i, (s, e) in enumerate(zip(spooots_evening, E_steps_evening_repeated))
@@ -86,7 +86,7 @@ scenes_spots_evening = [
 #{"ID": 45..66, "Zeit": "Abend", "Spot":3, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
 #{"ID": 67..88, "Zeit": "Abend", "Spot":4, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
 
-
+#scenes for 4 spots with every steps for night
 scenes_spots_night = [
     {"ID": i + 1 + scenes_spots_evening[-1]["ID"],"Zeit": "Nacht","Spot": s,"Farbe": "W1","E": e,}
     for i, (s, e) in enumerate(zip(spooots_night, E_steps_night_repeated))
@@ -97,36 +97,68 @@ scenes_spots_night = [
 #{"ID": 133..154, "Zeit": "Nacht", "Spot":3, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
 #{"ID": 155..176, "Zeit": "Nacht", "Spot":4, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
 
+#scenes for diffus with every steps for evening
 scenes_diffuse_evening = [
     {"ID": i + 1 + scenes_spots_night[-1]["ID"],"Zeit": "Abend","Spot": "diffus","Farbe": "W1","E": e,}
     for i, e in enumerate(E_steps_evening)
 ]
-
 #{"ID": 177..198, "Zeit": "Abend", "Spot": "diffus", "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
 
+
+#scenes for diffus with every steps for night
 scenes_diffuse_night = [
     {"ID": i + 1 + scenes_diffuse_evening[-1]["ID"],"Zeit": "Nacht","Spot": "diffus","Farbe": "W1","E": e,}
     for i, e in enumerate(E_steps_night)
 ]
-print(scenes_diffuse_night)
 #{"ID": 199..220, "Zeit": "Nacht", "Spot": "diffus", "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
 
 
 
-# need same IDs for szenen in both lists: generate fein first, grob is subset
-grob_indizes_abend = np.arange(0, len(E_steps_evening), 3)
-grob_indizes_abend_repeated = np.hstack(
-    [grob_indizes_abend + i * (num_E_steps_evening) for i in range(num_spots)]
-).tolist()
-grob_indizes_nacht = np.arange(0, len(E_steps_night), 3)
-grob_indizes_nacht_repeated = np.hstack(
-    [grob_indizes_nacht + i * (num_E_steps_night) for i in range(num_spots)]
+#################need same IDs for szenen in both lists: generate fein first, grob is subset
+
+#[ 0  3  6  9 12 15 18 21] = [0.1lx, 0,316lx .... 316lx], 8 scene for each spot
+# decade da ki stepler 3er 3er atlayarak gidiyor tezde yazildigi gibi
+grob_indices_evening = np.arange(0, len(E_steps_evening), 3)
+
+#32 scenes for evening, for 4 spots
+#[0, 3, 6, 9, 12, 15, 18, 21, 22, 25, 28, 31, 34, 37, 40, 43, 44, 47, 50, 53, 56, 59, 62, 65, 66, 69, 72, 75, 78, 81, 84, 87]
+grob_indices_evening_repeated = np.hstack(
+    [grob_indices_evening + i * (num_E_steps_evening) for i in range(num_spots)]
 ).tolist()
 
-scenes_spots_evening_grob = [scenes_spots_evening[i] for i in grob_indizes_abend_repeated]
-scenes_spots_night_grob = [scenes_spots_night[i] for i in grob_indizes_nacht_repeated]
-scenes_diffuse_evening_grob = [scenes_diffuse_evening[i] for i in grob_indizes_abend]
-scenes_diffuse_night_grob = [scenes_diffuse_night[i] for i in grob_indizes_nacht]
+#[ 0  3  6  9 12 15 18 21] = [0.01lx, 0,0316lx .... 31,6lx], 8 scenes for each spot
+# decade da ki stepler 3er 3er atlayarak gidiyor tezde yazildigi gibi
+grob_indices_night = np.arange(0, len(E_steps_night), 3) 
+
+#32 scenes for night, for 4 spots
+#[0, 3, 6, 9, 12, 15, 18, 21, 22, 25, 28, 31, 34, 37, 40, 43, 44, 47, 50, 53, 56, 59, 62, 65, 66, 69, 72, 75, 78, 81, 84, 87]
+grob_indices_night_repeated = np.hstack(
+    [grob_indices_night + i * (num_E_steps_night) for i in range(num_spots)]
+).tolist()
+
+##################################### actual scenes in grob block #######################################
+
+#{'ID': 1,4...22 'Zeit': 'Abend', 'Spot': 1 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 1
+#{'ID': 23,26...44 'Zeit': 'Abend', 'Spot': 2 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 2
+#{'ID': 45,48...66 'Zeit': 'Abend', 'Spot': 3 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 3
+#{'ID': 67,70...88 'Zeit': 'Abend', 'Spot': 4 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 4           
+scenes_spots_evening_grob = [scenes_spots_evening[i] for i in grob_indices_evening_repeated]
+
+
+#{'ID': 89,92...110 'Zeit': 'Nacht', 'Spot': 1 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 1
+#{'ID': 111,114...132 'Zeit': 'Nacht', 'Spot': 2 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 2
+#{'ID': 133,136...154 'Zeit': 'Nacht', 'Spot': 3 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 3
+#{'ID': 155,158...176 'Zeit': 'Nacht', 'Spot': 4 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 4
+scenes_spots_night_grob = [scenes_spots_night[i] for i in grob_indices_night_repeated]
+
+
+#{'ID': 177,180...198 'Zeit': 'Abend', 'Spot': 'diffus', 'Farbe': 'W1', 'E': 0.1...316lx} - 8 scenes for diffus evening
+scenes_diffuse_evening_grob = [scenes_diffuse_evening[i] for i in grob_indices_evening]
+
+#{'ID': 199,202...220 'Zeit': 'Nacht', 'Spot': 'diffus', 'Farbe': 'W1', 'E': 0.01...31.6lx} - 8 scenes for diffus night
+scenes_diffuse_night_grob = [scenes_diffuse_night[i] for i in grob_indices_night]
+
+   
 
 nr_wdh_grob = 1
 nr_wdh_fein = 3
@@ -252,10 +284,12 @@ def erzeuge_proband_fein(
     stoer_E_diffus_nacht,
 ):  # stoer_E_grob ist die erste Beleuchtungsstärke die störend war
     proband = {"ID": proband_id, "Abstufung": "fein"}
+    """
     print(stoer_E_spots_abend)
     print(stoer_E_spots_nacht)
     print(stoer_E_diffus_abend)
     print(stoer_E_diffus_nacht)
+    """
     # sanetize input: arrays for stoer_E spots and stoer E diffus inputs can be None. Take max E if None
     stoer_E_spots_abend = (
         [max_E_evening] * 4
