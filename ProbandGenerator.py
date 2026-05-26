@@ -210,7 +210,7 @@ def erzeuge_test_durchgang():
     with open("TestDurchgang.txt", "w") as file:
         file.write(printer.pformat(durchgang))
 """
-#generates ProbandLernen.txt
+#generates ProbandLernen.txt for Learning Phase
 def generate_learn_proband():
     proband = {"ID": -1, "Abstufung": "lernen"} # Abstufung = Phase
     durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}
@@ -219,11 +219,12 @@ def generate_learn_proband():
     with open("ProbandLernen.txt", "w") as file:
         file.write(printer.pformat(proband))
 
-def generate_durchgange_diffus(proband_id, nr_wdh, szenen_abend, szenen_nacht):
+#Durchgangs diffus fein
+def generate_durchgange_diffus(proband_id, number_of_repetitions, scenes_evening, scenes_night):
     durchgange_diffus = []
     for zeit in ["Abend", "Nacht"] if proband_id & 1 else ["Nacht", "Abend"]:
-        for w in range(1, nr_wdh + 1):
-            duchgang_id = 1 + (zeit == "Nacht")  # 1,2
+        for w in range(1, number_of_repetitions + 1):
+            duchgang_id = 1 + (zeit == "Nacht")  # Durchgang ID 1,2
             durchgang = {
                 "ID": duchgang_id,
                 "Wiederholung": w,
@@ -231,21 +232,21 @@ def generate_durchgange_diffus(proband_id, nr_wdh, szenen_abend, szenen_nacht):
                 "Zeit": zeit,
             }
             durchgang["Szenen"] = rng.permutation(
-                szenen_abend if zeit == "Abend" else szenen_nacht
+                scenes_evening if zeit == "Abend" else scenes_night
             ).tolist()
             durchgange_diffus.append(durchgang)
     return durchgange_diffus
 
-
-def generate_durchgange_spots(proband_id, nr_wdh, szenen_abend, szenen_nacht):
+#Durchgangs spots fein
+def generate_durchgange_spots(proband_id, number_of_repetitions, scenes_evening, scenes_night):
     durchgange_spots = []
     for zeit in ["Abend", "Nacht"] if proband_id & 1 else ["Nacht", "Abend"]:
-        for w in range(1, nr_wdh + 1):
-            duchgang_id = 3 + (zeit == "Nacht")  # 3,4
+        for w in range(1, number_of_repetitions + 1):
+            duchgang_id = 3 + (zeit == "Nacht")  # Durchgang ID 3,4
             szenen = rng.permutation(
-                szenen_abend if zeit == "Abend" else szenen_nacht
+                scenes_evening if zeit == "Abend" else scenes_night
             ).tolist()
-            # erste Hälfte der Szenen
+            # first half of the scenes
             durchgang1 = {
                 "ID": duchgang_id,
                 "Wiederholung": w,
@@ -266,16 +267,18 @@ def generate_durchgange_spots(proband_id, nr_wdh, szenen_abend, szenen_nacht):
     return durchgange_spots
 
 
-# grob enthält test-run mit
-def erzeuge_probanden_grob(nr_probanden):
-    for proband_id in range(1, nr_probanden + 1):
+# Generates Probandens grob when this .py file is run
+def generate_probanden_grob(nr_probanden):
+    for proband_id in range(1, nr_probanden + 1): 
         proband = {"ID": proband_id, "Abstufung": "grob", "Lerndurchgang": False}
+        
         durchgange_spots = generate_durchgange_spots(
             proband_id, number_of_repetitions_grob, scenes_spots_evening_grob, scenes_spots_night_grob
-        )
+        ) #args come from global variables except proband_id
         durchgange_diffus = generate_durchgange_diffus(
             proband_id, number_of_repetitions_grob, scenes_diffuse_evening_grob, scenes_diffuse_night_grob
-        )
+        )#args come from global variables except proband_id
+
         if proband_id & 2:  # start with diffus
             proband["Durchgange"] = durchgange_spots + durchgange_diffus
         else:
@@ -295,13 +298,8 @@ def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
     return low_idx, high_idx
 
 
-def erzeuge_proband_fein(
-    proband_id,
-    stoer_E_spots_abend,
-    stoer_E_spots_nacht,
-    stoer_E_diffus_abend,
-    stoer_E_diffus_nacht,
-):  # stoer_E_grob ist die erste Beleuchtungsstärke die störend war
+def generate_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoer_E_diffus_abend,stoer_E_diffus_nacht,): 
+     # stoer_E_grob ist die erste Beleuchtungsstärke die störend war
     proband = {"ID": proband_id, "Abstufung": "fein"}
     """
     print(stoer_E_spots_abend)
@@ -401,5 +399,5 @@ def erzeuge_proband_fein(
 
 
 if __name__ == "__main__":
-    erzeuge_probanden_grob(nr_probanden=5)
+    generate_probanden_grob(nr_probanden=5)
     generate_learn_proband()
