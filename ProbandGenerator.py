@@ -203,14 +203,13 @@ def get_E_idx(E_vals, Zeit):
         raise ValueError("Invalid Zeit value. Must be 'Abend' or 'Nacht'.")
     return E_idx
 
-
+"""
 def erzeuge_test_durchgang():
     durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}
     durchgang["Szenen"] = rng.permutation(scenes_test).tolist()
-    print("berko")
     with open("TestDurchgang.txt", "w") as file:
         file.write(printer.pformat(durchgang))
-
+"""
 
 def erzeuge_lern_proband():
     proband = {"ID": -1, "Abstufung": "lernen"}
