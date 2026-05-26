@@ -218,8 +218,6 @@ def generate_learn_proband():
     proband["Durchgange"] = [durchgang]
     with open("ProbandLernen.txt", "w") as file:
         file.write(printer.pformat(proband))
-    return print(proband)
-
 
 def generate_durchgange_diffus(proband_id, nr_wdh, szenen_abend, szenen_nacht):
     durchgange_diffus = []
@@ -239,7 +237,7 @@ def generate_durchgange_diffus(proband_id, nr_wdh, szenen_abend, szenen_nacht):
     return durchgange_diffus
 
 
-def erzeuge_durchgange_spots(proband_id, nr_wdh, szenen_abend, szenen_nacht):
+def generate_durchgange_spots(proband_id, nr_wdh, szenen_abend, szenen_nacht):
     durchgange_spots = []
     for zeit in ["Abend", "Nacht"] if proband_id & 1 else ["Nacht", "Abend"]:
         for w in range(1, nr_wdh + 1):
@@ -272,7 +270,7 @@ def erzeuge_durchgange_spots(proband_id, nr_wdh, szenen_abend, szenen_nacht):
 def erzeuge_probanden_grob(nr_probanden):
     for proband_id in range(1, nr_probanden + 1):
         proband = {"ID": proband_id, "Abstufung": "grob", "Lerndurchgang": False}
-        durchgange_spots = erzeuge_durchgange_spots(
+        durchgange_spots = generate_durchgange_spots(
             proband_id, number_of_repetitions_grob, scenes_spots_evening_grob, scenes_spots_night_grob
         )
         durchgange_diffus = generate_durchgange_diffus(
@@ -362,7 +360,7 @@ def erzeuge_proband_fein(
             ]
         )
 
-    durchgange_spots = erzeuge_durchgange_spots(
+    durchgange_spots = generate_durchgange_spots(
         proband_id, number_of_repetitions_fein, scenes_spots_evening_custom, scenes_spots_night_custom
     )
 
