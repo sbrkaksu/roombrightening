@@ -178,7 +178,7 @@ E_vals_test = [0.1, 3.1622777, 100] # E levels in Learning/Trial Run
 E_vals_test_repeated = np.tile(E_vals_test, num_spots).tolist()
 spooots_test = np.repeat(spots, len(E_vals_test)).tolist()
 
-######################## Scenes for LEarning/Trial Durchgang ########################################### 
+######################## Scenes for Learning/Trial Durchgang ########################################### 
 
 #{'ID': -1..-3, 'Zeit': 'Abend', 'Spot': 1, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 1
 #{'ID': -4..-6, 'Zeit': 'Abend', 'Spot': 2, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 2
@@ -210,17 +210,18 @@ def erzeuge_test_durchgang():
     with open("TestDurchgang.txt", "w") as file:
         file.write(printer.pformat(durchgang))
 """
-
-def erzeuge_lern_proband():
-    proband = {"ID": -1, "Abstufung": "lernen"}
+#generates ProbandLernen.txt
+def generate_learn_proband():
+    proband = {"ID": -1, "Abstufung": "lernen"} # Abstufung = Phase
     durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}
     durchgang["Szenen"] = rng.permutation(scenes_test).tolist()
     proband["Durchgange"] = [durchgang]
     with open("ProbandLernen.txt", "w") as file:
         file.write(printer.pformat(proband))
+    return print(proband)
 
 
-def erzeuge_durchgange_diffus(proband_id, nr_wdh, szenen_abend, szenen_nacht):
+def generate_durchgange_diffus(proband_id, nr_wdh, szenen_abend, szenen_nacht):
     durchgange_diffus = []
     for zeit in ["Abend", "Nacht"] if proband_id & 1 else ["Nacht", "Abend"]:
         for w in range(1, nr_wdh + 1):
@@ -274,7 +275,7 @@ def erzeuge_probanden_grob(nr_probanden):
         durchgange_spots = erzeuge_durchgange_spots(
             proband_id, number_of_repetitions_grob, scenes_spots_evening_grob, scenes_spots_night_grob
         )
-        durchgange_diffus = erzeuge_durchgange_diffus(
+        durchgange_diffus = generate_durchgange_diffus(
             proband_id, number_of_repetitions_grob, scenes_diffuse_evening_grob, scenes_diffuse_night_grob
         )
         if proband_id & 2:  # start with diffus
@@ -383,7 +384,7 @@ def erzeuge_proband_fein(
         diffus_nacht_low_idx:diffus_nacht_high_idx
     ]
 
-    durchgange_diffus = erzeuge_durchgange_diffus(
+    durchgange_diffus = generate_durchgange_diffus(
         proband_id, number_of_repetitions_fein, scenes_diffuse_evening_custom, scenes_diffuse_night_custom
     )
 
@@ -403,4 +404,4 @@ def erzeuge_proband_fein(
 
 if __name__ == "__main__":
     erzeuge_probanden_grob(nr_probanden=5)
-    erzeuge_lern_proband()
+    generate_learn_proband()
