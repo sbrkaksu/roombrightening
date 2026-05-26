@@ -173,17 +173,27 @@ number_of_repetitions_fein = 3
 #value is derived from the lowest stimulus level that was evaluated as disturbing in the grob block.
 stimulus_range_fein = 4  # 4 below steps + threshold + 3 above steps
 
-
-E_vals_test = [0.1, 3.1622777, 100]
-
+#Learning/Trial Run
+E_vals_test = [0.1, 3.1622777, 100] # E levels in Learning/Trial Run
 E_vals_test_repeated = np.tile(E_vals_test, num_spots).tolist()
 spooots_test = np.repeat(spots, len(E_vals_test)).tolist()
-szenen_test = [
+
+######################## Scenes for LEarning/Trial Durchgang ########################################### 
+
+#{'ID': -1..-3, 'Zeit': 'Abend', 'Spot': 1, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 1
+#{'ID': -4..-6, 'Zeit': 'Abend', 'Spot': 2, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 2
+#{'ID': -7..-9, 'Zeit': 'Abend', 'Spot': 3, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 3
+#{'ID': -10..-12, 'Zeit': 'Abend', 'Spot': 4, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 4
+scenes_test = [
     {"ID": -(i + 1), "Zeit": "Abend", "Spot": s, "Farbe": "W1", "E": e}
     for i, (s, e) in enumerate(zip(spooots_test, E_vals_test_repeated))
 ]
 
+#np.searchsirted(E_steps_evening, E_vals), verilen sorted E_steps_evening arrayinde
+#E_vals degerinin hangi indexe gelmesi gerektigini return eder
 
+#asagidaki fonksiyon E_steps_evening de tanimlanan butun E degerleri arrayinde verilen
+#E_vals degerinin gelmesi gereken indexi return ediyor time a gore
 def get_E_idx(E_vals, Zeit):
     if Zeit == "Abend":
         E_idx = np.searchsorted(E_steps_evening, E_vals)
@@ -196,7 +206,8 @@ def get_E_idx(E_vals, Zeit):
 
 def erzeuge_test_durchgang():
     durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}
-    durchgang["Szenen"] = rng.permutation(szenen_test).tolist()
+    durchgang["Szenen"] = rng.permutation(scenes_test).tolist()
+    print("berko")
     with open("TestDurchgang.txt", "w") as file:
         file.write(printer.pformat(durchgang))
 
@@ -204,7 +215,7 @@ def erzeuge_test_durchgang():
 def erzeuge_lern_proband():
     proband = {"ID": -1, "Abstufung": "lernen"}
     durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}
-    durchgang["Szenen"] = rng.permutation(szenen_test).tolist()
+    durchgang["Szenen"] = rng.permutation(scenes_test).tolist()
     proband["Durchgange"] = [durchgang]
     with open("ProbandLernen.txt", "w") as file:
         file.write(printer.pformat(proband))
