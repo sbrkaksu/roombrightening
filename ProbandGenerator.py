@@ -114,7 +114,7 @@ scenes_diffuse_night = [
 
 
 
-#################need same IDs for szenen in both lists: generate fein first, grob is subset
+#################need same IDs for szenen in both lists: generate fein first, grob is subset###############
 
 #[ 0  3  6  9 12 15 18 21] = [0.1lx, 0,316lx .... 316lx], 8 scene for each spot
 # decade da ki stepler 3er 3er atlayarak gidiyor tezde yazildigi gibi
@@ -160,12 +160,22 @@ scenes_diffuse_night_grob = [scenes_diffuse_night[i] for i in grob_indices_night
 
    
 
-nr_wdh_grob = 1
-nr_wdh_fein = 3
-suchbereich_fein = 4  # in stufen +- um stoer E in feiner skala
+# 8 scenes for diffus evening, 8 scenes for diffus night, 
+# 32 scenes for spots evening, 32 scenes for spots night 
+number_of_repetitions_grob = 1 
+
+# 24 scenes for diffus evening, 24 scenes for diffus night, 
+# 96 scenes for spots evening, 96 scenes for spots night
+number_of_repetitions_fein = 3 
+
+#Based on the results of the grob block, a stimulus range is determined within which all 
+#intermediate levels are then presented in the subsequent fein block.
+#value is derived from the lowest stimulus level that was evaluated as disturbing in the grob block.
+stimulus_range_fein = 4  # 4 below steps + threshold + 3 above steps
 
 
-E_vals_test = np.array([0.1, 3.1622777, 100]).tolist()
+E_vals_test = [0.1, 3.1622777, 100]
+
 E_vals_test_repeated = np.tile(E_vals_test, num_spots).tolist()
 spooots_test = np.repeat(spots, len(E_vals_test)).tolist()
 szenen_test = [
@@ -252,10 +262,10 @@ def erzeuge_probanden_grob(nr_probanden):
     for proband_id in range(1, nr_probanden + 1):
         proband = {"ID": proband_id, "Abstufung": "grob", "Lerndurchgang": False}
         durchgange_spots = erzeuge_durchgange_spots(
-            proband_id, nr_wdh_grob, scenes_spots_evening_grob, scenes_spots_night_grob
+            proband_id, number_of_repetitions_grob, scenes_spots_evening_grob, scenes_spots_night_grob
         )
         durchgange_diffus = erzeuge_durchgange_diffus(
-            proband_id, nr_wdh_grob, scenes_diffuse_evening_grob, scenes_diffuse_night_grob
+            proband_id, number_of_repetitions_grob, scenes_diffuse_evening_grob, scenes_diffuse_night_grob
         )
         if proband_id & 2:  # start with diffus
             proband["Durchgange"] = durchgange_spots + durchgange_diffus
@@ -321,7 +331,7 @@ def erzeuge_proband_fein(
         spot_offset_abend = i * num_E_steps_evening
         spot_offset_nacht = i * num_E_steps_night
         spot_abend_low_idx, spot_abend_high_idx = sliding_window(
-            0, num_E_steps_evening - 1, stoer_szene_spots_abend_idx, suchbereich_fein
+            0, num_E_steps_evening - 1, stoer_szene_spots_abend_idx, stimulus_range_fein
         )
         scenes_spots_evening_custom.extend(
             scenes_spots_evening[
@@ -331,7 +341,7 @@ def erzeuge_proband_fein(
             ]
         )
         spot_nacht_low_idx, spot_nacht_high_idx = sliding_window(
-            0, num_E_steps_night - 1, stoer_szene_spots_nacht_idx, suchbereich_fein
+            0, num_E_steps_night - 1, stoer_szene_spots_nacht_idx, stimulus_range_fein
         )
         scenes_spots_night_custom.extend(
             scenes_spots_night[
@@ -342,7 +352,7 @@ def erzeuge_proband_fein(
         )
 
     durchgange_spots = erzeuge_durchgange_spots(
-        proband_id, nr_wdh_fein, scenes_spots_evening_custom, scenes_spots_night_custom
+        proband_id, number_of_repetitions_fein, scenes_spots_evening_custom, scenes_spots_night_custom
     )
 
     # Create Diffus Durchgange
@@ -351,20 +361,20 @@ def erzeuge_proband_fein(
     )
     stoer_szene_diffus_nacht_idx = np.searchsorted(E_steps_night, stoer_E_diffus_nacht)
     diffus_abend_low_idx, diffus_abend_high_idx = sliding_window(
-        0, num_E_steps_evening - 1, stoer_szene_diffus_abend_idx, suchbereich_fein
+        0, num_E_steps_evening - 1, stoer_szene_diffus_abend_idx, stimulus_range_fein
     )
     scenes_diffuse_evening_custom = scenes_diffuse_evening[
         diffus_abend_low_idx:diffus_abend_high_idx
     ]
     diffus_nacht_low_idx, diffus_nacht_high_idx = sliding_window(
-        0, num_E_steps_night - 1, stoer_szene_diffus_nacht_idx, suchbereich_fein
+        0, num_E_steps_night - 1, stoer_szene_diffus_nacht_idx, stimulus_range_fein
     )
     scenes_diffuse_night_custom = scenes_diffuse_night[
         diffus_nacht_low_idx:diffus_nacht_high_idx
     ]
 
     durchgange_diffus = erzeuge_durchgange_diffus(
-        proband_id, nr_wdh_fein, scenes_diffuse_evening_custom, scenes_diffuse_night_custom
+        proband_id, number_of_repetitions_fein, scenes_diffuse_evening_custom, scenes_diffuse_night_custom
     )
 
     if proband_id & 2:  # start with diffus
