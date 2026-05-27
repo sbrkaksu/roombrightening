@@ -1,27 +1,24 @@
-from ast import literal_eval
-from requests import post
-from itertools import pairwise
-from timeit import default_timer as timer
-from os.path import splitext, exists
-import serial
-import string
-
-from re import compile
+from ast import literal_eval #dict type security for Proband file reading
+from requests import post #communication with QLC+ via HTTP API
+from itertools import pairwise #used for calculating fade steps in scene transitions
+from timeit import default_timer as timer #used for reaction time measurement
+from os.path import splitext, exists #used for saving result files with correct naming and preventing overwriting 
+import serial #used for communication with the measurement monitor via serial port
+from re import compile #used for parsing the monitor input with regular expressions
 
 import numpy as np
 
-from tkinter import filedialog, font, DoubleVar
-import customtkinter as ctk
-from CTkMenuBar import CTkTitleMenu
-from CTkTable import CTkTable
-from pprint import PrettyPrinter
-import asyncio
-from async_tkinter_loop import async_handler
-from async_tkinter_loop.mixins import AsyncCTk
-import async_timer
-# maybe use uvloop (fast / more time-accurate event loop)
+import asyncio #used for asynchronous tasks such as running the scene sequences and reading the monitor input without blocking
+from tkinter import filedialog, font, DoubleVar #used for file dialogs, font configuration 
+from async_tkinter_loop import async_handler #decorator to allow async functions to be used as event handlers in Tkinter
+from async_tkinter_loop.mixins import AsyncCTk #mixin to allow the main application class to run asynchronous tasks
+import customtkinter as ctk #GUI framework
+from CTkTable import CTkTable #custom table widget for displaying the scenes and their parameters
+from pprint import PrettyPrinter #used for pretty-printing the proband data structures when saving to file
 
-import pyartnet as pan
+
+import pyartnet as pan #used for controlling the lighting via Art-Net protocol
+
 from ProbandGenerator import erzeuge_proband_fein, get_E_idx
 
 def all_children(wid, finList=None):
