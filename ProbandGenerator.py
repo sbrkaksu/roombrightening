@@ -192,6 +192,7 @@ scenes_test = [
 #np.searchsirted(E_steps_evening, E_vals), verilen sorted E_steps_evening arrayinde
 #E_vals degerinin hangi indexe gelmesi gerektigini return eder
 
+"""
 #asagidaki fonksiyon E_steps_evening de tanimlanan butun E degerleri arrayinde verilen
 #E_vals degerinin gelmesi gereken indexi return ediyor time a gore
 def get_E_idx(E_vals, Zeit):
@@ -202,7 +203,7 @@ def get_E_idx(E_vals, Zeit):
     else:
         raise ValueError("Invalid Zeit value. Must be 'Abend' or 'Nacht'.")
     return E_idx
-
+"""
 """
 def erzeuge_test_durchgang():
     durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}

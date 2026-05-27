@@ -19,7 +19,7 @@ from pprint import PrettyPrinter #used for pretty-printing the proband data stru
 
 import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 
-from ProbandGenerator import erzeuge_proband_fein, get_E_idx
+from ProbandGenerator import erzeuge_proband_fein
 
 def all_children(wid, finList=None):
     finList = finList or []
