@@ -283,8 +283,6 @@ def generate_probanden_grob(nr_probanden):
             proband["Durchgange"] = durchgange_spots + durchgange_diffus
         else:
             proband["Durchgange"] = durchgange_diffus + durchgange_spots
-        print(proband)
-        print("\n\n")
         with open("Proband{}_grob.txt".format(proband_id), "w") as file:
             file.write(printer.pformat(proband))
 
@@ -401,5 +399,5 @@ def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoe
 
 
 if __name__ == "__main__":
-    generate_probanden_grob(nr_probanden=2)
+    generate_probanden_grob(nr_probanden=5)
     generate_learn_proband()
