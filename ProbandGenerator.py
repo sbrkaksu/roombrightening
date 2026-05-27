@@ -286,7 +286,7 @@ def generate_probanden_grob(nr_probanden):
         with open("Proband{}_grob.txt".format(proband_id), "w") as file:
             file.write(printer.pformat(proband))
 
-
+#fine threshold slice ini olusturuyor. ust ve alt siniri asmayacak sekilde
 def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
     num = max_idx - min_idx + 1
     window_size = 2 * window_half_size
@@ -299,7 +299,7 @@ def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
 
 
 def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoer_E_diffus_abend,stoer_E_diffus_nacht,): 
-     # stoer_E_grob ist die erste Beleuchtungsstärke die störend war
+     # stoer_E_grob is the first illuminance level that was perceived as disturbing
     proband = {"ID": proband_id, "Abstufung": "fein"}
     """
     print(stoer_E_spots_abend)
@@ -309,13 +309,11 @@ def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoe
     """
     # sanetize input: arrays for stoer_E spots and stoer E diffus inputs can be None. Take max E if None
     stoer_E_spots_abend = (
-        [max_E_evening] * 4
-        if stoer_E_spots_abend is None
+        [max_E_evening] * 4 if stoer_E_spots_abend is None
         else [max_E_evening if e is None else e for e in stoer_E_spots_abend]
     )
     stoer_E_spots_nacht = (
-        [max_E_night] * 4
-        if stoer_E_spots_nacht is None
+        [max_E_night] * 4 if stoer_E_spots_nacht is None
         else [max_E_night if e is None else e for e in stoer_E_spots_nacht]
     )
     stoer_E_diffus_abend = (
@@ -399,5 +397,5 @@ def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoe
 
 
 if __name__ == "__main__":
-    generate_probanden_grob(nr_probanden=5)
+    generate_probanden_grob(nr_probanden=1)
     generate_learn_proband()

@@ -1,14 +1,14 @@
 import numpy as np
 
-num_E_steps_per_decade = 6
+def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
+    num = max_idx - min_idx + 1
+    window_size = 2 * window_half_size
+    assert window_size <= num
+    high_idx = np.minimum(middle_idx + window_half_size, max_idx + 1)
+    low_idx = high_idx - window_size
+    low_idx = np.maximum(low_idx, min_idx)
+    high_idx = low_idx + window_size
+    return print(low_idx, high_idx)
 
-E_decades_Evening = (-1, 0, 1, 2)  # 10^...
-E_decades_Night = (-2, -1, 0, 1)  # 10^...
+sliding_window(0, 21, 15, 4)
 
-
-E_steps_evening = np.logspace(
-    E_decades_Evening[0], E_decades_Evening[-1], len(E_decades_Evening)
-)
-
-
-print(E_steps_evening)
