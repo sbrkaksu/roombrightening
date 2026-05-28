@@ -288,15 +288,21 @@ def generate_probanden_grob(nr_probanden):
             file.write(printer.pformat(proband))
 
 #fine threshold slice ini olusturuyor. ust ve alt siniri asmayacak sekilde
+#4 lower than threshold + threshold + 3 higher than threshold = 8 scenes for each spot and diffus
 def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
-    num = max_idx - min_idx + 1
+    num = max_idx - min_idx + 1 #lenght
     window_size = 2 * window_half_size
-    assert window_size <= num
-    high_idx = np.minimum(middle_idx + window_half_size, max_idx + 1)
-    low_idx = high_idx - window_size
-    low_idx = np.maximum(low_idx, min_idx)
-    high_idx = low_idx + window_size
+    assert window_size <= num #ensure that window size is not bigger than the number of available indices
+    high_idx = np.minimum(middle_idx + window_half_size, max_idx + 1) #ensure upper limit of the window
+    low_idx = high_idx - window_size #actual lower index
+    low_idx = np.maximum(low_idx, min_idx) #ensure that lower limit is not smaller than the minimum index
+    high_idx = low_idx + window_size #actual upper index
     return low_idx, high_idx
+
+# finds the index of the E value in E_steps for threshold
+def nearest_E_idx(E_steps, E_val):
+    E_steps = np.asarray(E_steps)
+    return int(np.argmin(np.abs(E_steps - E_val)))
 
 
 def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoer_E_diffus_abend,stoer_E_diffus_nacht,): 
@@ -328,10 +334,10 @@ def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoe
     scenes_spots_evening_custom = []
     scenes_spots_night_custom = []
     for i in range(num_spots):
-        stoer_szene_spots_abend_idx = np.searchsorted(
+        stoer_szene_spots_abend_idx = nearest_E_idx(
             E_steps_evening, stoer_E_spots_abend[i]
         )
-        stoer_szene_spots_nacht_idx = np.searchsorted(
+        stoer_szene_spots_nacht_idx = nearest_E_idx(
             E_steps_night, stoer_E_spots_nacht[i]
         )
         spot_offset_abend = i * num_E_steps_evening
@@ -362,10 +368,10 @@ def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoe
     )
 
     # Create Diffus Durchgange
-    stoer_szene_diffus_abend_idx = np.searchsorted(
+    stoer_szene_diffus_abend_idx = nearest_E_idx(
         E_steps_evening, stoer_E_diffus_abend
     )
-    stoer_szene_diffus_nacht_idx = np.searchsorted(E_steps_night, stoer_E_diffus_nacht)
+    stoer_szene_diffus_nacht_idx = nearest_E_idx(E_steps_night, stoer_E_diffus_nacht)
     diffus_abend_low_idx, diffus_abend_high_idx = sliding_window(
         0, num_E_steps_evening - 1, stoer_szene_diffus_abend_idx, stimulus_range_fein
     )
