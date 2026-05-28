@@ -24,9 +24,10 @@ from requests import post #communication with QLC+ via HTTP API
 import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
-# Import Probandens
+# Generates Fein block
 from ProbandGenerator import erzeuge_proband_fein
 
+#loops through all children of a widget and its children in GUI
 def all_children(wid, finList=None):
     finList = finList or []
     children = wid.winfo_children()
@@ -35,6 +36,7 @@ def all_children(wid, finList=None):
         all_children(item, finList)
     return finList
 
+#class for scientific formatting of the E values 
 class FormatPrinter(PrettyPrinter):
     def __init__(self, formats, *args, **kwargs):
         super(FormatPrinter, self).__init__(*args, **kwargs)
@@ -49,19 +51,21 @@ class FormatPrinter(PrettyPrinter):
             return fmt.format(obj), 1, 0
         return PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
 
-printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
+printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False) #4 digits after comma for E values for file saving
 
 superscript_map = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵",
                    "6": "⁶","7": "⁷", "8": "⁸", "9": "⁹","+": "⁺","-": "⁻"}
-superscript_trans = str.maketrans(
-    ''.join(superscript_map.keys()),
-    ''.join(superscript_map.values()))
+
+superscript_trans = str.maketrans(''.join(superscript_map.keys()),''.join(superscript_map.values()))
+
 def pprint_scientific(f):
     b,e = np.format_float_scientific(f, precision=2, min_digits=2, exp_digits=1).split('e', 1)
-    return "{} ⋅10{}".format(b, e.translate(superscript_trans))
+    return "{} ⋅10{}".format(b, e.translate(superscript_trans)) 
+#formats float in scientific notation with superscript exponent, e.g. 1.23e+04 -> 1.23 ⋅10⁺⁴ 
 
-table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} )
+table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} ) #formatting E values in the table with above formatter
 
+#Creates a clickable table with header and specified number of rows
 class ClickableTable(ctk.CTkFrame):
     def __init__(self, *args, header_labels, row_num, callback = None, **kwargs):
         super().__init__(*args, **kwargs,fg_color="transparent")
@@ -121,7 +125,8 @@ class ClickableTable(ctk.CTkFrame):
         if isinstance(col, str):
             col = self.header_dict[col]
         self.table.insert(row_idx, col, str(table_printer.pformat(value)))
-        
+
+ # Creates a pop-up window with a confirm button       
 class CheckWindow(ctk.CTkToplevel):
     def __init__(self, parent, title, label, *args, **kwargs):
         super().__init__(parent,*args, **kwargs)
@@ -134,7 +139,8 @@ class CheckWindow(ctk.CTkToplevel):
         self.grid_rowconfigure(0, weight=1)
         self.confirm_button = ctk.CTkButton(self, text=label, command=self.destroy)
         self.confirm_button.grid(row=0, column=0, padx=20, pady=30, sticky="nsew")
-    
+
+# Creates a pop-up window with multiple dropdowns    
 class CheckWindowDropDown(ctk.CTkToplevel):
     def __init__(self, parent, title, options_dictlist, callback, *args, **kwargs):
         super().__init__(parent,*args, **kwargs)
@@ -171,6 +177,7 @@ class CheckWindowDropDown(ctk.CTkToplevel):
         self.callback(selected_options)
         self.destroy()
 
+# Switch button class that can be toggled on and off, and can be part of a group where only one button can be selected at a time. 
 class SwitchButton(ctk.CTkButton):
     button_groups = {}
     def __init__(self , *args, on_color, group=None, command=None, toggleable=False, **kwargs):
@@ -258,6 +265,7 @@ class SwitchButton(ctk.CTkButton):
     def set_command(self, command):
         self.command = command
 
+# Class representing a phase of the experiment
 class Phase(dict):
     def __init__(self,proband_file, *args, **kwargs):
         __slots__ = ()
@@ -345,6 +353,7 @@ class Phase(dict):
         with open(fname, 'w') as f:
             f.write(printer.pformat(self))
 
+# Main application class
 class App(ctk.CTk, AsyncCTk):
     def __init__(self):
         super().__init__()
@@ -1027,6 +1036,7 @@ class App(ctk.CTk, AsyncCTk):
         self.isi_color.set_values([255,0,0,0])
         self.pixel2_7_intensity.set_values([0])
 
+"""
 class QLCArtNetInterface:
     def __init__(self):
         self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
@@ -1047,6 +1057,7 @@ class QLCArtNetInterface:
         self.reading_light_intensity = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
         self.room_light = self.qlc_input.add_channel(start=25, width=1) # Room light
 
+"""
 app = App()
 app.async_mainloop()
 

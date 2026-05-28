@@ -16,16 +16,13 @@ class FormatPrinter(pprint.PrettyPrinter):
         return pprint.PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
 
 
-printer = FormatPrinter(
-    {float: "{:.4e}"}, sort_dicts=False
-)  #'{:.4e}'.format(3.14159) = '3.1416e+00' - formats E
-# printer = FormatPrinter({},sort_dicts=False)
+printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)  #'{:.4e}'.format(3.14159) = '3.1416e+00' - formats E
 
-
+"""
 def broadcast_stack(arr, num):  # stacks arrays (copying arrays per given shape)
     arr = np.asarray(arr)
     return np.broadcast_to(arr, (num,) + arr.shape)
-
+"""
 
 
 # create 128-byte integer for seed, everytime creates different seed to ensure randomness
