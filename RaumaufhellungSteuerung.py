@@ -69,8 +69,10 @@ table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} ) #formattin
 class ClickableTable(ctk.CTkFrame):
     def __init__(self, *args, header_labels, row_num, callback = None, **kwargs):
         super().__init__(*args, **kwargs,fg_color="transparent")
+
         self.row_num = row_num
         self.col_num = len(header_labels)
+        
         #table header
         self.table_header = CTkTable(self, row=1, column=self.col_num, header_color='white', corner_radius=0, height=10, width=85)
         self.table_header.grid(row=0, column=0, padx=10, pady=0, sticky="n")
@@ -84,13 +86,6 @@ class ClickableTable(ctk.CTkFrame):
             self.set_callback(callback)
         
         self.selected_row = None
-        #self.sequence_progressbar = ctk.CTkProgressBar(self, orientation="vertical", mode = "determinate", width = 6)
-        #self.sequence_progressbar.grid(row=2, column=1, padx=0, pady=(0,1), sticky="nsw")
-        #self.sequence_progressbar.configure(corner_radius=0)
-        # swap progressbar colors, so it "fills" from top to bottom
-        #self.sequence_progressbar.configure(progress_color=ctk.ThemeManager.theme["CTkProgressBar"]["fg_color"])
-        #self.sequence_progressbar.configure(fg_color=ctk.ThemeManager.theme["CTkProgressBar"]["progress_color"])
-        #self.sequence_progressbar.set(1)
     
     def set_callback(self, callback):
         for i in range(self.table.rows):
