@@ -71,15 +71,14 @@ class ClickableTable(ctk.CTkFrame):
         super().__init__(*args, **kwargs,fg_color="transparent")
         self.row_num = row_num
         self.col_num = len(header_labels)
+        #table header
         self.table_header = CTkTable(self, row=1, column=self.col_num, header_color='white', corner_radius=0, height=10, width=85)
         self.table_header.grid(row=0, column=0, padx=10, pady=0, sticky="n")
         self.table_header.update_values([header_labels])
         self.header_dict = dict(zip(header_labels, range(len(header_labels))))
-        self.table = CTkTable(self, row=self.row_num, column=self.col_num, corner_radius=0, height=10, width=85)
+        #table body
+        self.table = CTkTable(self, row=self.row_num, column=self.col_num, corner_radius=0, height=10, width=85 ,hover_color= "#cec9c0")
         self.table.grid(row=1, column=0, padx=10, pady=(0,10), sticky="n")
-        hover_color = ctk.ThemeManager.theme["CTkButton"]["hover_color"]
-        for i in range(self.table.rows):
-            self.table.edit_row(row=i,hover_color = hover_color)
         
         if callback is not None:
             self.set_callback(callback)
