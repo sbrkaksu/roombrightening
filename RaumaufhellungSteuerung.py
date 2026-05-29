@@ -39,7 +39,7 @@ def all_children(wid, finList=None):
 #class for scientific formatting of the E values 
 class FormatPrinter(PrettyPrinter):
     def __init__(self, formats, *args, **kwargs):
-        super(FormatPrinter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.formats = formats
 
     def format(self, obj, ctx, maxlvl, lvl):
