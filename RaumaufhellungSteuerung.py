@@ -155,7 +155,7 @@ class CheckWindowDropDown(ctk.CTkToplevel):
             dropdown.grid(row=(i*2) + 1, column=0, padx=20, pady=(0,5), sticky="nw")
             d["Dropdown"] = dropdown
             
-        self.confirm_button = ctk.CTkButton(self, text="bestätigen", state="normal",
+        self.confirm_button = ctk.CTkButton(self, text="Confirm", state="normal",
                                             command=self.call_callback_and_selfdestruct)
         self.confirm_button.grid(row=(i+1)*2, column=0, padx=10, pady=30, sticky="nsew")
         self.callback = callback
@@ -175,9 +175,12 @@ class CheckWindowDropDown(ctk.CTkToplevel):
 
 # Switch button class that can be toggled on and off, and can be part of a group where only one button can be selected at a time. 
 class SwitchButton(ctk.CTkButton):
+
     button_groups = {}
+    
     def __init__(self , *args, on_color, group=None, command=None, toggleable=False, **kwargs):
         super().__init__(*args, command=self.on_click, hover=False, **kwargs)
+
         self.on_color = on_color
         self.off_color = super().cget("fg_color")
         self.border_color = super().cget("border_color")
@@ -188,6 +191,7 @@ class SwitchButton(ctk.CTkButton):
         self.group = group
         self.on_enter_id = None
         self.on_leave_id = None
+
         if group is not None:
             SwitchButton.button_groups.setdefault(group, []).append(self)
         if super().cget("state") == "disabled":
@@ -195,17 +199,20 @@ class SwitchButton(ctk.CTkButton):
             self.disable()
         else:
             self.enabled = False
-            self.enalbe()
+            self.enable() # check later
         # create label
         
     def on_enter(self, event):
         super().configure(border_color="white")
+
     def on_leave(self, event):
         super().configure(border_color=self.border_color)
+        
     def add_enter_leave_interaction(self):
         if self.on_enter_id is None and self.on_leave_id is None:
             self.on_enter_id = super().bind("<Enter>", self.on_enter, add='+')
             self.on_leave_id = super().bind("<Leave>", self.on_leave, add='+')
+            
     def remove_enter_leave_interaction(self):
         print("Remove Enter Leave")
         super().unbind("<Enter>")
@@ -221,43 +228,52 @@ class SwitchButton(ctk.CTkButton):
                 self.command()
         elif self.toggleable:
             self.turn_off()
+
     def turn_on(self):
         super().configure(fg_color=self.on_color)
+
     def turn_off(self):
         super().configure(fg_color=self.off_color)
+
     def enable(self):
         if self.enabled == False:
             super().configure(state="normal")
             super().configure(border_color=self.border_color)
             self.add_enter_leave_interaction()
             self.enabled = True
+
     def enable_children(self):
         if self.enabled == True:
             for child in all_children(self):
                 if isinstance(child, ctk.CTkButton):
                     child.configure(state="normal")
+
     def disable(self):
         if self.enabled == True:
             super().configure(state="disabled", border_color="gray")
             self.remove_enter_leave_interaction()
             self.enabled = False
             self.disable_children()
+
     def disable_children(self):
         for child in all_children(self):
             if isinstance(child, ctk.CTkButton):
                 child.configure(state="disabled")
+
     def select(self):
         if self.enabled == True and self.selected == False:
             self.selected = True
             self.remove_enter_leave_interaction()
             super().configure(border_color="white", border_width=self.border_width*2)
             self.enable_children()
+
     def deselect(self):
         if self.enabled == True and self.selected == True:
             self.selected = False
             self.add_enter_leave_interaction()
             super().configure(border_color=self.border_color, border_width=self.border_width)
             self.disable_children()
+            
     def set_command(self, command):
         self.command = command
 
