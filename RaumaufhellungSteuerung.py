@@ -175,7 +175,7 @@ class CheckWindowDropDown(ctk.CTkToplevel):
 
 # Switch button class that can be toggled on and off, and can be part of a group where only one button can be selected at a time. 
 class SwitchButton(ctk.CTkButton):
-
+#soldaki 3 transparent button
     button_groups = {}
     
     def __init__(self , *args, on_color, group=None, command=None, toggleable=False, **kwargs):
@@ -202,19 +202,25 @@ class SwitchButton(ctk.CTkButton):
             self.enable() # check later
         # create label
         
-    def on_enter(self, event):
+    def on_enter(self, event): #mouse on
         super().configure(border_color="white")
+        print("enter")
 
-    def on_leave(self, event):
+
+    def on_leave(self, event):#mouse off
         super().configure(border_color=self.border_color)
+
         
     def add_enter_leave_interaction(self):
         if self.on_enter_id is None and self.on_leave_id is None:
             self.on_enter_id = super().bind("<Enter>", self.on_enter, add='+')
             self.on_leave_id = super().bind("<Leave>", self.on_leave, add='+')
             
+
+            
+            
     def remove_enter_leave_interaction(self):
-        print("Remove Enter Leave")
+        #print("Remove Enter Leave")
         super().unbind("<Enter>")
         super().unbind("<Leave>")
         self.on_enter_id, self.on_leave_id = None, None
