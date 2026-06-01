@@ -51,19 +51,21 @@ class FormatPrinter(PrettyPrinter):
             return fmt.format(obj), 1, 0
         return PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
 
-printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False) #4 digits after comma for E values for file saving
+#4 digits after comma for E values for file saving
+printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
 
 superscript_map = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵",
                    "6": "⁶","7": "⁷", "8": "⁸", "9": "⁹","+": "⁺","-": "⁻"}
 
 superscript_trans = str.maketrans(''.join(superscript_map.keys()),''.join(superscript_map.values()))
 
+#formats float in scientific notation with superscript exponent, e.g. 1.23e+04 -> 1.23 ⋅10⁺⁴ 
 def pprint_scientific(f):
     b,e = np.format_float_scientific(f, precision=2, min_digits=2, exp_digits=1).split('e', 1)
     return "{} ⋅10{}".format(b, e.translate(superscript_trans)) 
-#formats float in scientific notation with superscript exponent, e.g. 1.23e+04 -> 1.23 ⋅10⁺⁴ 
 
-table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} ) #formatting E values in the table with above formatter
+#formatting E values in the table with above formatter
+table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} ) 
 
 #Creates a clickable table with header and specified number of rows
 class ClickableTable(ctk.CTkFrame):
@@ -72,33 +74,33 @@ class ClickableTable(ctk.CTkFrame):
 
         self.row_num = row_num
         self.col_num = len(header_labels)
+        self.selected_row = None
         
         #table header
         self.table_header = CTkTable(self, row=1, column=self.col_num, header_color='white', corner_radius=0, height=10, width=85)
         self.table_header.grid(row=0, column=0, padx=10, pady=0, sticky="n")
         self.table_header.update_values([header_labels])
         self.header_dict = dict(zip(header_labels, range(len(header_labels))))
+
         #table body
-        self.table = CTkTable(self, row=self.row_num, column=self.col_num, corner_radius=0, height=10, width=85 ,hover_color= "#cec9c0")
+        self.table = CTkTable(self, row=self.row_num, column=self.col_num, corner_radius=0, height=10, width=85 ,hover_color= "#92d5e0")
         self.table.grid(row=1, column=0, padx=10, pady=(0,10), sticky="n")
         
         if callback is not None:
             self.set_callback(callback)
         
-        self.selected_row = None
-    
     def set_callback(self, callback):
         for i in range(self.table.rows):
             self.table.edit_row(row=i, command = lambda i=i: callback(i))
-    
+
+    def deselect_row(self):
+        if self.selected_row is not None:
+            self.table.deselect_row(self.selected_row)
+
     def select_row(self, row_idx):
         self.deselect_row()
         self.selected_row = row_idx
         self.table.select_row(self.selected_row)
-            
-    def deselect_row(self):
-        if self.selected_row is not None:
-            self.table.deselect_row(self.selected_row)
 
     def update_table(self, values):
         #for button in self.table.frame.values():
@@ -141,15 +143,15 @@ class CheckWindowDropDown(ctk.CTkToplevel):
         super().transient(parent) # always on top of parent window
         super().grab_set() # block parent window
         self.options_dictlist = options_dictlist
-        self.geometry("400x1000")
+        self.geometry("400x800")
         self.title(title)
         self.dropdowns = []
         for i,d in enumerate(self.options_dictlist):
             # pop the title of the dropDown
-            title = d["Titel"]
-            options = d["Optionen"]
+            title = d["Title"]
+            options = d["Options"]
             ctk.CTkLabel(self, text=title).grid(row=i*2, column=0, padx=10, pady=5, sticky="nw")
-            dropdown = ctk.CTkOptionMenu(self, values=options)#,command = self.check_set_options)
+            dropdown = ctk.CTkOptionMenu(self, values=options)
             dropdown.grid(row=(i*2) + 1, column=0, padx=20, pady=(0,5), sticky="nw")
             d["Dropdown"] = dropdown
             
@@ -167,7 +169,7 @@ class CheckWindowDropDown(ctk.CTkToplevel):
     
     def call_callback_and_selfdestruct(self):
         # call the callback function with the selected options
-        selected_options = {d["Titel"]: d["Dropdown"].get() for d in self.options_dictlist}
+        selected_options = {d["Title"]: d["Dropdown"].get() for d in self.options_dictlist}
         self.callback(selected_options)
         self.destroy()
 
@@ -295,9 +297,9 @@ class Phase(dict):
     def process_lowest_bothering_scenes_cb(self, lowest_bothering_scenes):
         lowest_bothering_Es = {}
         for dict_list in self.bothering_options_dict_list:
-            choice = lowest_bothering_scenes[dict_list["Titel"]]
-            E_choice = dict_list["Werte"][dict_list["Optionen"].index(choice)]
-            lowest_bothering_Es[dict_list["Titel"]] = E_choice
+            choice = lowest_bothering_scenes[dict_list["Title"]]
+            E_choice = dict_list["Werte"][dict_list["Options"].index(choice)]
+            lowest_bothering_Es[dict_list["Title"]] = E_choice
 
         self.lowest_bothering_Es = lowest_bothering_Es
 
@@ -318,13 +320,13 @@ class Phase(dict):
         for k in ["Spot1 Abend","Spot2 Abend","Spot3 Abend","Spot4 Abend",
                   "Spot1 Nacht","Spot2 Nacht","Spot3 Nacht","Spot4 Nacht",
                   "Diffus Abend","Diffus Nacht"]: # combination of spot and time
-            d = {"Titel":k}
+            d = {"Title":k}
             scene_list = bothering_scenes.setdefault(k, [])
             scene_list.sort(key=lambda sz: sz.get("E")) # sort for ascending illuminance
             d["Werte"] = [sz.get("E") for sz in scene_list]
             d["Werte"].append(None)
-            d["Optionen"] = ["E:{} Reaktionszeit:{}".format(table_printer.pformat(sz.get("E")), sz.get("Reaktionszeit")) for sz in scene_list]
-            d["Optionen"].append("Keine")
+            d["Options"] = ["E:{} Reaktionszeit:{}".format(table_printer.pformat(sz.get("E")), sz.get("Reaktionszeit")) for sz in scene_list]
+            d["Options"].append("Keine")
             self.bothering_options_dict_list.append(d)
         
         return self.bothering_options_dict_list
