@@ -194,10 +194,10 @@ class SwitchButton(ctk.CTkButton):
 
         if group is not None:
             SwitchButton.button_groups.setdefault(group, []).append(self)
-        if super().cget("state") == "disabled":
+        if super().cget("state") == "disabled": # to be able to call disable()
             self.enabled = True
             self.disable()
-        else:
+        else: # to be able to call enable()
             self.enabled = False
             self.enable() # check later
         # create label
@@ -210,17 +210,13 @@ class SwitchButton(ctk.CTkButton):
     def on_leave(self, event):#mouse off
         super().configure(border_color=self.border_color)
 
-        
-    def add_enter_leave_interaction(self):
+    def add_enter_leave_interaction(self): # triggers when proband grob file is loaded 
         if self.on_enter_id is None and self.on_leave_id is None:
             self.on_enter_id = super().bind("<Enter>", self.on_enter, add='+')
             self.on_leave_id = super().bind("<Leave>", self.on_leave, add='+')
             
 
-            
-            
-    def remove_enter_leave_interaction(self):
-        #print("Remove Enter Leave")
+    def remove_enter_leave_interaction(self): # 
         super().unbind("<Enter>")
         super().unbind("<Leave>")
         self.on_enter_id, self.on_leave_id = None, None
@@ -254,6 +250,7 @@ class SwitchButton(ctk.CTkButton):
                 if isinstance(child, ctk.CTkButton):
                     child.configure(state="normal")
 
+#GUI calisinca ilk bu call ediliyor
     def disable(self):
         if self.enabled == True:
             super().configure(state="disabled", border_color="gray")
