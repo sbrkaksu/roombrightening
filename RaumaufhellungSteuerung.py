@@ -230,9 +230,6 @@ class SwitchButton(ctk.CTkButton):
     def turn_on(self): #is activated when the phase is completed, fg_color = green
         super().configure(fg_color=self.on_color)
 
-    def turn_off(self):
-        super().configure(fg_color=self.off_color)
-
     def enable(self): #makes the button clickable
         if self.enabled == False:
             super().configure(state="normal")
