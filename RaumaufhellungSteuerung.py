@@ -204,19 +204,18 @@ class SwitchButton(ctk.CTkButton):
         
     def on_enter(self, event): #mouse on
         super().configure(border_color="white")
-        print("enter")
-
+        
 
     def on_leave(self, event):#mouse off
         super().configure(border_color=self.border_color)
 
-    def add_enter_leave_interaction(self): # triggers when proband grob file is loaded 
+    def add_enter_leave_interaction(self): # binds events for mouse enter and leave 
         if self.on_enter_id is None and self.on_leave_id is None:
             self.on_enter_id = super().bind("<Enter>", self.on_enter, add='+')
             self.on_leave_id = super().bind("<Leave>", self.on_leave, add='+')
             
 
-    def remove_enter_leave_interaction(self): # 
+    def remove_enter_leave_interaction(self): #unbinds events for mouse enter and leave
         super().unbind("<Enter>")
         super().unbind("<Leave>")
         self.on_enter_id, self.on_leave_id = None, None
@@ -231,13 +230,13 @@ class SwitchButton(ctk.CTkButton):
         elif self.toggleable:
             self.turn_off()
 
-    def turn_on(self):
+    def turn_on(self): #is activated when the phase is completed, fg_color = green
         super().configure(fg_color=self.on_color)
 
     def turn_off(self):
         super().configure(fg_color=self.off_color)
 
-    def enable(self):
+    def enable(self): #makes the button clickable
         if self.enabled == False:
             super().configure(state="normal")
             super().configure(border_color=self.border_color)
@@ -251,7 +250,7 @@ class SwitchButton(ctk.CTkButton):
                     child.configure(state="normal")
 
 #GUI calisinca ilk bu call ediliyor
-    def disable(self):
+    def disable(self):#makes the button unclickable 
         if self.enabled == True:
             super().configure(state="disabled", border_color="gray")
             self.remove_enter_leave_interaction()
