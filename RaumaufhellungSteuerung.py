@@ -193,6 +193,7 @@ class SwitchButton(ctk.CTkButton):
 
         if group is not None:
             SwitchButton.button_groups.setdefault(group, []).append(self)
+            
         if super().cget("state") == "disabled": # to be able to call disable()
             self.enabled = True
             self.disable()
@@ -303,9 +304,6 @@ class Phase(dict):
         reactions = [sz.get("Stoert") for s in self["Durchgange"] for sz in s["Szenen"]]
         return True if None not in reactions else False
     
-    def check_completion_test(self):
-        return True
-
     def process_lowest_bothering_scenes_cb(self, lowest_bothering_scenes):
         lowest_bothering_Es = {}
         for dict_list in self.bothering_options_dict_list:
