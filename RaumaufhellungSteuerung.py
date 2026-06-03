@@ -178,7 +178,7 @@ class SwitchButton(ctk.CTkButton):
 #soldaki 3 transparent button
     button_groups = {}
     
-    def __init__(self , *args, on_color, group=None, command=None, toggleable=False, **kwargs):
+    def __init__(self , *args, on_color, group=None, command=None, **kwargs):
         super().__init__(*args, command=self.on_click, hover=False, **kwargs)
 
         self.on_color = on_color
@@ -186,7 +186,6 @@ class SwitchButton(ctk.CTkButton):
         self.border_color = super().cget("border_color")
         self.border_width = super().cget("border_width")
         self.selected = False
-        self.toggleable = toggleable
         self.command = command
         self.group = group
         self.on_enter_id = None
@@ -227,8 +226,6 @@ class SwitchButton(ctk.CTkButton):
                 [sb.deselect() for sb in SwitchButton.button_groups[self.group] if sb is not self]
             if self.command is not None:
                 self.command()
-        elif self.toggleable:
-            self.turn_off()
 
     def turn_on(self): #is activated when the phase is completed, fg_color = green
         super().configure(fg_color=self.on_color)
