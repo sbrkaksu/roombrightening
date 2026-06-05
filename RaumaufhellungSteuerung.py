@@ -364,9 +364,10 @@ class App(ctk.CTk, AsyncCTk):
     def __init__(self):
         super().__init__()
         ######## Setup the Window ########
-        self.title("Studie Raumaufhellung")
-        self.geometry("1200x800") 
+        self.title("Study Room Brightening")
+        self.geometry("1100x750") 
         self.resizable(False, False)
+        self.style = ctk.set_appearance_mode("light") #force to work in light mode
         ##################################
         
         ######## Settings ########
