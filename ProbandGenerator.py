@@ -18,11 +18,6 @@ class FormatPrinter(pprint.PrettyPrinter):
 
 printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)  #'{:.4e}'.format(3.14159) = '3.1416e+00' - formats E
 
-"""
-def broadcast_stack(arr, num):  # stacks arrays (copying arrays per given shape)
-    arr = np.asarray(arr)
-    return np.broadcast_to(arr, (num,) + arr.shape)
-"""
 
 
 # create 128-byte integer for seed, everytime creates different seed to ensure randomness
@@ -186,28 +181,7 @@ scenes_test = [
     for i, (s, e) in enumerate(zip(spooots_test, E_vals_test_repeated))
 ]
 
-#np.searchsirted(E_steps_evening, E_vals), verilen sorted E_steps_evening arrayinde
-#E_vals degerinin hangi indexe gelmesi gerektigini return eder
 
-"""
-#asagidaki fonksiyon E_steps_evening de tanimlanan butun E degerleri arrayinde verilen
-#E_vals degerinin gelmesi gereken indexi return ediyor time a gore
-def get_E_idx(E_vals, Zeit):
-    if Zeit == "Abend":
-        E_idx = np.searchsorted(E_steps_evening, E_vals)
-    elif Zeit == "Nacht":
-        E_idx = np.searchsorted(E_steps_night, E_vals)
-    else:
-        raise ValueError("Invalid Zeit value. Must be 'Abend' or 'Nacht'.")
-    return E_idx
-"""
-"""
-def erzeuge_test_durchgang():
-    durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}
-    durchgang["Szenen"] = rng.permutation(scenes_test).tolist()
-    with open("TestDurchgang.txt", "w") as file:
-        file.write(printer.pformat(durchgang))
-"""
 #generates ProbandLernen.txt for Learning Phase
 def generate_learn_proband():
     proband = {"ID": -1, "Abstufung": "lernen"} # Abstufung = Phase
@@ -305,12 +279,7 @@ def nearest_E_idx(E_steps, E_val):
 def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoer_E_diffus_abend,stoer_E_diffus_nacht,): 
      # stoer_E_grob is the first illuminance level that was perceived as disturbing
     proband = {"ID": proband_id, "Abstufung": "fein"}
-    """
-    print(stoer_E_spots_abend)
-    print(stoer_E_spots_nacht)
-    print(stoer_E_diffus_abend)
-    print(stoer_E_diffus_nacht)
-    """
+
     # sanetize input: arrays for stoer_E spots and stoer E diffus inputs can be None. Take max E if None
     stoer_E_spots_abend = (
         [max_E_evening] * 4 if stoer_E_spots_abend is None
