@@ -1043,28 +1043,6 @@ class App(ctk.CTk, AsyncCTk):
         self.isi_color.set_values([255,0,0,0])
         self.pixel2_7_intensity.set_values([0])
 
-"""
-class QLCArtNetInterface:
-    def __init__(self):
-        self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
-        self.qlc_input = self.qlc_node.add_universe(10)
-
-        self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) #  0:0
-        self.spot2_intensity    = self.qlc_input.add_channel(start=3, width=2) #  0:47
-        self.spot3_intensity    = self.qlc_input.add_channel(start=5, width=2) # 47:0
-        self.spot4_intensity    = self.qlc_input.add_channel(start=7, width=2) # 47:47
-        self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
-        self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
-        self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
-        self.spot_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
-        self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
-        self.qlc_init_channel   = self.qlc_input.add_channel(start=21, width=1) # Init-Button
-        self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
-        self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
-        self.reading_light_intensity = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
-        self.room_light = self.qlc_input.add_channel(start=25, width=1) # Room light
-
-"""
 app = App()
 app.async_mainloop()
 
