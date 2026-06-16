@@ -7,14 +7,25 @@ import serial
 
 DEFAULT_PORT = "COM3"
 DEFAULT_BAUD_RATE = 9600
-READ_PERIOD_SECONDS = 0.2
+READ_PERIOD_SECONDS = 2
+DEFAULT_CHANGE_THRESHOLD = 0.10
 
 
 MONITOR_VALUE_PATTERN = compile(r"[+-]\d+\.\d+ E[+-]\d\d")
 
+def changed_enough(current_value, previous_value, threshold):
+    if previous_value is None:
+        return True
+    if previous_value == 0:
+        return current_value != 0
 
-async def read_monitor_continuously(port, baud_rate, period):
+    relative_change = abs(current_value - previous_value) / abs(previous_value)
+    return relative_change > threshold
+
+
+async def read_monitor_continuously(port, baud_rate, period, change_threshold):
     latest_monitor_value = None
+    last_printed_monitor_value = None
 
     try:
         with serial.Serial(port, baud_rate, timeout=1) as ser:
@@ -38,7 +49,13 @@ async def read_monitor_continuously(port, baud_rate, period):
                         raw_text = raw_text[match.end():]
 
                         latest_monitor_value = float(raw_value.replace(" ", ""))
-                        print(f"monitor_I = {latest_monitor_value:.6e}    raw = {raw_value}")
+                        if changed_enough(
+                            latest_monitor_value,
+                            last_printed_monitor_value,
+                            change_threshold,
+                        ):
+                            print(f"monitor_I = {latest_monitor_value:.6e}    raw = {raw_value}")
+                            last_printed_monitor_value = latest_monitor_value
 
                 await asyncio.sleep(period)
 
@@ -67,12 +84,28 @@ def parse_args():
         default=READ_PERIOD_SECONDS,
         help=f"Polling period in seconds, default: {READ_PERIOD_SECONDS}",
     )
+    parser.add_argument(
+        "--change-threshold",
+        type=float,
+        default=DEFAULT_CHANGE_THRESHOLD,
+        help=(
+            "Relative change needed before printing again, "
+            f"default: {DEFAULT_CHANGE_THRESHOLD} (10%)"
+        ),
+    )
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    asyncio.run(read_monitor_continuously(args.port, args.baud_rate, args.period))
+    asyncio.run(
+        read_monitor_continuously(
+            args.port,
+            args.baud_rate,
+            args.period,
+            args.change_threshold,
+        )
+    )
 
 
 if __name__ == "__main__":
