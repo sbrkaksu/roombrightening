@@ -1,7 +1,7 @@
 import sys
 
 # ==========================================
-# 1. PARAMETRELER VE KONFİGÜRASYON
+# 1. PARAMETERS AND CONFIGURATION
 # ==========================================
 MIN_VAL = 0
 MAX_VAL = 100
@@ -18,9 +18,9 @@ response_sequence = []
 response_sequence_history = []
 
 print("=" * 65)
-print("  2-DOWN / 1-UP CUSTOM ADAPTIVE STAIRCASE (FIXED VERSION)")
+print("1-DOWN / 1-UP ADAPTIVE STAIRCASE METHOD")
 print("=" * 65)
-print(f"Menzil: {MIN_VAL}-{MAX_VAL} lx | Başlangıç: {START_VAL} lx | Toplam Adım: {TOTAL_TRIALS}")
+print(f"Range: {MIN_VAL}-{MAX_VAL} lx | Start: {START_VAL} lx | Total Steps: {TOTAL_TRIALS}")
 print("-" * 65)
 
 def get_arrow_key():
@@ -48,90 +48,90 @@ def get_arrow_key():
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 # ==========================================
-# 2. DENEY DÖNGÜSÜ
+# 2. EXPERIMENT LOOP
 # ==========================================
 for trial in range(1, TOTAL_TRIALS + 1):
     history.append(current_value)
     step = STEP_SIZES[trial - 1] 
     
-    print(f"\n[Adım {trial}/{TOTAL_TRIALS}]")
-    print(f"Şu anki Uyaran Şiddeti: {current_value:.2f} lx")
-    print("Katılımcı tepkisi bekleniyor (Yukarı Ok: +, Aşağı Ok: -)...")
+    print(f"\n[Step {trial}/{TOTAL_TRIALS}]")
+    print(f"Current stimulus intensity: {current_value:.2f} lx")
+    print("Waiting for participant response (Up Arrow: +, Down Arrow: -)...")
     
     response = get_arrow_key()
     response_sequence.append(response)
     response_sequence_history.append(response)
 
-    # Kural 1: Üst üste iki pozitif yanıt (++) -> Şiddeti azalt
+    # Rule 1: Two consecutive positive responses (++) -> decrease intensity
     if response_sequence == ["+", "+"]:
-        print("-> Tepki Kombinasyonu: [ + + ] -> Şiddet azaltılıyor.")
+        print("-> Response combination: [ + + ] -> Decreasing intensity.")
         current_value -= step
         response_sequence = [] 
         
-        # GÜVENLİK KİLİDİ: Son trial ise yarım kalan reversal'ı listeye ekleme
+        # Safety guard: if this is the final trial, do not add an incomplete reversal
         if last_direction == "increased" and trial < TOTAL_TRIALS:
             reversal_points.append(history[-1])
-            print("   *** YÖN DEĞİŞİMİ (REVERSAL) TESPİT EDİLDİ! ***")
+            print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
         last_direction = "decreased"
 
-    # Kural 2: Tek bir negatif yanıt (-) -> Şiddeti artır
+    # Rule 2: A single negative response (-) -> increase intensity
     elif response_sequence == ["-"]:
-        print("-> Tepki Kombinasyonu: [ - ] -> Şiddet artırılıyor.")
+        print("-> Response combination: [ - ] -> Increasing intensity.")
         current_value += step
         response_sequence = [] 
         
-        # GÜVENLİK KİLİDİ: Son trial ise yarım kalan reversal'ı listeye ekleme
+        # Safety guard: if this is the final trial, do not add an incomplete reversal
         if last_direction == "decreased" and trial < TOTAL_TRIALS:
             reversal_points.append(history[-1])
-            print("   *** YÖN DEĞİŞİMİ (REVERSAL) TESPİT EDİLDİ! ***")
+            print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
         last_direction = "increased"
         
-    # Kural 3: Bir pozitif, bir negatif yanıt (+ -) dizisi -> Şiddeti artır
+    # Rule 3: One positive followed by one negative response (+ -) -> increase intensity
     elif response_sequence == ["+", "-"]:
-        print("-> Tepki Kombinasyonu: [ + - ] -> Şiddet artırılıyor.")
+        print("-> Response combination: [ + - ] -> Increasing intensity.")
         current_value += step
         response_sequence = [] 
         
-        # GÜVENLİK KİLİDİ: Son trial ise yarım kalan reversal'ı listeye ekleme
+        # Safety guard: if this is the final trial, do not add an incomplete reversal
         if last_direction == "decreased" and trial < TOTAL_TRIALS:
             reversal_points.append(history[-1])
-            print("   *** YÖN DEĞİŞİMİ (REVERSAL) TESPİT EDİLDİ! ***")
+            print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
         last_direction = "increased"
         
     else:
-        print("-> Tepki Kombinasyonu: [ + ] -> Sonuç bekleniyor, şiddet sabit tutuldu.")
+        print("-> Response combination: [ + ] -> Waiting for result, intensity kept constant.")
 
     if current_value < MIN_VAL: current_value = MIN_VAL
     elif current_value > MAX_VAL: current_value = MAX_VAL
 
 # ==========================================
-# 3. SONUÇ VE DOĞRULANMIŞ THRESHOLD HESABI
+# 3. RESULT AND VALIDATED THRESHOLD CALCULATION
 # ==========================================
 print("\n" + "=" * 65)
-print("  DENEY TAMAMLANDI!")
+print("  EXPERIMENT COMPLETED!")
 print("=" * 65)
 
-print("Gerçekleşen DOĞRULANMIŞ Yön Değişimleri (Reversals):")
+print("Confirmed direction changes (reversals):")
 if reversal_points:
-    print(f"  {[round(x, 2) for x in reversal_points]} lx (Toplam {len(reversal_points)} adet)")
+    print(f"  {[round(x, 2) for x in reversal_points]} lx (Total {len(reversal_points)})")
     print("-" * 65)
     
     if len(reversal_points) >= 6:
         final_reversals = reversal_points[-6:]
-        print(f"-> Durum: 6 veya daha fazla reversal var. SON 6 tanesi işleme alınıyor:")
+        print("-> Status: 6 or more reversals found. Using the last 6:")
     else:
         final_reversals = reversal_points
-        print(f"-> Durum: 6'dan az reversal var. MEVCUT TÜMÜ ({len(reversal_points)} adet) işleme alınıyor:")
+        print(f"-> Status: Less than 6 reversals found. Using all available reversals ({len(reversal_points)}):")
         
-    print(f"   İşleme Alınan Reversal'lar: {[round(x, 2) for x in final_reversals]} lx")
+    print(f"   Reversals used for calculation: {[round(x, 2) for x in final_reversals]} lx") #2 digit after comma 
     
     threshold = sum(final_reversals) / len(final_reversals)
-    print(f"\nHesaplanan Güvenilir Eşik Değeri (%70.7 Eşik Oranı): {threshold:.2f} lx")
+    print(f"\nCalculated reliable threshold value (70.7% threshold rate): {threshold:.2f} lx")
     
 else:
-    print("  Hiç yön değişimi gerçekleşmedi.")
+    print("  No direction changes occurred.")
     threshold = sum(history[-5:]) / 5
-    print(f"\nHesaplanan Eşik Değeri (Son 5 adımın ortalaması): {threshold:.2f} lx")
+    print(f"\nCalculated threshold value (average of the last 5 steps): {threshold:.2f} lx")
 
 print("\n")
 print(history)
