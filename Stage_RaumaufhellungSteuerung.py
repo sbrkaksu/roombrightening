@@ -25,7 +25,7 @@ import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
 # Generates Fein block
-from ProbandGenerator import erzeuge_proband_fein
+from Stage_ProbandGenerator import erzeuge_proband_fein
 
 #loops through all children of a widget and its children in GUI
 def all_children(wid, finList=None):
@@ -373,7 +373,7 @@ class App(ctk.CTk, AsyncCTk):
         ######## Settings ########
         self.settings = {
             "qlc_address":              'localhost:9999',
-            "qlc_project":              'VersuchsraumLeo.qxw',
+            "qlc_project":              'Stage_VersuchsraumLeo.qxw',
             "monitor_serial_port":      'COM3',
             "monitor_baud_rate":        9600,
             "monitor_E_factor_spot_1":  2.41e7,
