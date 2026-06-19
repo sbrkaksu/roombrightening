@@ -60,18 +60,18 @@ class AdaptiveStaircase:
         step = self._get_dynamic_step_size(self.current_value)
         self.active_step = step
         
-        msg = ""
+
         is_reversal = False
         
         # 1-Up / 1-Down rule
         if response == "+":
             self.current_value -= step
             current_direction = "decreased"
-            msg = "-> Response: (+) light was too strong / detected -> decreasing intensity."
+
         elif response == "-":
             self.current_value += step
             current_direction = "increased"
-            msg = "-> Response: (-) light was too weak / not detected -> increasing intensity."
+
         else:
             return False, "Invalid response"
             
@@ -89,7 +89,7 @@ class AdaptiveStaircase:
                 
         self.last_direction = current_direction
         
-        return is_reversal, msg
+        return is_reversal
 
     def is_finished(self):
         """Checks whether the target reversals or maximum trial count has been reached."""
@@ -103,33 +103,33 @@ class AdaptiveStaircase:
             return sum(self.history[-5:]) / 5 if self.history else 0.0
 
 
-# ==========================================
-# 2. INTERFACE AND EXPERIMENT EXECUTION (MAIN)
-# ==========================================
-def get_arrow_key():
-    """Captures the up/down arrow keys from the terminal."""
-    if sys.platform == "win32":
-        import msvcrt
-        while True:
-            ch = msvcrt.getch()
-            if ch in (b'\x00', b'\xe0'):
+    # ==========================================
+    # 2. INTERFACE AND EXPERIMENT EXECUTION (MAIN)
+    # ==========================================
+    def get_arrow_key(self):
+        """Captures the up/down arrow keys from the terminal."""
+        if sys.platform == "win32":
+            import msvcrt
+            while True:
                 ch = msvcrt.getch()
-                if ch == b'H': return "+"
-                if ch == b'P': return "-"
-    else:
-        import tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-            if ch == '\x1b':
-                sys.stdin.read(1)
-                ch3 = sys.stdin.read(1)
-                if ch3 == 'A': return "+"
-                if ch3 == 'B': return "-"
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                if ch in (b'\x00', b'\xe0'):
+                    ch = msvcrt.getch()
+                    if ch == b'H': return "+"
+                    if ch == b'P': return "-"
+        else:
+            import tty, termios
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(sys.stdin.fileno())
+                ch = sys.stdin.read(1)
+                if ch == '\x1b':
+                    sys.stdin.read(1)
+                    ch3 = sys.stdin.read(1)
+                    if ch3 == 'A': return "+"
+                    if ch3 == 'B': return "-"
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 if __name__ == "__main__":
     print("=" * 70)
@@ -152,11 +152,10 @@ if __name__ == "__main__":
         print(f"\n[Step {staircase.trial_count + 1}/{staircase.max_trials}] | Reversals: {len(staircase.reversal_points)}/{staircase.target_reversals}")
         print(f"Current stimulus intensity: {staircase.current_value:.2f} lx (active step size: {current_step:.4f} lx)")
 
-        response = get_arrow_key()
+        response = staircase.get_arrow_key()
         
         # Send the response to the object and retrieve the results
-        is_reversal, message = staircase.update(response)
-        print(message)
+        is_reversal = staircase.update(response)
         
         if is_reversal:
             print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
