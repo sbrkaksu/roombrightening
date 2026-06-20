@@ -99,10 +99,12 @@ class AdaptiveStaircase:
 
     def get_threshold(self):
         """Calculates the average result."""
-        if self.reversal_points:
-            return sum(self.reversal_points) / len(self.reversal_points)
+        if self.reversal_points and len(self.reversal_points) == self.target_reversals:
+            return (sum(self.reversal_points[1:]) / len(self.reversal_points[1:]))
+        elif self.reversal_points and len(self.reversal_points) < self.target_reversals:
+            return (sum(self.reversal_points) / len(self.reversal_points))
         else:
-            return sum(self.history[-5:]) / 5 if self.history else 0.0
+            return print("No reversals recorded, threshold calculation not possible.")
 
 
     # ==========================================
@@ -134,45 +136,56 @@ class AdaptiveStaircase:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
     def start_algorithm(self):
+
+        print("=" * 70)
+        print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
+        print("=" * 70)
+        print("Keyboard instructions:")
+        print("-> Light was disturbing / detected (+)        : [UP ARROW]")
+        print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
+        print("=" * 70)
         
-        while not staircase.is_finished():
+        while not self.is_finished():
         
             # Calculate the current step size for display
-            current_step = staircase._get_dynamic_step_size(staircase.current_value)
+            current_step = self._get_dynamic_step_size(self.current_value)
             
-            print(f"\n[Step {staircase.trial_count + 1}/{staircase.max_trials}] | Reversals: {len(staircase.reversal_points)}/{staircase.target_reversals}")
-            print(f"Current stimulus intensity: {staircase.current_value:.2f} lx (active step size: {current_step:.4f} lx)")
+            print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
+            print(f"Current stimulus intensity: {self.current_value:.2f} lx (active step size: {current_step:.4f} lx)")
 
-            response = staircase.get_arrow_key()
+            response = self.get_arrow_key()
             
             # Send the response to the object and retrieve the results
-            is_reversal = staircase.update(response)
+            is_reversal = self.update(response)
             
             if is_reversal:
                 print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
 
-            # ==========================================
-            # 3. RESULTS
-            # ==========================================
-            print("\n" + "=" * 70)
-            print("  EXPERIMENT COMPLETED!")
-            print("=" * 70)
+        # ==========================================
+        # 3. RESULTS
+        # ==========================================
+        print("\n" + "=" * 70)
+        print("  EXPERIMENT COMPLETED!")
+        print("=" * 70)
 
-            print("Confirmed direction changes (reversals):")
-            if staircase.reversal_points:
-                print(f"  {[round(x, 4) for x in staircase.reversal_points]} lx (Total {len(staircase.reversal_points)})")
+        if self.reversal_points:
+                print("Confirmed direction changes (reversals):")
+                print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
+                print("\n")
+                print("Calculated reversals:")
+                print(f"  {[round(x, 4) for x in self.reversal_points[1:]]} lx (Total {len(self.reversal_points[1:])})")
                 print("-" * 70)
-                print(f"Calculated threshold value (reversal average): {staircase.get_threshold():.4f} lx")
-            else:
+                print(f"Calculated threshold value (reversal average): {self.get_threshold():.4f} lx")
+        else:
                 print("  No direction changes occurred.")
-                print(f"Calculated threshold value (average of the last 5 steps): {staircase.get_threshold():.4f} lx")
+                print(f"Calculated threshold value (average of the last 5 steps): {self.get_threshold():.4f} lx")
 
-            print("\nFull stimulus history:")
-            print([round(x, 4) for x in staircase.history])
+        print("\nFull stimulus history:")
+        print([round(x, 4) for x in self.history])
             
-            print("\nFull response sequence history:")
-            print(staircase.response_sequence_history)
-            print("=" * 70)
+        print("\nFull response sequence history:")
+        print(self.response_sequence_history)
+        print("=" * 70)
 
 if __name__ == "__main__":
     print("=" * 70)
@@ -183,7 +196,5 @@ if __name__ == "__main__":
     print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
     print("=" * 70)
 
-    # Create the staircase object
-    staircase = AdaptiveStaircase(start_val=147.0, min_val=0.0100, max_val=316.0, max_trials=30, target_reversals=6 , combination_factor=1)
-    staircase.start_algorithm()
+
     
