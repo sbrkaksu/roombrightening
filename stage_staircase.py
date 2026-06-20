@@ -22,8 +22,8 @@ class AdaptiveStaircase:
         self.active_step = 0.0 # Stores the current step for display
 
     def _get_dynamic_step_size(self, current_value):
-        """Determines the dynamic step size based on the sensitivity table."""
-        if self.combination_factor == 0:
+
+        if self.combination_factor == 0: #if the illumination is pure direct 
             if current_value > 100.0:
                 return 30.0  
             elif current_value > 10.0:
@@ -35,7 +35,7 @@ class AdaptiveStaircase:
             else:
                 return current_value / 2.154  
             
-        elif self.combination_factor == 1:
+        elif self.combination_factor == 1: #if the illumination is pure diffuse
             if current_value > 100.0:
                 return 40.0  
             elif current_value > 10.0:
@@ -44,9 +44,11 @@ class AdaptiveStaircase:
                 return 4.0   
             elif current_value > 1.0:
                 return 1.0   
-            else:
+            else: 
                 return current_value / 2.154  
-
+        else:                           #combined illumination
+            pass
+    
     def update(self, response):
         """Processes the response, calculates the dynamic step, and advances the algorithm."""
         if self.is_finished():
