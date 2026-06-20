@@ -133,6 +133,47 @@ class AdaptiveStaircase:
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
+    def start_algorithm(self):
+        
+        while not staircase.is_finished():
+        
+            # Calculate the current step size for display
+            current_step = staircase._get_dynamic_step_size(staircase.current_value)
+            
+            print(f"\n[Step {staircase.trial_count + 1}/{staircase.max_trials}] | Reversals: {len(staircase.reversal_points)}/{staircase.target_reversals}")
+            print(f"Current stimulus intensity: {staircase.current_value:.2f} lx (active step size: {current_step:.4f} lx)")
+
+            response = staircase.get_arrow_key()
+            
+            # Send the response to the object and retrieve the results
+            is_reversal = staircase.update(response)
+            
+            if is_reversal:
+                print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
+
+            # ==========================================
+            # 3. RESULTS
+            # ==========================================
+            print("\n" + "=" * 70)
+            print("  EXPERIMENT COMPLETED!")
+            print("=" * 70)
+
+            print("Confirmed direction changes (reversals):")
+            if staircase.reversal_points:
+                print(f"  {[round(x, 4) for x in staircase.reversal_points]} lx (Total {len(staircase.reversal_points)})")
+                print("-" * 70)
+                print(f"Calculated threshold value (reversal average): {staircase.get_threshold():.4f} lx")
+            else:
+                print("  No direction changes occurred.")
+                print(f"Calculated threshold value (average of the last 5 steps): {staircase.get_threshold():.4f} lx")
+
+            print("\nFull stimulus history:")
+            print([round(x, 4) for x in staircase.history])
+            
+            print("\nFull response sequence history:")
+            print(staircase.response_sequence_history)
+            print("=" * 70)
+
 if __name__ == "__main__":
     print("=" * 70)
     print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
@@ -144,43 +185,5 @@ if __name__ == "__main__":
 
     # Create the staircase object
     staircase = AdaptiveStaircase(start_val=147.0, min_val=0.0100, max_val=316.0, max_trials=30, target_reversals=6 , combination_factor=1)
-
-    # The experiment loop runs until the staircase is finished
-    while not staircase.is_finished():
-        
-        # Calculate the current step size for display
-        current_step = staircase._get_dynamic_step_size(staircase.current_value)
-        
-        print(f"\n[Step {staircase.trial_count + 1}/{staircase.max_trials}] | Reversals: {len(staircase.reversal_points)}/{staircase.target_reversals}")
-        print(f"Current stimulus intensity: {staircase.current_value:.2f} lx (active step size: {current_step:.4f} lx)")
-
-        response = staircase.get_arrow_key()
-        
-        # Send the response to the object and retrieve the results
-        is_reversal = staircase.update(response)
-        
-        if is_reversal:
-            print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
-
-    # ==========================================
-    # 3. RESULTS
-    # ==========================================
-    print("\n" + "=" * 70)
-    print("  EXPERIMENT COMPLETED!")
-    print("=" * 70)
-
-    print("Confirmed direction changes (reversals):")
-    if staircase.reversal_points:
-        print(f"  {[round(x, 4) for x in staircase.reversal_points]} lx (Total {len(staircase.reversal_points)})")
-        print("-" * 70)
-        print(f"Calculated threshold value (reversal average): {staircase.get_threshold():.4f} lx")
-    else:
-        print("  No direction changes occurred.")
-        print(f"Calculated threshold value (average of the last 5 steps): {staircase.get_threshold():.4f} lx")
-
-    print("\nFull stimulus history:")
-    print([round(x, 4) for x in staircase.history])
+    staircase.start_algorithm()
     
-    print("\nFull response sequence history:")
-    print(staircase.response_sequence_history)
-    print("=" * 70)
