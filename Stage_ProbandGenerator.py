@@ -1,19 +1,21 @@
 import os, sys
-import pprint
+from pprint import PrettyPrinter #used for pretty-printing the proband data structures when saving to file
 import numpy as np
 
-
-class FormatPrinter(pprint.PrettyPrinter):
-
+#class for scientific formatting of the E values 
+class FormatPrinter(PrettyPrinter):
     def __init__(self, formats, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.formats = formats
 
-    # overrides the default format method to use the custom formats for E, otherwise falls back to default formatting
     def format(self, obj, ctx, maxlvl, lvl):
         if type(obj) in self.formats:
-            return self.formats[type(obj)].format(obj), 1, 0
-        return pprint.PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
+            fmt = self.formats[type(obj)]
+            if callable(fmt):
+                return fmt(obj), 1, 0
+            # else assume format string
+            return fmt.format(obj), 1, 0
+        return PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
 
 
 printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)  #'{:.4e}'.format(3.14159) = '3.1416e+00' - formats E

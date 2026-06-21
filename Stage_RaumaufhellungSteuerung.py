@@ -1,7 +1,6 @@
 # Data parsing, formatting and file handling
 from ast import literal_eval #dict type security for Proband file reading
 from os.path import splitext, exists #used for saving result files with correct naming and preventing overwriting 
-from pprint import PrettyPrinter #used for pretty-printing the proband data structures when saving to file
 from re import compile #used for parsing the monitor input with regular expressions
 
 # Timing, async flow
@@ -25,7 +24,7 @@ import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
 # Generates Fein block
-from Stage_ProbandGenerator import erzeuge_proband_fein
+from Stage_ProbandGenerator import erzeuge_proband_fein ,FormatPrinter
 
 #loops through all children of a widget and its children in GUI
 def all_children(wid, finList=None):
@@ -36,20 +35,6 @@ def all_children(wid, finList=None):
         all_children(item, finList)
     return finList
 
-#class for scientific formatting of the E values 
-class FormatPrinter(PrettyPrinter):
-    def __init__(self, formats, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.formats = formats
-
-    def format(self, obj, ctx, maxlvl, lvl):
-        if type(obj) in self.formats:
-            fmt = self.formats[type(obj)]
-            if callable(fmt):
-                return fmt(obj), 1, 0
-            # else assume format string
-            return fmt.format(obj), 1, 0
-        return PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
 
 #4 digits after comma for E values for file saving
 printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
