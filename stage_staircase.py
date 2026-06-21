@@ -106,6 +106,20 @@ class AdaptiveStaircase:
         else:
 
             self.threshold = sum(self.reversal_points) / len(self.reversal_points)
+
+            print("Confirmed direction changes (reversals):")
+            print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
+            print("\n")
+            print("-" * 70)
+            print(f"Calculated threshold value (reversal average): {self.threshold: .4f} lx")
+
+            print("\n")
+            print("\nFull stimulus history:")
+            print([round(x, 4) for x in self.history])
+            
+            print("\nFull response sequence history:")
+            print(self.response_sequence_history)
+            print("=" * 70)
         
         return self.threshold
 
@@ -168,25 +182,14 @@ class AdaptiveStaircase:
         # ==========================================
         # 3. RESULTS
         # ==========================================
-        print("\n" + "=" * 70)
-        print("  EXPERIMENT COMPLETED!")
-        print("=" * 70)
 
         if self.is_finished():
-                print("Confirmed direction changes (reversals):")
-                print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
-                print("\n")
-                print("-" * 70)
-                print(f"Calculated threshold value (reversal average): {self.get_threshold()} lx")
-        else:
-                print(self.get_threshold())
-
-        print("\nFull stimulus history:")
-        print([round(x, 4) for x in self.history])
             
-        print("\nFull response sequence history:")
-        print(self.response_sequence_history)
-        print("=" * 70)
+            print("\n" + "=" * 70)
+            print("  EXPERIMENT COMPLETED!")
+            print("=" * 70)
+            
+            self.get_threshold()
 
 if __name__ == "__main__":
     print("=" * 70)
