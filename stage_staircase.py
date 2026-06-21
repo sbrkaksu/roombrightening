@@ -101,16 +101,16 @@ class AdaptiveStaircase:
 
     def get_threshold(self):
         """Calculates the average result."""
-        if self.reversal_points and len(self.reversal_points) == self.target_reversals:
-            self.calculated_reversal_points = self.reversal_points[1:]
-            self.threshold = sum(self.calculated_reversal_points) / len(self.calculated_reversal_points)
-            return self.calculated_reversal_points, self.threshold
-        elif self.reversal_points and len(self.reversal_points) < self.target_reversals:
-            self.calculated_reversal_points = self.reversal_points
-            self.threshold = sum(self.calculated_reversal_points) / len(self.calculated_reversal_points)
-            return self.calculated_reversal_points, self.threshold
-        else:
+        if not self.reversal_points:
             return "No reversals recorded, threshold calculation not possible."
+
+        if len(self.reversal_points) == self.target_reversals:
+            self.calculated_reversal_points = self.reversal_points[1:]
+        else:
+            self.calculated_reversal_points = self.reversal_points
+
+        self.threshold = sum(self.calculated_reversal_points) / len(self.calculated_reversal_points)
+        return self.calculated_reversal_points, self.threshold
 
 
     # ==========================================
