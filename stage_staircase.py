@@ -16,7 +16,6 @@ class AdaptiveStaircase:
         # Memory (state)
         self.history = []
         self.reversal_points = []
-        self.calculated_reversal_points = []
         self.response_sequence_history = []
         self.last_direction = None
         self.trial_count = 0
@@ -104,13 +103,11 @@ class AdaptiveStaircase:
         if not self.reversal_points:
             return "No reversals recorded, threshold calculation not possible."
 
-        if len(self.reversal_points) == self.target_reversals:
-            self.calculated_reversal_points = self.reversal_points[1:]
         else:
-            self.calculated_reversal_points = self.reversal_points
 
-        self.threshold = sum(self.calculated_reversal_points) / len(self.calculated_reversal_points)
-        return self.calculated_reversal_points, self.threshold
+            self.threshold = sum(self.reversal_points) / len(self.reversal_points)
+        
+        return self.threshold
 
 
     # ==========================================
@@ -179,10 +176,8 @@ class AdaptiveStaircase:
                 print("Confirmed direction changes (reversals):")
                 print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
                 print("\n")
-                print("Calculated reversals:")
-                print(f"  { [round(x, 4) for x in self.get_threshold()[0]] } lx (Total {len(self.get_threshold()[0])})")
                 print("-" * 70)
-                print(f"Calculated threshold value (reversal average): {self.get_threshold()[1]:.4f} lx")
+                print(f"Calculated threshold value (reversal average): {self.get_threshold()} lx")
         else:
                 print(self.get_threshold())
 
