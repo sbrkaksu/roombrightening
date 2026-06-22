@@ -90,11 +90,11 @@ class AdaptiveStaircase:
             self.last_direction = current_direction
 
             if self.is_finished():
-                self.get_threshold()
+                self.get_result()
         return
 
 
-    def get_threshold(self):
+    def get_result(self):
         """Calculates the average result."""
         if not self.reversal_points:
             return print("No reversals recorded, threshold calculation not possible.")
