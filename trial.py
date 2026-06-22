@@ -59,65 +59,62 @@ class AdaptiveStaircase:
     
     def update(self, response):
         """Processes the response, calculates the dynamic step, and advances the algorithm."""
-        if not self.is_finished():
+        
            
-            self.trial_count += 1
-            self.history.append(self.current_value)
-            self.response_sequence_history.append(response)
+        self.trial_count += 1
+        self.history.append(self.current_value)
+        self.response_sequence_history.append(response)
+        
+        # Calculate the dynamic step
+        self.step = self.get_dynamic_step_size(self.current_value)
+
+        
+        # 1-Up / 1-Down rule
+        if response == "+":
+            self.current_value -= self.step
+            current_direction = "decreased"
+
+        elif response == "-":
+            self.current_value += self.step
+            current_direction = "increased"
+
+        # Safety limits
+        if self.current_value < self.min_val:
+            self.current_value = self.min_val
+        elif self.current_value > self.max_val:
+            self.current_value = self.max_val
             
-            # Calculate the dynamic step
-            self.step = self.get_dynamic_step_size(self.current_value)
-
-            
-            # 1-Up / 1-Down rule
-            if response == "+":
-                self.current_value -= self.step
-                current_direction = "decreased"
-
-            elif response == "-":
-                self.current_value += self.step
-                current_direction = "increased"
-
-            # Safety limits
-            if self.current_value < self.min_val:
-                self.current_value = self.min_val
-            elif self.current_value > self.max_val:
-                self.current_value = self.max_val
+        # Direction change (reversal) and final-step lock
+        if self.last_direction and self.last_direction != current_direction:
+            if self.trial_count < self.max_trials: #do not take account the last reversal if reversal behavior is not completed       
+                self.reversal_points.append(self.history[-1])
                 
-            # Direction change (reversal) and final-step lock
-            if self.last_direction and self.last_direction != current_direction:
-                if self.trial_count < self.max_trials: #do not take account the last reversal if reversal behavior is not completed       
-                    self.reversal_points.append(self.history[-1])
-                    
-            self.last_direction = current_direction
-
-            if self.is_finished():
-                self.get_result()
-        return
-
+        self.last_direction = current_direction
+        
 
     def get_result(self):
         """Calculates the average result."""
+
         if not self.reversal_points:
-            return print("No reversals recorded, threshold calculation not possible.")
+                return print("No reversals recorded, threshold calculation not possible.")
         else:
 
-            self.threshold = sum(self.reversal_points) / len(self.reversal_points)
+                self.threshold = sum(self.reversal_points) / len(self.reversal_points)
 
-            print("Confirmed direction changes (reversals):")
-            print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
-            print("\n")
-            print("-" * 70)
-            print(f"Calculated threshold value (reversal average): {self.threshold: .4f} lx")
+                print("Confirmed direction changes (reversals):")
+                print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
+                print("\n")
+                print("-" * 70)
+                print(f"Calculated threshold value (reversal average): {self.threshold: .4f} lx")
 
-            print("\n")
-            print("\nFull stimulus history:")
-            print([round(x, 4) for x in self.history])
+                print("\n")
+                print("\nFull stimulus history:")
+                print([round(x, 4) for x in self.history])
+                
+                print("\nFull response sequence history:")
+                print(self.response_sequence_history)
+                print("=" * 70)
             
-            print("\nFull response sequence history:")
-            print(self.response_sequence_history)
-            print("=" * 70)
-        
         return self.threshold
 
     
@@ -133,84 +130,96 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("Asynchronous Timed Button")
+        self.title("Asenkron Zamanlı Buton")
         self.geometry("300x200")
 
         self.is_clicked = False
-        self.turn_count = 1
         
-        # Flag indicating whether the application is running
+        # Uygulamanın çalışıp çalışmadığını kontrol eden bayrak
         self.is_running = True
 
         self.button = customtkinter.CTkButton(
             self, 
-            text="Click! (Async 2s)", 
+            text="Tıkla! (Async 2s)", 
             command=self.button_clicked
         )
         self.button.pack(expand=True)
 
-        # Bind the function triggered when the window's close button is pressed
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # Çarpı butonuna basıldığında tetiklenecek fonksiyonu bağlıyoruz
+        self.protocol("WM_DELETE_WINDOW", self.stop)
 
     def button_clicked(self):
         if not self.is_clicked:
             self.is_clicked = True
-            print(f"button clicked")
+            staircase.update("+")
+            staircase.get_status()
+            self.is_staircase_finished()
+            
 
-    def on_closing(self):
-        # Stop the loops and destroy the window when the close button is pressed
+    def stop(self):
+        # Çarpıya basıldığında döngüleri durdur ve pencereyi yok et
         self.is_running = False
         self.destroy()
-        print("Application is closing; execution has stopped.")
+
+    def is_staircase_finished(self):
+        if staircase.is_finished():
+            staircase.get_result()
+            self.is_running = False
+            return True
+        return False
+        
 
     async def monitor_loop(self):
-        # Keep this loop running only while the application is active
+        # Sadece uygulama çalışıyorken bu döngü dönsün
         while self.is_running:
+
             self.is_clicked = False
             
-            # Sleeping in short intervals makes it safer to check whether the
-            # application was closed during the two-second waiting period
-            for _ in range(20): # 20 * 0.1 seconds = 2 seconds
+            # 2 saniye beklerken uygulamanın kapatılıp kapatılmadığını 
+            # kontrol etmek için küçük adımlarla uyumak daha güvenlidir
+            for _ in range(10): # 20 * 0.1 saniye = 2 saniye
                 if not self.is_running:
                     return
-                await asyncio.sleep(0.1) #time.sleep olsa program donardi, 2 sn tek parca uyumak yerine
-                                         #2 sen 0.1 parcali uyu kapatinca 2 sn bekleme
+                await asyncio.sleep(0.1)
             
             if not self.is_running:
                 return
 
             if not self.is_clicked:
-                print(f"[Round {self.turn_count}] button not clicked")
-            
-            self.turn_count += 1
+                staircase.update("-")
+                staircase.get_status()
+                if self.is_staircase_finished():
+                    return
+
 
     async def updater(self):
         while self.is_running:
             try:
                 self.update()
                 await asyncio.sleep(0.01)
-            except (customtkinter.TclError, RuntimeError):
-                # Catch errors that may occur when the window closes and exit
+            except (RuntimeError):
+                # Pencere kapandığında oluşabilecek hataları yakala ve çık
                 break
 
 async def main():
     app = App()
     
-    # Run the loops
+    # Döngüleri çalıştırıyoruz
     await asyncio.gather(
         app.updater(),
         app.monitor_loop()
     )
 
 if __name__ == "__main__":
+    staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
+    staircase.get_status()
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, asyncio.CancelledError):
         pass
     finally:
-        # Release the terminal completely and exit when everything is finished
+        # Her şey bittiğinde terminali tamamen serbest bırak ve çık
         sys.exit(0)
-
 
 
     
