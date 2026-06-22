@@ -19,8 +19,9 @@ class AdaptiveStaircase:
         self.response_sequence_history = []
         self.last_direction = None
         self.trial_count = 0
-        self.active_step = 0.0 # Stores the current step for display
+        self.step = None
         self.threshold = None
+
 
     def get_dynamic_step_size(self, current_value):
 
@@ -56,54 +57,47 @@ class AdaptiveStaircase:
     
     def update(self, response):
         """Processes the response, calculates the dynamic step, and advances the algorithm."""
-        if self.is_finished():
-            return False, "" # Do nothing if the algorithm has finished
+        if not self.is_finished():
+           
+            self.trial_count += 1
+            self.history.append(self.current_value)
+            self.response_sequence_history.append(response)
             
-        self.trial_count += 1
-        self.history.append(self.current_value)
-        self.response_sequence_history.append(response)
-        
-        # Calculate the dynamic step
-        step = self.get_dynamic_step_size(self.current_value)
-        self.active_step = step
+            # Calculate the dynamic step
+            self.step = self.get_dynamic_step_size(self.current_value)
 
-        
-        # 1-Up / 1-Down rule
-        if response == "+":
-            self.current_value -= step
-            current_direction = "decreased"
-
-        elif response == "-":
-            self.current_value += step
-            current_direction = "increased"
-
-        # Safety limits
-        if self.current_value < self.min_val:
-            self.current_value = self.min_val
-        elif self.current_value > self.max_val:
-            self.current_value = self.max_val
             
-        # Direction change (reversal) and final-step lock
-        if self.last_direction and self.last_direction != current_direction:
-            if self.trial_count < self.max_trials: #do not take account the last reversal if reversal behavior is not completed       
-                self.reversal_points.append(self.history[-1])
-  
+            # 1-Up / 1-Down rule
+            if response == "+":
+                self.current_value -= self.step
+                current_direction = "decreased"
+
+            elif response == "-":
+                self.current_value += self.step
+                current_direction = "increased"
+
+            # Safety limits
+            if self.current_value < self.min_val:
+                self.current_value = self.min_val
+            elif self.current_value > self.max_val:
+                self.current_value = self.max_val
                 
-        self.last_direction = current_direction
+            # Direction change (reversal) and final-step lock
+            if self.last_direction and self.last_direction != current_direction:
+                if self.trial_count < self.max_trials: #do not take account the last reversal if reversal behavior is not completed       
+                    self.reversal_points.append(self.history[-1])
+                    
+            self.last_direction = current_direction
 
-        print(f"\n[Step {self.trial_count}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
-        print(f"Current stimulus intensity: {self.current_value:.2f} lx (active step size: {step:.4f} lx)")
+            if self.is_finished():
+                self.get_threshold()
+        return
 
-        if self.is_finished():
-            self.get_threshold()
-
-        return True
 
     def get_threshold(self):
         """Calculates the average result."""
         if not self.reversal_points:
-            return "No reversals recorded, threshold calculation not possible."
-
+            return print("No reversals recorded, threshold calculation not possible.")
         else:
 
             self.threshold = sum(self.reversal_points) / len(self.reversal_points)
@@ -123,10 +117,16 @@ class AdaptiveStaircase:
             print("=" * 70)
         
         return self.threshold
+
     
-    def clicked(self,cvp):
-        print(cvp)
-    
+    def get_status(self):
+        if not self.is_finished():
+            self.step = self.get_dynamic_step_size(self.current_value)
+            
+            print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
+            print(f"Current stimulus intensity: {self.current_value:.2f} lx (active step size: {self.step:.4f} lx)")
+ 
+            
 if __name__ == "__main__":
     print("=" * 70)
     print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
@@ -134,15 +134,15 @@ if __name__ == "__main__":
     print("Keyboard instructions:")
     print("-> Light was disturbing / detected (+)        : [UP ARROW]")
     print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
-    print("=" * 70)
-
-    staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=30, target_reversals=6, combination_factor=1)
+    print("=" * 70) 
+    staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
+    staircase.get_status()
 
 app = customtkinter.CTk()
 app.geometry("400x150")
 
-increase = customtkinter.CTkButton(app, text="+", command=lambda:staircase.update("+"))
-decrease = customtkinter.CTkButton(app, text="-", command=lambda:staircase.update("-"))
+increase = customtkinter.CTkButton(app, text="+", command=lambda:(staircase.update("+"), staircase.get_status()))
+decrease = customtkinter.CTkButton(app, text="-", command=lambda:(staircase.update("-"), staircase.get_status()))
 increase.pack(pady=10)
 decrease.pack(pady=10)
 
