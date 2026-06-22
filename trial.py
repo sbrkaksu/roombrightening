@@ -1,4 +1,6 @@
 import customtkinter
+import asyncio
+import sys
 
 # ==========================================
 # 1. ALGORITHM CLASS
@@ -127,26 +129,95 @@ class AdaptiveStaircase:
             print(f"Current stimulus intensity: {self.current_value:.2f} lx (active step size: {self.step:.4f} lx)")
  
             
+class App(customtkinter.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("Asynchronous Timed Button")
+        self.geometry("300x200")
+
+        self.is_clicked = False
+        self.turn_count = 1
+        
+        # Flag indicating whether the application is running
+        self.is_running = True
+
+        self.button_increase = customtkinter.CTkButton(
+            self, 
+            text="Click! (Async 2s)", 
+            command=lambda:(staircase.update("+"), staircase.get_status())
+        )
+        self.button_increase.pack(expand=True)
+
+        # Bind the function triggered when the window's close button is pressed
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def button_clicked(self):
+        if not self.is_clicked:
+            self.is_clicked = True
+            print(f"button clicked")
+
+    def on_closing(self):
+        # Stop the loops and destroy the window when the close button is pressed
+        self.is_running = False
+        self.destroy()
+        print("Application is closing; execution has stopped.")
+
+    async def monitor_loop(self):
+        # Keep this loop running only while the application is active
+        while self.is_running:
+            self.is_clicked = False
+            
+            # Sleeping in short intervals makes it safer to check whether the
+            # application was closed during the two-second waiting period
+            for _ in range(20): # 20 * 0.1 seconds = 2 seconds
+                if not self.is_running:
+                    return
+                await asyncio.sleep(0.1)
+            
+            if not self.is_running:
+                return
+
+            if not self.is_clicked:
+                print(f"[Round {self.turn_count}] button not clicked")
+            
+            self.turn_count += 1
+
+    async def updater(self):
+        while self.is_running:
+            try:
+                self.update()
+                await asyncio.sleep(0.01)
+            except (customtkinter.TclError, RuntimeError):
+                # Catch errors that may occur when the window closes and exit
+                break
+
+async def main():
+    app = App()
+    
+    # Run the loops
+    await asyncio.gather(
+        app.updater(),
+        app.monitor_loop()
+    )
+
 if __name__ == "__main__":
-    print("=" * 70)
-    print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
-    print("=" * 70)
-    print("Keyboard instructions:")
-    print("-> Light was disturbing / detected (+)        : [UP ARROW]")
-    print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
-    print("=" * 70) 
-    staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
-    staircase.get_status()
-
-app = customtkinter.CTk()
-app.geometry("400x150")
-
-increase = customtkinter.CTkButton(app, text="+", command=lambda:(staircase.update("+"), staircase.get_status()))
-decrease = customtkinter.CTkButton(app, text="-", command=lambda:(staircase.update("-"), staircase.get_status()))
-increase.pack(pady=10)
-decrease.pack(pady=10)
-
-app.mainloop()
+    try:
+            asyncio.run(main())
+            print("=" * 70)
+            print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
+            print("=" * 70)
+            print("Keyboard instructions:")
+            print("-> Light was disturbing / detected (+)        : [UP ARROW]")
+            print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
+            print("=" * 70) 
+            staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
+            staircase.get_status()
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        # Release the terminal completely and exit when everything is finished
+            sys.exit(0)
 
 
 
