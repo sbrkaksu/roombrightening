@@ -16,7 +16,6 @@ class AdaptiveStaircase:
         # Memory (state)
         self.history = []
         self.reversal_points = []
-        self.response = None
         self.response_sequence_history = []
         self.last_direction = None
         self.trial_count = 0
@@ -67,9 +66,7 @@ class AdaptiveStaircase:
         # Calculate the dynamic step
         step = self.get_dynamic_step_size(self.current_value)
         self.active_step = step
-        
 
-        is_reversal = False
         
         # 1-Up / 1-Down rule
         if response == "+":
@@ -80,9 +77,6 @@ class AdaptiveStaircase:
             self.current_value += step
             current_direction = "increased"
 
-        else:
-            return False, "Invalid response"
-            
         # Safety limits
         if self.current_value < self.min_val:
             self.current_value = self.min_val
@@ -93,11 +87,17 @@ class AdaptiveStaircase:
         if self.last_direction and self.last_direction != current_direction:
             if self.trial_count < self.max_trials: #do not take account the last reversal if reversal behavior is not completed       
                 self.reversal_points.append(self.history[-1])
-                is_reversal = True
+  
                 
         self.last_direction = current_direction
-        
-        return is_reversal
+
+        print(f"\n[Step {self.trial_count}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
+        print(f"Current stimulus intensity: {self.current_value:.2f} lx (active step size: {step:.4f} lx)")
+
+        if self.is_finished():
+            self.get_threshold()
+
+        return True
 
     def get_threshold(self):
         """Calculates the average result."""
@@ -123,50 +123,10 @@ class AdaptiveStaircase:
             print("=" * 70)
         
         return self.threshold
-
-
-    # ==========================================
-    # 2. INTERFACE AND EXPERIMENT EXECUTION (MAIN)
-    # ==========================================
-    def handle_user_input(self):
-
-        print("=" * 70)
-        print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
-        print("=" * 70)
-        print("Keyboard instructions:")
-        print("-> Light was disturbing / detected (+)        : [UP ARROW]")
-        print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
-        print("=" * 70)
-        
-        if not self.is_finished():
-        
-            # Calculate the current step size for display
-            current_step = self.get_dynamic_step_size(self.current_value)
-            
-            
-            print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
-            print(f"Current stimulus intensity: {self.current_value:.2f} lx (active step size: {current_step:.4f} lx)")
-
-            response = self.response
-            
-            # Send the response to the object and retrieve the results
-            is_reversal = self.update(response)
-            
-            if is_reversal:
-                print("   *** DIRECTION CHANGE (REVERSAL) DETECTED! ***")
-
-        # ==========================================
-        # 3. RESULTS
-        # ==========================================
-
-        if self.is_finished():
-            
-            print("\n" + "=" * 70)
-            print("  EXPERIMENT COMPLETED!")
-            print("=" * 70)
-            
-            self.get_threshold()
-
+    
+    def clicked(self,cvp):
+        print(cvp)
+    
 if __name__ == "__main__":
     print("=" * 70)
     print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
@@ -176,16 +136,18 @@ if __name__ == "__main__":
     print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
     print("=" * 70)
 
-
+    staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=30, target_reversals=6, combination_factor=1)
 
 app = customtkinter.CTk()
 app.geometry("400x150")
 
-button = customtkinter.CTkButton(app, text="+", command=response("+"))
-button = customtkinter.CTkButton(app, text="-", command=response("-"))
-button.pack(padx=20, pady=20)
+increase = customtkinter.CTkButton(app, text="+", command=lambda:staircase.update("+"))
+decrease = customtkinter.CTkButton(app, text="-", command=lambda:staircase.update("-"))
+increase.pack(pady=10)
+decrease.pack(pady=10)
 
 app.mainloop()
+
 
 
     
