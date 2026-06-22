@@ -192,13 +192,8 @@ class AdaptiveStaircase:
             self.get_threshold()
 
 if __name__ == "__main__":
-    print("=" * 70)
-    print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
-    print("=" * 70)
-    print("Keyboard instructions:")
-    print("-> Light was disturbing / detected (+)        : [UP ARROW]")
-    print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
-    print("=" * 70)
+    staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=30, target_reversals=6, combination_factor=1)
+    staircase.start_algorithm()
 
 
     
