@@ -142,12 +142,12 @@ class App(customtkinter.CTk):
         # Flag indicating whether the application is running
         self.is_running = True
 
-        self.button_increase = customtkinter.CTkButton(
+        self.button = customtkinter.CTkButton(
             self, 
             text="Click! (Async 2s)", 
-            command=lambda:(staircase.update("+"), staircase.get_status())
+            command=self.button_clicked
         )
-        self.button_increase.pack(expand=True)
+        self.button.pack(expand=True)
 
         # Bind the function triggered when the window's close button is pressed
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -173,7 +173,8 @@ class App(customtkinter.CTk):
             for _ in range(20): # 20 * 0.1 seconds = 2 seconds
                 if not self.is_running:
                     return
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1) #time.sleep olsa program donardi, 2 sn tek parca uyumak yerine
+                                         #2 sen 0.1 parcali uyu kapatinca 2 sn bekleme
             
             if not self.is_running:
                 return
@@ -203,21 +204,12 @@ async def main():
 
 if __name__ == "__main__":
     try:
-            asyncio.run(main())
-            print("=" * 70)
-            print("  DYNAMIC-STEP 1-UP / 1-DOWN ADAPTIVE STAIRCASE (OOP VERSION)")
-            print("=" * 70)
-            print("Keyboard instructions:")
-            print("-> Light was disturbing / detected (+)        : [UP ARROW]")
-            print("-> Light was not disturbing / not detected (-): [DOWN ARROW]")
-            print("=" * 70) 
-            staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
-            staircase.get_status()
+        asyncio.run(main())
     except (KeyboardInterrupt, asyncio.CancelledError):
         pass
     finally:
         # Release the terminal completely and exit when everything is finished
-            sys.exit(0)
+        sys.exit(0)
 
 
 
