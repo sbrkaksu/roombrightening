@@ -27,7 +27,7 @@ class AdaptiveStaircase:
 
     def get_dynamic_step_size(self, current_value):
 
-        if self.combination_factor == 0: #if the illumination is pure direct 
+        if self.combination_factor == 0: #if the illumination is pure diffuse
             if current_value > 100.0:
                 return 30.0  
             elif current_value > 10.0:
@@ -39,7 +39,7 @@ class AdaptiveStaircase:
             else:
                 return current_value / 2.154  
             
-        elif self.combination_factor == 1: #if the illumination is pure diffuse
+        elif self.combination_factor == 1: #if the illumination is pure direct
             if current_value > 100.0:
                 return 40.0  
             elif current_value > 10.0:
@@ -133,63 +133,78 @@ class App(customtkinter.CTk):
         self.title("Asenkron Zamanlı Buton")
         self.geometry("300x200")
 
+                
+        self.is_running = True # Uygulamanın çalışıp çalışmadığını kontrol eden bayrak
+        self.is_experiment_started = False
         self.is_clicked = False
-        
-        # Uygulamanın çalışıp çalışmadığını kontrol eden bayrak
-        self.is_running = True
 
-        self.button = customtkinter.CTkButton(
+        self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
+        self.staircase_diffuse = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=0)
+        self.staircase_combined = None
+
+        self.button_response = customtkinter.CTkButton(
             self, 
-            text="Tıkla! (Async 2s)", 
-            command=self.button_clicked
+            text="Response", 
+            command=self.click
         )
-        self.button.pack(expand=True)
+        self.button_response.pack(expand=True)
 
         # Çarpı butonuna basıldığında tetiklenecek fonksiyonu bağlıyoruz
         self.protocol("WM_DELETE_WINDOW", self.stop)
-
-    def button_clicked(self):
-        if not self.is_clicked:
-            self.is_clicked = True
-            staircase.update("+")
-            staircase.get_status()
-            self.is_staircase_finished()
             
 
+    """
+    def is_staircase_finished(self):
+        if self.staircase_direct.is_finished():
+            self.is_running = False
+            print("staircase has finished")
+            self.staircase_direct.get_result()
+            return True
+        else :
+            return False
+    """    
+    def click(self):
+        if not self.is_clicked:
+            self.is_clicked = True
+
+    
+    def handle_response(self):
+            if not self.staircase_direct.is_finished():
+                if self.is_clicked:
+                    self.staircase_direct.update("+")
+                    self.is_clicked = False
+                    print("+ pressed")
+                else:
+                    self.staircase_direct.update("-")
+                    print("- pressed")
+                self.staircase_direct.get_status()
+            else: 
+                print("staircase has finished")
+                self.staircase_direct.get_result()
+                return
     def stop(self):
         # Çarpıya basıldığında döngüleri durdur ve pencereyi yok et
         self.is_running = False
         self.destroy()
 
-    def is_staircase_finished(self):
-        if staircase.is_finished():
-            staircase.get_result()
-            self.is_running = False
-            return True
-        return False
-        
+    async def monitor_loop(self):       
+            # Sadece uygulama çalışıyorken bu döngü dönsün
+            while self.is_running:
+                    
+                    #self.is_clicked = False
 
-    async def monitor_loop(self):
-        # Sadece uygulama çalışıyorken bu döngü dönsün
-        while self.is_running:
-
-            self.is_clicked = False
-            
-            # 2 saniye beklerken uygulamanın kapatılıp kapatılmadığını 
-            # kontrol etmek için küçük adımlarla uyumak daha güvenlidir
-            for _ in range(10): # 20 * 0.1 saniye = 2 saniye
-                if not self.is_running:
-                    return
-                await asyncio.sleep(0.1)
-            
-            if not self.is_running:
-                return
-
-            if not self.is_clicked:
-                staircase.update("-")
-                staircase.get_status()
-                if self.is_staircase_finished():
-                    return
+                    
+                    # 2 saniye beklerken uygulamanın kapatılıp kapatılmadığını 
+                    # kontrol etmek için küçük adımlarla uyumak daha güvenlidir
+                    for _ in range(20): # 20 * 0.1 saniye = 2 saniye
+                        if not self.is_running:
+                            return
+                        await asyncio.sleep(0.1)
+                    
+                    if not self.is_running:
+                        return
+                    
+                    self.handle_response()
 
 
     async def updater(self):
@@ -211,8 +226,6 @@ async def main():
     )
 
 if __name__ == "__main__":
-    staircase = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
-    staircase.get_status()
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, asyncio.CancelledError):
