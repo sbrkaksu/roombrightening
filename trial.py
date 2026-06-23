@@ -135,12 +135,20 @@ class App(customtkinter.CTk):
 
                 
         self.is_running = True # Uygulamanın çalışıp çalışmadığını kontrol eden bayrak
-        self.is_experiment_started = False
+        self.start_event = asyncio.Event() 
         self.is_clicked = False
 
-        self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
-        self.staircase_diffuse = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=0)
-        self.staircase_combined = None
+        self.staircase_direct = None
+        self.staircase_diffuse = None
+
+        #self.staircase_combined = None
+
+        self.button_start = customtkinter.CTkButton(
+            self, 
+            text="Start", 
+            command=self.start_app
+        )
+        self.button_start.pack(expand=True)
 
         self.button_response = customtkinter.CTkButton(
             self, 
@@ -151,18 +159,15 @@ class App(customtkinter.CTk):
 
         # Çarpı butonuna basıldığında tetiklenecek fonksiyonu bağlıyoruz
         self.protocol("WM_DELETE_WINDOW", self.stop)
-            
 
-    """
-    def is_staircase_finished(self):
-        if self.staircase_direct.is_finished():
-            self.is_running = False
-            print("staircase has finished")
-            self.staircase_direct.get_result()
-            return True
-        else :
-            return False
-    """    
+    def start_app(self):
+        self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
+        self.staircase_diffuse = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=0)
+        self.start_event.set()
+        self.staircase_direct.get_status()
+        self.button_start.configure(state="disabled")
+        
+               
     def click(self):
         if not self.is_clicked:
             self.is_clicked = True
@@ -189,6 +194,9 @@ class App(customtkinter.CTk):
 
     async def monitor_loop(self):       
             # Sadece uygulama çalışıyorken bu döngü dönsün
+            await self.start_event.wait()
+            print("--- Deney Başlatıldı ---")
+            
             while self.is_running:
                     
                     #self.is_clicked = False
@@ -196,7 +204,7 @@ class App(customtkinter.CTk):
                     
                     # 2 saniye beklerken uygulamanın kapatılıp kapatılmadığını 
                     # kontrol etmek için küçük adımlarla uyumak daha güvenlidir
-                    for _ in range(20): # 20 * 0.1 saniye = 2 saniye
+                    for _ in range(30): # 20 * 0.1 saniye = 2 saniye
                         if not self.is_running:
                             return
                         await asyncio.sleep(0.1)
