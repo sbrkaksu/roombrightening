@@ -1,5 +1,6 @@
 import customtkinter
 import asyncio
+from async_tkinter_loop import async_handler
 import sys
 
 # ==========================================
@@ -132,21 +133,17 @@ class App(customtkinter.CTk):
 
         self.title("Asenkron Zamanlı Buton")
         self.geometry("300x200")
-
                 
-        self.is_running = True # Uygulamanın çalışıp çalışmadığını kontrol eden bayrak
-        self.start_event = asyncio.Event() 
+        self.is_running = True 
         self.is_clicked = False
 
         self.staircase_direct = None
         self.staircase_diffuse = None
 
-        #self.staircase_combined = None
-
         self.button_start = customtkinter.CTkButton(
             self, 
             text="Start", 
-            command=self.start_app
+            command=self.start_app # Now it will run asynchronously thanks to the decorator
         )
         self.button_start.pack(expand=True)
 
@@ -157,81 +154,72 @@ class App(customtkinter.CTk):
         )
         self.button_response.pack(expand=True)
 
-        # Çarpı butonuna basıldığında tetiklenecek fonksiyonu bağlıyoruz
         self.protocol("WM_DELETE_WINDOW", self.stop)
 
-    def start_app(self):
+    @async_handler
+    async def start_app(self):
+        """Asynchronous experiment loop that runs when the Start button is pressed."""
         self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
         self.staircase_diffuse = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=0)
-        self.start_event.set()
+        
         self.staircase_direct.get_status()
         self.button_start.configure(state="disabled")
+        print("--- Deney Başlatıldı ---")
         
+        # Instead of a separate monitor_loop, the loop is handled directly in the button's async function
+        while self.is_running:
+            # Wait 3 seconds, checking for shutdown in 0.1-second intervals
+            for _ in range(30): 
+                if not self.is_running:
+                    return
+                await asyncio.sleep(0.1)
+            
+            if not self.is_running:
+                return
+            
+            self.handle_response()
+            
+        # If the experiment finishes by itself (is_finished returns True), you can re-enable the button
+        # self.button_start.configure(state="normal")
                
     def click(self):
         if not self.is_clicked:
             self.is_clicked = True
-
     
     def handle_response(self):
-            if not self.staircase_direct.is_finished():
-                if self.is_clicked:
-                    self.staircase_direct.update("+")
-                    self.is_clicked = False
-                    print("+ pressed")
-                else:
-                    self.staircase_direct.update("-")
-                    print("- pressed")
-                self.staircase_direct.get_status()
-            else: 
-                print("staircase has finished")
-                self.staircase_direct.get_result()
-                return
+        if not self.staircase_direct.is_finished():
+            if self.is_clicked:
+                self.staircase_direct.update("+")
+                self.is_clicked = False
+                print("+ pressed")
+            else:
+                self.staircase_direct.update("-")
+                print("- pressed")
+            
+            self.staircase_direct.get_status()
+        else: 
+            print("staircase has finished")
+            self.staircase_direct.get_result()
+
     def stop(self):
-        # Çarpıya basıldığında döngüleri durdur ve pencereyi yok et
         self.is_running = False
         self.destroy()
 
-    async def monitor_loop(self):       
-            # Sadece uygulama çalışıyorken bu döngü dönsün
-            await self.start_event.wait()
-            print("--- Deney Başlatıldı ---")
-            
-            while self.is_running:
-                    
-                    #self.is_clicked = False
-
-                    
-                    # 2 saniye beklerken uygulamanın kapatılıp kapatılmadığını 
-                    # kontrol etmek için küçük adımlarla uyumak daha güvenlidir
-                    for _ in range(30): # 20 * 0.1 saniye = 2 saniye
-                        if not self.is_running:
-                            return
-                        await asyncio.sleep(0.1)
-                    
-                    if not self.is_running:
-                        return
-                    
-                    self.handle_response()
-
-
     async def updater(self):
+        """Main update loop required to keep the GUI responsive."""
         while self.is_running:
             try:
                 self.update()
                 await asyncio.sleep(0.01)
             except (RuntimeError):
-                # Pencere kapandığında oluşabilecek hataları yakala ve çık
+                # CustomTkinter windows may raise TclError when closed, so catch it and exit
                 break
 
 async def main():
     app = App()
-    
-    # Döngüleri çalıştırıyoruz
-    await asyncio.gather(
-        app.updater(),
-        app.monitor_loop()
-    )
+    # It is enough to gather/run only the GUI update loop.
+    # The other loop will start by itself via @async_handler when the Start button is pressed.
+    await app.updater()
 
 if __name__ == "__main__":
     try:
@@ -239,8 +227,5 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, asyncio.CancelledError):
         pass
     finally:
-        # Her şey bittiğinde terminali tamamen serbest bırak ve çık
         sys.exit(0)
-
-
     
