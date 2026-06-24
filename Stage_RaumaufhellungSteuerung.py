@@ -402,7 +402,7 @@ class App(ctk.CTk, AsyncCTk):
         self.inquery_frame = ctk.CTkFrame(self)
         self.inquery_frame.grid(row=0, column=2, padx=10, pady=10, sticky="nw")
 
-        self.inquery_label = ctk.CTkLabel(self.inquery_frame, text="Ist die Szene störend?").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.inquery_label = ctk.CTkLabel(self.inquery_frame, text="Is the scene disturbing?").grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
         self.stoer_button = ctk.CTkButton(self.inquery_frame, text="Jo", command=lambda: self.set_scene_reaction(disturbing=True))
         self.stoer_button.grid(row=1, column=0, padx=10, pady=10, sticky="w")
@@ -416,10 +416,10 @@ class App(ctk.CTk, AsyncCTk):
         sequence_buttons_settings = {"height":25, "border_width":1, "text_color":"black", "border_color":"black",
                                         "fg_color":"transparent", "hover_color":"light blue"}
         
-        self.load_proband_button = ctk.CTkButton(self.seq_crtl_frame, text="Proband-Phase laden", command=self.load_proband)
+        self.load_proband_button = ctk.CTkButton(self.seq_crtl_frame, text="Load subject phase", command=self.load_proband)
         self.load_proband_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
         
-        self.lern_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Lernphase", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_lernen), state="disabled")
+        self.lern_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning phase", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_lernen), state="disabled")
         self.lern_phase_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
         
         self.grob_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Phase grobes Raster", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_grob), state="disabled")
