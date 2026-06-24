@@ -1,5 +1,5 @@
 # Data parsing, formatting and file handling
-from ast import literal_eval #dict type security for Proband file reading
+from ast import literal_eval #dict type security for subject file reading
 from os.path import splitext, exists #used for saving result files with correct naming and preventing overwriting 
 from re import compile #used for parsing the monitor input with regular expressions
 
@@ -23,7 +23,7 @@ from requests import post #communication with QLC+ via HTTP API
 import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
-# Generates Fein block
+# Generates fine-grid block
 from Stage_ProbandGenerator import erzeuge_proband_fein ,FormatPrinter
 
 #loops through all children of a widget and its children in GUI
@@ -36,7 +36,7 @@ def all_children(wid, finList=None):
     return finList
 
 
-#4 digits after comma for E values for file saving
+#4 digits after the decimal point for E values when saving files
 printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
 
 superscript_map = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵",
@@ -160,7 +160,7 @@ class CheckWindowDropDown(ctk.CTkToplevel):
 
 # Switch button class that can be toggled on and off, and can be part of a group where only one button can be selected at a time. 
 class SwitchButton(ctk.CTkButton):
-#soldaki 3 transparent button
+# the three transparent buttons on the left
     button_groups = {}
     
     def __init__(self , *args, on_color, group=None, command=None, **kwargs):
@@ -229,7 +229,7 @@ class SwitchButton(ctk.CTkButton):
                 if isinstance(child, ctk.CTkButton):
                     child.configure(state="normal")
 
-#GUI calisinca ilk bu call ediliyor
+# called first when the GUI starts
     def disable(self):#makes the button unclickable 
         if self.enabled == True:
             super().configure(state="disabled", border_color="gray")
@@ -398,7 +398,7 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_grob = None
         self.phase_fein = None
         
-        ######## Frame to simulate Input on Light Szene, bothering or not? ########
+        ######## Frame to simulate input on the light scene, disturbing or not? ########
         self.inquery_frame = ctk.CTkFrame(self)
         self.inquery_frame.grid(row=0, column=2, padx=10, pady=10, sticky="nw")
 
@@ -441,7 +441,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Durchgang starten", command=self.run_sequence, state="disabled")
         self.sequence_start_reset_button.grid(row=4, column=0, padx=10, pady=10, sticky="n")
         
-        self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Durchgang anhalten", command=self.stop_sequence, state="disabled")
+        self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Durchgang pause", command=self.stop_sequence, state="disabled")
         self.sequence_stop_continue_button.grid(row=5, column=0, padx=10, pady=10, sticky="n")
         
         self.sequence_stop_event = asyncio.Event()
@@ -508,8 +508,8 @@ class App(ctk.CTk, AsyncCTk):
                 ser.dtr = True
                 raw_text = ''
                 while True:
-                    if ser.in_waiting > 0:  # Prüfen, ob Daten verfügbar sind
-                        raw_text += ser.read(ser.in_waiting).decode('ascii')  # Alle verfügbaren Bytes 
+                    if ser.in_waiting > 0:  # Check whether data is available
+                        raw_text += ser.read(ser.in_waiting).decode('ascii')  # All available bytes
                         while True:
                             match = value_pattern.search(raw_text)
                             if match:
@@ -530,7 +530,7 @@ class App(ctk.CTk, AsyncCTk):
             spot = self.active_scene.get("Spot")
             factor = self.settings.get("monitor_E_factor_spot_{}".format(spot)) if spot in [1,2,3,4] else self.settings.get("monitor_E_factor_diffus")
             EM = self.monitor_I * factor
-            EM = f"{EM:.2e}" #E Monitor anpassen auf exponentielle Schreibweise für die Tabelle
+            EM = f"{EM:.2e}" # format E monitor in exponential notation for the table
             print(EM)
             self.sequence_table.update_cell(EM, "E Monitor")
             self.active_scene["E_monitor"] = EM
@@ -538,11 +538,11 @@ class App(ctk.CTk, AsyncCTk):
     def open_check_window(self,diffus = None, zeit = None):
         if diffus is not None:
             if diffus == True:
-                title="Diffuse Scheibe einsetzen"
-                label="Diffuse Scheibe ist eingesetzt"
+                title="Insert diffuser disc"
+                label="Diffuser disc is inserted"
             if diffus == False:
-                title="Diffuse Scheibe entfernen"
-                label="Diffuse Scheibe ist entfernt"
+                title="Remove diffuser disc"
+                label="Diffuser disc is removed"
             if self.diffus_window is None or not self.diffus_window.winfo_exists():
                 self.diffus_window = CheckWindow(self,title=title,label=label)  # create window if its None or destroyed
             else:
@@ -550,11 +550,11 @@ class App(ctk.CTk, AsyncCTk):
             self.wait_window(self.diffus_window)
         if zeit is not None:
             if zeit == "Abend":
-                title="Probandenposition sitzend"
-                label="Proband sitzt"
+                title="Subject position: sitting"
+                label="Subject is sitting"
             if zeit == "Nacht":
-                title="Probandenposition liegend"
-                label="Proband liegt"
+                title="Subject position: lying down"
+                label="Subject is lying down"
             if self.position_window is None or not self.position_window.winfo_exists():
                 self.position_window = CheckWindow(self,title=title,label=label)
             else:
@@ -568,7 +568,7 @@ class App(ctk.CTk, AsyncCTk):
                     print("Task is not stopped")
                     return
         else: # task does not exist
-            if self.active_sequence is None: # if proband not loaded
+            if self.active_sequence is None: # if subject not loaded
                 print("Proband not loaded")
                 return
         self.current_scene_idx = row_idx
@@ -646,7 +646,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_start_reset_button.configure(state="normal")
     
     def stop_sequence(self):
-        self.sequence_stop_continue_button.configure(text="Durchgang fortsetzen",
+        self.sequence_stop_continue_button.configure(text="Continue Durchgang",
                                                   command=self.continue_sequence,
                                                   fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
         self.sequence_stop_event.set()
@@ -654,7 +654,7 @@ class App(ctk.CTk, AsyncCTk):
         self.set_roomlight_level(1)
         
     def continue_sequence(self):
-        self.sequence_stop_continue_button.configure(text="Durchgang anhalten", command=self.stop_sequence, fg_color="red")
+        self.sequence_stop_continue_button.configure(text="Pause Durchgang", command=self.stop_sequence, fg_color="red")
         self.sequence_continue_event.set()
         self.roomlight_button.configure(state="disabled")
         self.set_roomlight_level(0)
@@ -694,7 +694,7 @@ class App(ctk.CTk, AsyncCTk):
             self.set_reading_light(self.time_position_status == "Abend")
             self.set_roomlight_level(0) # turn off dim pause light
             # display isi light for twice the duration before a sequence starts
-            # time for the proband to get accustomed to the light
+            # time for the subject to get accustomed to the light
             self.activate_isi()
             await self.await_countdown_timer(start_time=isi_duration * 2,
                                                  end_time=isi_fade_duration,
@@ -786,7 +786,7 @@ class App(ctk.CTk, AsyncCTk):
                 if button.selected:
                     button.enable_children()
             
-            # wait for the pause duration here. stop event can be set from the run_sequence function, after aquitting a popup
+            # wait for the pause duration here. stop event can be set from the run_sequence function, after confirming a popup
             await self.await_countdown_timer(start_time=pause_duration,
                                              stop_event=self.pause_stop_event,
                                              label="Pause")
@@ -847,7 +847,7 @@ class App(ctk.CTk, AsyncCTk):
         timer_value -= 0.1
         if timer_value > self.scene_countdown_end:
             self.countdown_timer_var.set(round(timer_value,1))
-            self.after(100, self.countdown_timer_cb)  # Countdown alle 100ms dekrementieren
+            self.after(100, self.countdown_timer_cb)  # decrement countdown every 100 ms
         else:
             self.scene_countdown_finished.set()
     
@@ -950,8 +950,8 @@ class App(ctk.CTk, AsyncCTk):
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
         self.szene_ctc           = self.qlc_input.add_channel(start=19, width=1) # CTC
         self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
-        self.qlc_init_channel    = self.qlc_input.add_channel(start=21, width=1) # Init-Button
-        self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
+        self.qlc_init_channel    = self.qlc_input.add_channel(start=21, width=1) # Init button
+        self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the sequence of scene and ISI
         self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
         self.reading_light_intensity = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
         self.room_light_level = self.qlc_input.add_channel(start=25, width=1) # Room light
@@ -1030,6 +1030,3 @@ class App(ctk.CTk, AsyncCTk):
 
 app = App()
 app.async_mainloop()
-
-
-
