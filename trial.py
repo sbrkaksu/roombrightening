@@ -107,7 +107,6 @@ class AdaptiveStaircase:
                 print(f"Confirmed direction changes (reversals): {'Direct' if self.combination_factor == 1 else 'Diffuse'}")
                 print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
                 print("\n")
-                print("-" * 70)
                 print(f"Calculated threshold value (reversal average): {self.threshold: .4f} lx")
 
                 print("\n")
@@ -182,6 +181,11 @@ class App(customtkinter.CTk):
 
             if staircase is None: #end of the phase
                 print("Both staircases have finished")
+                print('#' * 30)
+                self.staircase_direct.get_result()
+                print('#' * 30)
+                self.staircase_diffuse.get_result()
+                print('#' * 30)
                 self.is_running = False
                 return
             
@@ -235,9 +239,6 @@ class App(customtkinter.CTk):
         else:
             staircase.update("-")
             print("- pressed")
-
-        if staircase.is_finished():
-            staircase.get_result()
 
     def stop(self):
         self.is_running = False
