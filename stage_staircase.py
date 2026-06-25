@@ -7,7 +7,7 @@ import sys
 # 1. ALGORITHM CLASS
 # ==========================================
 class AdaptiveStaircase:
-    def __init__(self, start_val, min_val, max_val, max_trials, target_reversals, combination_factor):
+    def __init__(self, start_val, min_val, max_val, max_trials, target_reversals, combination_factor, **kwargs):
         # Parameters
         self.current_value = start_val
         self.min_val = min_val

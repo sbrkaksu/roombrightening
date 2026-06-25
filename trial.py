@@ -1,13 +1,15 @@
 import customtkinter
+import numpy as np
 import asyncio
 from async_tkinter_loop import async_handler
 import sys
+import os
 
 # ==========================================
 # 1. ALGORITHM CLASS
 # ==========================================
 class AdaptiveStaircase:
-    def __init__(self, start_val, min_val, max_val, max_trials, target_reversals, combination_factor):
+    def __init__(self, start_val, min_val, max_val, max_trials, target_reversals, combination_factor, **kwargs):
         # Parameters
         self.current_value = start_val
         self.min_val = min_val
@@ -102,7 +104,7 @@ class AdaptiveStaircase:
 
                 self.threshold = sum(self.reversal_points) / len(self.reversal_points)
 
-                print("Confirmed direction changes (reversals):")
+                print(f"Confirmed direction changes (reversals): {'Direct' if self.combination_factor == 1 else 'Diffuse'}")
                 print(f"  {[round(x, 4) for x in self.reversal_points]} lx (Total {len(self.reversal_points)})")
                 print("\n")
                 print("-" * 70)
@@ -122,7 +124,9 @@ class AdaptiveStaircase:
     def get_status(self):
         if not self.is_finished():
             self.step = self.get_dynamic_step_size(self.current_value)
-            
+            print('-'* 10)
+            print('Direct' if self.combination_factor == 1 else 'Diffuse')
+            print('-'* 10)
             print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
             print(f"Current stimulus intensity: {self.current_value:.2f} lx (active step size: {self.step:.4f} lx)")
  
@@ -139,6 +143,7 @@ class App(customtkinter.CTk):
 
         self.staircase_direct = None
         self.staircase_diffuse = None
+        self.staircase_combined = None
 
         self.button_start = customtkinter.CTkButton(
             self, 
@@ -158,18 +163,21 @@ class App(customtkinter.CTk):
 
     @async_handler
     async def start_app(self):
+
+        #if ıle daha sonra exp phasenıe gore kosul eklenecek
+
         """Asynchronous experiment loop that runs when the Start button is pressed."""
-        self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=1)
+        self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=20, target_reversals=6, combination_factor=1)
         self.staircase_diffuse = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=0)
         
-        self.staircase_direct.get_status()
-        self.button_start.configure(state="disabled")
         print("--- Deney Başlatıldı ---")
+        #self.staircase_direct.get_status()
+        self.button_start.configure(state="disabled")
         
         # Instead of a separate monitor_loop, the loop is handled directly in the button's async function
         while self.is_running:
             # Wait 3 seconds, checking for shutdown in 0.1-second intervals
-            for _ in range(30): 
+            for _ in range(40): 
                 if not self.is_running:
                     return
                 await asyncio.sleep(0.1)
@@ -184,22 +192,48 @@ class App(customtkinter.CTk):
                
     def click(self):
         if not self.is_clicked:
-            self.is_clicked = True
-    
-    def handle_response(self):
+            self.is_clicked = True   
+
+    def select_random_staircase(self):
+
+        seed = int.from_bytes(os.urandom(128), sys.byteorder)
+        rng = np.random.default_rng(seed)
+        
+        available_staircases = []
+
+        if not self.staircase_diffuse.is_finished():
+            available_staircases.append(self.staircase_diffuse)
+
         if not self.staircase_direct.is_finished():
-            if self.is_clicked:
-                self.staircase_direct.update("+")
-                self.is_clicked = False
-                print("+ pressed")
-            else:
-                self.staircase_direct.update("-")
-                print("- pressed")
-            
-            self.staircase_direct.get_status()
-        else: 
-            print("staircase has finished")
-            self.staircase_direct.get_result()
+            available_staircases.append(self.staircase_direct)
+
+        if not available_staircases:
+            return None
+
+        index = int(rng.integers(0, len(available_staircases)))
+        selected_staricase = available_staircases[index]
+        return selected_staricase
+        
+    def handle_response(self):
+        staircase = self.select_random_staircase()
+
+        if staircase is None:
+            print("Both staircases have finished")
+            self.is_running = False
+            return
+
+        staircase.get_status()
+
+        if self.is_clicked:
+            staircase.update("+")
+            self.is_clicked = False
+            print("+ pressed")
+        else:
+            staircase.update("-")
+            print("- pressed")
+
+        if staircase.is_finished():
+            staircase.get_result()
 
     def stop(self):
         self.is_running = False
