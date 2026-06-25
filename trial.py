@@ -161,21 +161,32 @@ class App(customtkinter.CTk):
 
         self.protocol("WM_DELETE_WINDOW", self.stop)
 
+    def create_staircases(self):
+        #if ıle daha sonra exp phasenıe gore kosul eklenecek
+
+        self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=20, target_reversals=6, combination_factor=1)
+        self.staircase_diffuse = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=0)
+
     @async_handler
     async def start_app(self):
 
-        #if ıle daha sonra exp phasenıe gore kosul eklenecek
-
         """Asynchronous experiment loop that runs when the Start button is pressed."""
-        self.staircase_direct = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=20, target_reversals=6, combination_factor=1)
-        self.staircase_diffuse = AdaptiveStaircase(start_val=100, min_val=0.01, max_val=316, max_trials=10, target_reversals=6, combination_factor=0)
-        
+        self.create_staircases()
+
         print("--- Deney Başlatıldı ---")
-        #self.staircase_direct.get_status()
         self.button_start.configure(state="disabled")
         
         # Instead of a separate monitor_loop, the loop is handled directly in the button's async function
         while self.is_running:
+            staircase = self.select_random_staircase()
+
+            if staircase is None: #end of the phase
+                print("Both staircases have finished")
+                self.is_running = False
+                return
+            
+            staircase.get_status()
+
             # Wait 3 seconds, checking for shutdown in 0.1-second intervals
             for _ in range(40): 
                 if not self.is_running:
@@ -184,8 +195,9 @@ class App(customtkinter.CTk):
             
             if not self.is_running:
                 return
+
             
-            self.handle_response()
+            self.handle_response(staircase)
             
         # If the experiment finishes by itself (is_finished returns True), you can re-enable the button
         # self.button_start.configure(state="normal")
@@ -207,22 +219,14 @@ class App(customtkinter.CTk):
         if not self.staircase_direct.is_finished():
             available_staircases.append(self.staircase_direct)
 
-        if not available_staircases:
+        if not available_staircases: #end of the phase
             return None
 
         index = int(rng.integers(0, len(available_staircases)))
         selected_staricase = available_staircases[index]
         return selected_staricase
         
-    def handle_response(self):
-        staircase = self.select_random_staircase()
-
-        if staircase is None:
-            print("Both staircases have finished")
-            self.is_running = False
-            return
-
-        staircase.get_status()
+    def handle_response(self, staircase):
 
         if self.is_clicked:
             staircase.update("+")
