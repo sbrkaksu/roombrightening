@@ -2,7 +2,7 @@ import customtkinter
 import asyncio
 from async_tkinter_loop import async_handler
 import sys
-from Formatter import printer
+from Formatter import FormatPrinter
 from ast import literal_eval
 
 steps_E_values = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
@@ -13,6 +13,7 @@ steps_E_values = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681,
 
   #'{:.4e}'.format(3.14159) = '3.1416e+00' - formats E
 
+printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)
 
 formatted_E = printer.pformat(3.1600e+02)
 #printer.pformat(steps_E_values)
