@@ -15,6 +15,6 @@ steps_E_values = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681,
 
 printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)
 
-formatted_E = printer.pformat(3.1600e+02)
+formatted_E = printer.pformat(steps_E_values)
 #printer.pformat(steps_E_values)
-print(literal_eval(formatted_E) + 5)  # prints the formatted list of floats
+print(type(formatted_E))  # prints the formatted list of floats
