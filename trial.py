@@ -239,11 +239,18 @@ class App(customtkinter.CTk):
         """
         if not self.staircase_diffuse.is_finished():
             available_staircases.append(self.staircase_diffuse)
+            
+        """
+
+        for staircase in self.available_staircases:
+            if not staircase.is_finished():
+                available_staircases.append(staircase)
+                print(staircase.time)
         """
         if not self.available_staircases[0].is_finished():
             available_staircases.append(self.available_staircases[0])
             print(self.available_staircases[0].time)
-            
+        """    
         if not available_staircases: #end of the durchgang
             self.is_Durchgang_completed = True
             print("Both staircases have finished")
@@ -257,20 +264,26 @@ class App(customtkinter.CTk):
         index = int(rng.integers(0, len(available_staircases)))
         selected_staricase =    available_staircases[index]
         return selected_staricase
-    """
+    
     def save_threshold_results(self):
-        if self.current_durchgang == 1:
-            self.E_threshold_results.append(self.available_staircases[0].get_result())
-            self.E_threshold_results.append(self.available_staircases[1].get_result())
+        if self.current_durchgang in (1, 2):
+            for staircase in self.available_staircases:
+                self.E_threshold_results.append({
+                    "Time": staircase.time,
+                    "Combination Factor": staircase.combination_factor,
+                    "Threshold": staircase.threshold,
+                })
+            print(self.E_threshold_results)
+        """
         elif self.current_durchgang == 2:
             self.E_threshold_results.append(self.available_staircases[0].get_result())
             self.E_threshold_results.append(self.available_staircases[1].get_result())
         elif self.current_durchgang == 3:
             self.combination_threshold_results.append(self.available_staircases[0].get_result())
             self.combination_threshold_results.append(self.available_staircases[1].get_result())
-            
+        """        
         print(f"Durchgang {self.current_durchgang} completed.")
-    """
+
     def proceed_next_phase(self):
             self.is_running = False
             self.is_Durchgang_completed = False
