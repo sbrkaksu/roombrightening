@@ -9,11 +9,12 @@ import os
 # 1. ALGORITHM CLASS
 # ==========================================
 class AdaptiveStaircase:
-    def __init__(self, time, combination_factor, **kwargs):
+    def __init__(self, Phase, time, **kwargs):
 
-        #Phase of the Experiment
-        self.E_threshold_determination_phase = kwargs.get("E_threshold_determination_phase", False)
-        self.combination_threshold_determination_phase = kwargs.get("combination_threshold_determination_phase", False)
+        #Actual Durchgang of the Experiment
+        self.phase = kwargs.get("Phase", "E_threshold_determination_phase")  # Default to E_threshold_determination_phase if not provided
+        self.combination_factor = kwargs.get("combination_factor", 1)
+        self.time = kwargs.get("time", "evening")  # Default to evening if not provided
 
         #Stimilus values for the E threshold determination phase 
         self.stimuli_E_night  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
@@ -25,17 +26,17 @@ class AdaptiveStaircase:
             10, 14.7, 21.5, 31.6, 46.4, 68.1, 
             100, 147, 215, 316]
         # Stimulus values for the combination threshold determination phase
-        self.stimuli_combinationed = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 
+        self.stimuli_combined = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 
                              0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
 
-        if self.E_threshold_determination_phase:
-            if time == "night":
+        if self.phase == "E_threshold_determination_phase":
+            if self.time == "night":
                 self.chosen_stimuli = self.stimuli_E_night
-            elif time == "evening":
+            elif self.time == "evening":
                 self.chosen_stimuli = self.stimuli_E_evening
 
-        elif self.combination_threshold_determination_phase:
-            self.chosen_stimuli = self.stimuli_combinationed
+        elif self.phase == "combination_threshold_determination_phase":
+            self.chosen_stimuli = self.stimuli_combined
 
         # Parameters
         self.current_value_index = len(self.chosen_stimuli) - 1
@@ -44,8 +45,7 @@ class AdaptiveStaircase:
         self.max_val = self.chosen_stimuli[-1]
         self.max_trials = 32
         self.target_reversals = 6
-        self.combination_factor = combination_factor
-        #self.combination_factor = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        
         
         # Memory (state)
         self.history = []
@@ -98,14 +98,14 @@ class AdaptiveStaircase:
 
                 self.threshold = sum(self.reversal_points) / len(self.reversal_points)
 
-                if self.E_threshold_determination_phase:
+                if self.phase == "E_threshold_determination_phase":
 
                     print(f"Confirmed direction changes (reversals): {'Direct' if self.combination_factor == 1 else 'Diffuse'}")
                     print(f" Reversals: {[round(x, 4) for x in self.reversal_points]} (Total {len(self.reversal_points)})")
                     print("\n")
                     print(f"Calculated threshold value for Illuminance (reversal average): {self.threshold: .4f} lx")
 
-                elif self.combination_threshold_determination_phase:
+                elif self.phase == "combination_threshold_determination_phase":
 
                     print(f"Confirmed direction changes (reversals): {'Combined'}")
                     print(f" Reversals: {[round(x, 4) for x in self.reversal_points]} (Total {len(self.reversal_points)})")
@@ -124,14 +124,16 @@ class AdaptiveStaircase:
 
     
     def get_status(self):
+
         if not self.is_finished():
             print('-'* 10)
-            if self.E_threshold_determination_phase:
+
+            if self.phase == "E_threshold_determination_phase":
                 print('Direct' if self.combination_factor == 1 else 'Diffuse')
                 print('-'* 10)
                 print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
                 print(f"Current stimulus intensity: {self.current_value:.2f} lx ")
-            elif self.combination_threshold_determination_phase:
+            elif self.phase == "combination_threshold_determination_phase":
                 print('Combined')
                 print('-'* 10)
                 print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
@@ -147,13 +149,15 @@ class App(customtkinter.CTk):
         self.is_running = True 
         self.is_clicked = False
 
-        self.current_phase = "E_threshold_determination_phase"
-        self.current_time = "night"  # or "evening", depending on your experiment design  
+        self.current_durchgang = 1
+        self.is_Durchgang_completed = False
 
         #self.is_E_threshold_determination_phase_completed = self.is_Durchgang_1_completed and self.is_Durchgang_2_completed
         #self.is_combination_threshold_determination_phase_completed = False
 
         self.available_staircases = None  # To keep track of the currently active staircase
+        self.E_threshold_results =  []
+        self.combination_threshold_results = []
         
         
 
@@ -174,14 +178,17 @@ class App(customtkinter.CTk):
         self.protocol("WM_DELETE_WINDOW", self.stop)
 
     def create_staircases(self):
-            if self.current_phase == "E_threshold_determination_phase" and self.current_time == "night":
-                self.staircase_direct_night = AdaptiveStaircase(time="night", combination_factor=1, E_threshold_determination_phase=True)
-                self.staircase_diffuse_night = AdaptiveStaircase(time="night", combination_factor=0, E_threshold_determination_phase=True)
-                self.available_staircases = [self.staircase_direct_night, self.staircase_diffuse_night]
-            elif self.current_phase == "E_threshold_determination_phase" and self.current_time == "evening":
-                self.staircase_direct_evening = AdaptiveStaircase(time="evening", combination_factor=1, E_threshold_determination_phase=True)
-                self.staircase_diffuse_evening = AdaptiveStaircase(time="evening", combination_factor=0, E_threshold_determination_phase=True)
-                self.available_staircases = [self.staircase_direct_evening, self.staircase_diffuse_evening]
+            if self.current_durchgang == 1:
+                    self.staircase_direct_evening = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="evening", combination_factor=1)
+                    self.staircase_diffuse_evening = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="evening", combination_factor=0)
+                    self.available_staircases = [self.staircase_direct_evening, self.staircase_diffuse_evening]
+            elif self.current_durchgang == 2:
+                    self.staircase_direct_night = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="night", combination_factor=1)
+                    self.staircase_diffuse_night = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="night", combination_factor=0)
+                    self.available_staircases = [self.staircase_direct_night, self.staircase_diffuse_night]
+            elif self.current_durchgang == 3:
+                pass
+            self.is_running = True
 
     @async_handler
     async def start_app(self):
@@ -194,19 +201,14 @@ class App(customtkinter.CTk):
         
         # Instead of a separate monitor_loop, the loop is handled directly in the button's async function
         while self.is_running:
-            staircase = self.select_random_staircase()
+            staircases = self.select_random_staircase()
 
-            if staircase is None: #end of the phase
-                print("Both staircases have finished")
-                print('#' * 30)
-                self.staircase_direct_night.get_result()
-                print('#' * 30)
-                #self.staircase_diffuse.get_result()
-                print('#' * 30)
-                self.is_running = False
+            if staircases == "Completed": #end of the phase
+                self.save_threshold_results()
+                self.proceed_next_phase()
                 return
             
-            staircase.get_status()
+            staircases.get_status()
 
             # Wait 3 seconds, checking for shutdown in 0.1-second intervals
             for _ in range(15): 
@@ -218,7 +220,7 @@ class App(customtkinter.CTk):
                 return
 
             
-            self.handle_response(staircase)
+            self.handle_response(staircases)
             
         # If the experiment finishes by itself (is_finished returns True), you can re-enable the button
         # self.button_start.configure(state="normal")
@@ -240,17 +242,41 @@ class App(customtkinter.CTk):
         """
         if not self.available_staircases[0].is_finished():
             available_staircases.append(self.available_staircases[0])
+            print(self.available_staircases[0].time)
             
-
-
-
-        if not available_staircases: #end of the phase
-            
-            return None
+        if not available_staircases: #end of the durchgang
+            self.is_Durchgang_completed = True
+            print("Both staircases have finished")
+            print('#' * 30)
+            self.available_staircases[0].get_result()
+            print('#' * 30)
+            self.available_staircases[1].get_result()
+            print('#' * 30)
+            return "Completed"  # Return a special value to indicate that both staircases are finished
 
         index = int(rng.integers(0, len(available_staircases)))
         selected_staricase =    available_staircases[index]
         return selected_staricase
+    """
+    def save_threshold_results(self):
+        if self.current_durchgang == 1:
+            self.E_threshold_results.append(self.available_staircases[0].get_result())
+            self.E_threshold_results.append(self.available_staircases[1].get_result())
+        elif self.current_durchgang == 2:
+            self.E_threshold_results.append(self.available_staircases[0].get_result())
+            self.E_threshold_results.append(self.available_staircases[1].get_result())
+        elif self.current_durchgang == 3:
+            self.combination_threshold_results.append(self.available_staircases[0].get_result())
+            self.combination_threshold_results.append(self.available_staircases[1].get_result())
+            
+        print(f"Durchgang {self.current_durchgang} completed.")
+    """
+    def proceed_next_phase(self):
+            self.is_running = False
+            self.is_Durchgang_completed = False
+            self.current_durchgang += 1
+            self.available_staircases = []  # Clear the list to indicate that both staircases are finished
+            self.button_start.configure(state="normal")
         
     def handle_response(self, staircase):
 
