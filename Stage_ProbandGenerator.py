@@ -21,13 +21,22 @@ def generate_probanden_E_block():
      
         proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
             {'ID': 1, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
-            {'ID': 2, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
-            {'ID': 3, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
-            {'ID': 4, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
+            {'ID': 2, "Time": "Night", "Color": "3000 K", "Scenes" : []},
         ]}
 
         with open("Proband_E_Block.txt", "w") as file:
             file.write(printer.pformat(proband))
 
+def generate_probanden_Combination_block():
+     
+        proband = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
+            {'ID': 3, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
+            {'ID': 4, "Time": "Night", "Color": "3000 K", "Scenes" : []},
+        ]}
+
+        with open("Proband_Combination_Block.txt", "w") as file:
+            file.write(printer.pformat(proband))
+
 if __name__ == "__main__":
     generate_probanden_E_block()
+    generate_probanden_Combination_block()
