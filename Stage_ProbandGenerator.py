@@ -18,13 +18,16 @@ def generate_learn_proband():
 
 # Generates Probandens grob when this .py file is run
 def generate_probanden_E_block():
-    for proband_id in range(1, 5): 
-        proband = {"ID": proband_id, "Phase": "E_threshold_determination", "LearnDurchgang": False, "Durchgange": [
-            {'ID': 4, "Scenes" : []}
+     
+        proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
+            {'ID': 1, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
+            {'ID': 2, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
+            {'ID': 3, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
+            {'ID': 4, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
         ]}
 
-        with open("Proband{}_E_Block_Trials.txt".format(proband_id), "w") as file:
+        with open("Proband_E_Block.txt", "w") as file:
             file.write(printer.pformat(proband))
 
 if __name__ == "__main__":
-    pass
+    generate_probanden_E_block()
