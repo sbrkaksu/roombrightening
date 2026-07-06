@@ -91,10 +91,7 @@ class AdaptiveStaircase:
 
     def get_threshold(self):
         """Returns the calculated threshold value."""
-        if self.phase == "E_threshold_determination_phase": 
-            self.threshold = sum(self.reversal_points) / len(self.reversal_points)
-        elif self.phase == "combination_threshold_determination_phase":
-            self.threshold = self.threshold
+        self.threshold = sum(self.reversal_points) / len(self.reversal_points)
         return self.threshold
 
     def get_result(self):
@@ -145,7 +142,7 @@ class AdaptiveStaircase:
                 print('Combined')
                 print('-'* 10)
                 print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
-                print(f"Current stimulus intensity: {self.current_value:.2f} ")
+                print(f"Current stimulus: {self.current_value:.2f} ")
             
 class App(customtkinter.CTk):
     def __init__(self):
@@ -167,9 +164,9 @@ class App(customtkinter.CTk):
         self.available_staircases = None  # To keep track of the currently active staircase
         self.Proband_E_block_trials =  []
         self.Proband_E_block_results =  []
+        self.threshold_memory_for_combination_block = []
         self.combination_block_trials = []
         self.combination_block_results = []
-        self.threshold_memory_for_combination_block = []
         
         
 
@@ -199,11 +196,13 @@ class App(customtkinter.CTk):
                     self.staircase_diffuse_night = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="night", combination_factor=0)
                     self.available_staircases = [self.staircase_direct_night, self.staircase_diffuse_night]
             elif self.current_durchgang == 3:
-                    self.staircase_combined_evening = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="evening", combination_factor=0.5)
-                    self.available_staircases = [self.staircase_combined_evening]
+                    self.staircase_combined_evening_1 = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="evening", threshold = self.threshold_memory_for_combination_block[0], combination_factor=0.5)
+                    self.staircase_combined_evening_2 = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="evening", threshold = self.threshold_memory_for_combination_block[1], combination_factor=0.5)
+                    self.available_staircases = [self.staircase_combined_evening_1, self.staircase_combined_evening_2]
             elif self.current_durchgang == 4:
-                    self.staircase_combined_night = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="night", combination_factor=0.5)
-                    self.available_staircases = [self.staircase_combined_night]
+                    self.staircase_combined_night_1 = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="night", threshold = self.threshold_memory_for_combination_block[2], combination_factor=0.5)
+                    self.staircase_combined_night_2 = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="night", threshold = self.threshold_memory_for_combination_block[3], combination_factor=0.5)
+                    self.available_staircases = [self.staircase_combined_night_1, self.staircase_combined_night_2]
             else:
                     self.available_staircases = []
                     self.is_running = False
@@ -296,6 +295,7 @@ class App(customtkinter.CTk):
                     "Combination Factor": staircase.combination_factor,
                     "Threshold": staircase.threshold,
                 })
+                self.threshold_memory_for_combination_block.append(staircase.threshold)
             print(self.Proband_E_block_trials)
         elif self.current_durchgang in (3, 4):
             for staircase in self.available_staircases:
