@@ -31,13 +31,13 @@ class AdaptiveStaircase:
         self.stimuli_combined = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 
                              0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
 
-        if self.phase == "E_threshold_determination_phase":
+        if self.phase == "E_Block":
             if self.time == "night":
                 self.chosen_stimuli = self.stimuli_E_night
             elif self.time == "evening":
                 self.chosen_stimuli = self.stimuli_E_evening
 
-        elif self.phase == "combination_threshold_determination_phase":
+        elif self.phase == "Combination_Block":
             self.chosen_stimuli = self.stimuli_combined
 
         # Parameters
@@ -144,8 +144,7 @@ class App(customtkinter.CTk):
         self.experiment_states = [
             {
                 "durchgang": 1,
-                "result_block": "E",
-                "phase": "E_threshold_determination_phase",
+                "phase": "E_Block",
                 "time": "evening",
                 "staircases": [
                     {"combination_factor": 1},
@@ -154,18 +153,19 @@ class App(customtkinter.CTk):
             },
             {
                 "durchgang": 2,
-                "result_block": "E",
-                "phase": "E_threshold_determination_phase",
+                "phase": "E_Block",
                 "time": "night",
                 "staircases": [
                     {"combination_factor": 1},
                     {"combination_factor": 0},
                 ],
             },
+        ]
+
+        """
             {
                 "durchgang": 3,
-                "result_block": "combination",
-                "phase": "combination_threshold_determination_phase",
+                "phase": "Combination_Block",
                 "time": "evening",
                 "staircases": [
                     {"combination_factor": 0.5, "threshold_memory_index": 0},
@@ -174,15 +174,14 @@ class App(customtkinter.CTk):
             },
             {
                 "durchgang": 4,
-                "result_block": "combination",
-                "phase": "combination_threshold_determination_phase",
+                "phase": "Combination_Block",
                 "time": "night",
                 "staircases": [
                     {"combination_factor": 0.5, "threshold_memory_index": 2},
                     {"combination_factor": 0.5, "threshold_memory_index": 3},
                 ],
             },
-        ]
+        """
         self.current_state_index = 0
 
         #self.is_E_threshold_determination_phase_completed = self.is_Durchgang_1_completed and self.is_Durchgang_2_completed
@@ -230,7 +229,7 @@ class App(customtkinter.CTk):
                     print("All Durchgang completed.")
                     return
 
-            staircases = []
+            self.available_staircases = []
 
             for staircase_config in state["staircases"]:
                     threshold_memory_index = staircase_config.get("threshold_memory_index")
@@ -244,7 +243,7 @@ class App(customtkinter.CTk):
                                     return
                             threshold = self.threshold_memory_for_combination_block[threshold_memory_index]
 
-                    staircases.append(
+                    self.available_staircases.append(
                             AdaptiveStaircase(
                                     Phase=state["phase"],
                                     time=state["time"],
@@ -252,8 +251,6 @@ class App(customtkinter.CTk):
                                     combination_factor=staircase_config["combination_factor"],
                             )
                     )
-
-            self.available_staircases = staircases
             self.is_running = True
 
     @async_handler
@@ -337,7 +334,7 @@ class App(customtkinter.CTk):
         state = self.get_current_state()
         durchgang = state["durchgang"]
 
-        if state["result_block"] == "E":
+        if state["phase"] == "E_Block":
             for staircase in self.available_staircases:
                 self.Proband_E_block_trials.append({
                     "Durchgang": durchgang,
@@ -347,15 +344,17 @@ class App(customtkinter.CTk):
                 })
                 self.threshold_memory_for_combination_block.append(staircase.threshold)
             print(self.Proband_E_block_trials)
-        elif state["result_block"] == "combination":
+        elif state["phase"] == "Combination_Block":
             for staircase in self.available_staircases:
-                self.combination_block_trials.append({
+                self.combination_block_results.append({
                     "Durchgang": durchgang,
                     "Time": staircase.time,
                     "Combination Factor": staircase.combination_factor,
+                    "Type of Illumination": staircase.type_of_illumination,
+                    "Reversal Points": staircase.reversal_points,
                     "Threshold": staircase.threshold,
                 })
-            print(self.combination_block_trials)
+            print(self.combination_block_results)
         print(f"{self.describe_state(state)} completed.")
 
     def proceed_next_durchgang(self):

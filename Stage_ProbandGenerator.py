@@ -27,6 +27,20 @@ def generate_probanden_E_block():
         with open("Proband_E_Block.txt", "w") as file:
             file.write(printer.pformat(proband))
 
+def generate_probanden_E_block_results():
+     
+        proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
+            {'ID': 1, "Time": "Evening", "Color": "3000 K", "Results" : [
+                  {"Threshold_E(lx)": None, "Reversals (lx)": [], "Reversal Points" : None},
+            ]},
+            {'ID': 2, "Time": "Night", "Color": "3000 K", "Results" : [
+                  {"Threshold_E(lx)": None, "Reversals (lx)": [], "Reversal Points" : None},
+            ]},
+        ]}
+
+        with open("Proband_E_Block_Results.txt", "w") as file:
+            file.write(printer.pformat(proband))
+
 def generate_probanden_Combination_block():
      
         proband = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
@@ -37,6 +51,22 @@ def generate_probanden_Combination_block():
         with open("Proband_Combination_Block.txt", "w") as file:
             file.write(printer.pformat(proband))
 
+def generate_probanden_Combination_block_results():
+     
+        proband = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
+            {'ID': 3, "Time": "Evening", "Color": "3000 K", "Results" : [
+                  {"Threshold_Combination_Factor": None, "Reversals (Combination Factor)": [], "Number of Reversals" : None},
+            ]},
+            {'ID': 4, "Time": "Night", "Color": "3000 K", "Results" : [
+                  {"Threshold_Combination_Factor": None, "Reversals (Combination Factor)": [], "Number of Reversals" : None},
+            ]},
+        ]}
+
+        with open("Proband_Combination_Block_Results.txt", "w") as file:
+            file.write(printer.pformat(proband))
+
 if __name__ == "__main__":
     generate_probanden_E_block()
     generate_probanden_Combination_block()
+    generate_probanden_E_block_results()
+    generate_probanden_Combination_block_results()
