@@ -13,8 +13,9 @@ class AdaptiveStaircase:
 
         #Actual Durchgang of the Experiment
         self.phase = Phase
-        self.combination_factor = kwargs.get("combination_factor", 1)
         self.time = time
+        self.combination_factor = kwargs.get("combination_factor", 1)
+        self.threshold = kwargs.get("threshold", None)  
 
         #Stimilus values for the E threshold determination phase 
         self.stimuli_E_night  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
@@ -53,7 +54,6 @@ class AdaptiveStaircase:
         self.response_sequence_history = []
         self.last_direction = None
         self.trial_count = 0
-        self.threshold = None
 
     def is_finished(self):
         """Checks whether the target reversals or maximum trial count has been reached."""
@@ -89,6 +89,14 @@ class AdaptiveStaircase:
         self.last_direction = current_direction
         
 
+    def get_threshold(self):
+        """Returns the calculated threshold value."""
+        if self.phase == "E_threshold_determination_phase": 
+            self.threshold = sum(self.reversal_points) / len(self.reversal_points)
+        elif self.phase == "combination_threshold_determination_phase":
+            self.threshold = self.threshold
+        return self.threshold
+
     def get_result(self):
         """Calculates the average result."""
 
@@ -96,21 +104,21 @@ class AdaptiveStaircase:
                 return print("No reversals recorded, threshold calculation not possible.")
         else:
 
-                self.threshold = sum(self.reversal_points) / len(self.reversal_points)
+                self.get_threshold()
 
                 if self.phase == "E_threshold_determination_phase":
 
                     print(f"Confirmed direction changes (reversals): {'Direct' if self.combination_factor == 1 else 'Diffuse'}")
                     print(f" Reversals: {[round(x, 4) for x in self.reversal_points]} (Total {len(self.reversal_points)})")
                     print("\n")
-                    print(f"Calculated threshold value for Illuminance (reversal average): {self.threshold: .4f} lx")
+                    print(f"Calculated threshold value for Illuminance (reversal average): {self.get_threshold(): .4f} lx")
 
                 elif self.phase == "combination_threshold_determination_phase":
 
                     print(f"Confirmed direction changes (reversals): {'Combined'}")
                     print(f" Reversals: {[round(x, 4) for x in self.reversal_points]} (Total {len(self.reversal_points)})")
                     print("\n")
-                    print(f"Calculated threshold value for Combined Illumination (reversal average): {self.threshold: .4f}")
+                    print(f"Calculated threshold value for Combined Illumination (reversal average): {self.get_threshold(): .4f}")
 
                 print("\n")
                 print("\nFull stimulus history:")
@@ -120,7 +128,7 @@ class AdaptiveStaircase:
                 print(self.response_sequence_history)
                 print("=" * 70)
             
-        return self.threshold
+        
 
     
     def get_status(self):
@@ -157,8 +165,11 @@ class App(customtkinter.CTk):
         #self.is_combination_threshold_determination_phase_completed = False
 
         self.available_staircases = None  # To keep track of the currently active staircase
-        self.E_threshold_results =  []
-        self.combination_threshold_results = []
+        self.Proband_E_block_trials =  []
+        self.Proband_E_block_results =  []
+        self.combination_block_trials = []
+        self.combination_block_results = []
+        self.threshold_memory_for_combination_block = []
         
         
 
@@ -279,22 +290,22 @@ class App(customtkinter.CTk):
     def save_threshold_results(self):
         if self.current_durchgang in (1, 2):
             for staircase in self.available_staircases:
-                self.E_threshold_results.append({
+                self.Proband_E_block_trials.append({
                     "Durchgang": self.current_durchgang,
                     "Time": staircase.time,
                     "Combination Factor": staircase.combination_factor,
                     "Threshold": staircase.threshold,
                 })
-            print(self.E_threshold_results)
+            print(self.Proband_E_block_trials)
         elif self.current_durchgang in (3, 4):
             for staircase in self.available_staircases:
-                self.combination_threshold_results.append({
+                self.combination_block_trials.append({
                     "Durchgang": self.current_durchgang,
                     "Time": staircase.time,
                     "Combination Factor": staircase.combination_factor,
                     "Threshold": staircase.threshold,
                 })
-            print(self.combination_threshold_results)
+            print(self.combination_block_trials)
         """
         elif self.current_durchgang == 2:
             self.E_threshold_results.append(self.available_staircases[0].get_result())
