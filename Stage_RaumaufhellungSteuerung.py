@@ -383,7 +383,7 @@ class App(ctk.CTk, AsyncCTk):
 
     def setup_window(self):
         self.title("Study Room Brightening")
-        self.geometry("1160x750") 
+        self.geometry("1190x750") 
         self.resizable(False, False)
         self.style = ctk.set_appearance_mode("light") #force to work in light mode
 
@@ -663,7 +663,7 @@ class App(ctk.CTk, AsyncCTk):
         
     def set_sequence(self):
         self.active_sequence = self.active_phase.get_current_sequence()
-        seq_values = [[s.get("ID"),s.get("Spot"),s.get("E"), s.get("E_monitor"),s.get("Stoert"),s.get("Reaktionszeit")] for s in self.active_sequence["Szenen"]]
+        seq_values = [[s.get("ID"),s.get("Spot"), None, s.get("E"), s.get("E_monitor"),s.get("Stoert"),s.get("Reaktionszeit")] for s in self.active_sequence["Szenen"]]
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
@@ -920,9 +920,9 @@ class App(ctk.CTk, AsyncCTk):
 
     def save_scene_reaction(self, stoert, reaction_time):
         self.active_scene["Stoert"] = stoert
-        self.sequence_table.update_cell(stoert, "Störend")
+        self.sequence_table.update_cell(stoert, "Disturbing")
         self.active_scene["Reaktionszeit"] = reaction_time
-        self.sequence_table.update_cell(reaction_time,"Reaktionszeit")
+        self.sequence_table.update_cell(reaction_time,"Reaction Time")
         # save current results to file and check the progress
         if self.active_phase is not None:
             self.active_phase.save()
@@ -930,9 +930,9 @@ class App(ctk.CTk, AsyncCTk):
     def clear_scene_reaction(self):
         if self.active_scene is not None: # are we even running a scene?
             self.active_scene["Stoert"] = ""
-            self.sequence_table.update_cell("", "Störend")
+            self.sequence_table.update_cell("", "Disturbing")
             self.active_scene["Reaktionszeit"] = ""
-            self.sequence_table.update_cell("","Reaktionszeit")
+            self.sequence_table.update_cell("","Reaction Time")
 
     def load_qlc_project(self):
         r = False
