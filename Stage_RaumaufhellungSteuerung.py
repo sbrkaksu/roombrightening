@@ -949,24 +949,20 @@ class App(ctk.CTk, AsyncCTk):
         self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
         self.qlc_input = self.qlc_node.add_universe(10)
 
-        channel_specs = {
-            "spot1_intensity": (1, 2),
-            "spot2_intensity": (3, 2),
-            "spot3_intensity": (5, 2),
-            "spot4_intensity": (7, 2),
-            "isi_intensity": (9, 2),
-            "spot_color": (11, 4),
-            "isi_color": (15, 4),
-            "szene_ctc": (19, 1),
-            "isi_ctc": (20, 1),
-            "qlc_init_channel": (21, 1),
-            "sequence_control": (22, 1),
-            "pixel2_7_intensity": (23, 1),
-            "reading_light_intensity": (24, 1),
-            "room_light_level": (25, 1),
-        }
-        for name, (start, width) in channel_specs.items():
-            setattr(self, name, self.qlc_input.add_channel(start=start, width=width))
+        self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) #  0:0
+        self.spot2_intensity    = self.qlc_input.add_channel(start=3, width=2) #  0:47
+        self.spot3_intensity    = self.qlc_input.add_channel(start=5, width=2) # 47:0
+        self.spot4_intensity    = self.qlc_input.add_channel(start=7, width=2) # 47:47
+        self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
+        self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
+        self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
+        self.szene_ctc          = self.qlc_input.add_channel(start=19, width=1) # CTC
+        self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
+        self.qlc_init_channel   = self.qlc_input.add_channel(start=21, width=1) # Init-Button
+        self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
+        self.pixel2_7_intensity = self.qlc_input.add_channel(start=23, width=1) # Pixel 2-7 intensity
+        self.reading_light_intensity = self.qlc_input.add_channel(start=24, width=1) # Reading light intensity
+        self.room_light_level   = self.qlc_input.add_channel(start=25, width=1) # Room light
 
     def activate_isi(self):
         self.set_sequence_control("isi")
