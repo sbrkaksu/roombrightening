@@ -25,7 +25,6 @@ import serial #used for communication with the measurement monitor via serial po
 
 # Generates fine-grid block
 from Stage_ProbandGenerator import FormatPrinter
-from ProbandGenerator import erzeuge_proband_fein 
 
 #loops through all children of a widget and its children in GUI
 def all_children(wid, finList=None):
@@ -276,7 +275,7 @@ class Phase(dict):
         with open(self.filename, 'r') as f:
             s = f.read()
             super().__init__(literal_eval(s))
-        self.phase_type = self["Abstufung"]
+        self.phase_type = self["Phase"]
         self.seq_num = len(self["Durchgange"])
         self.seq_idx = 0
         self.complete = False
@@ -295,45 +294,8 @@ class Phase(dict):
             self.seq_idx += self.seq_num
     
     def check_completion(self):
-        reactions = [sz.get("Stoert") for s in self["Durchgange"] for sz in s["Szenen"]]
-        return True if None not in reactions else False
-    
-    def process_lowest_bothering_scenes_cb(self, lowest_bothering_scenes):
-        lowest_bothering_Es = {}
-        for dict_list in self.bothering_options_dict_list:
-            choice = lowest_bothering_scenes[dict_list["Title"]]
-            E_choice = dict_list["Werte"][dict_list["Options"].index(choice)]
-            lowest_bothering_Es[dict_list["Title"]] = E_choice
-
-        self.lowest_bothering_Es = lowest_bothering_Es
-
-    def query_lowest_bothering_scenes(self):
-        # get all bothering scenes in separate lists for different Spots, Time of Day, sorted by E value
-        bothering_scenes = {}
-        for s in self["Durchgange"]:
-            zeit = s.get("Zeit")
-            for sz in s["Szenen"]:
-                if sz.get("Stoert") == "Ja":
-                    spot = sz.get("Spot")
-                    if spot in [1, 2, 3, 4]:
-                        key = "Spot{idx} {zeit}".format(idx=spot,zeit=zeit)
-                    else:
-                        key = "Diffus {zeit}".format(zeit=zeit)
-                    bothering_scenes.setdefault(key, []).append(sz)
-        self.bothering_options_dict_list = []
-        for k in ["Spot1 Abend","Spot2 Abend","Spot3 Abend","Spot4 Abend",
-                  "Spot1 Nacht","Spot2 Nacht","Spot3 Nacht","Spot4 Nacht",
-                  "Diffus Abend","Diffus Nacht"]: # combination of spot and time
-            d = {"Title":k}
-            scene_list = bothering_scenes.setdefault(k, [])
-            scene_list.sort(key=lambda sz: sz.get("E")) # sort for ascending illuminance
-            d["Werte"] = [sz.get("E") for sz in scene_list]
-            d["Werte"].append(None)
-            d["Options"] = ["E:{} Reaktionszeit:{}".format(table_printer.pformat(sz.get("E")), sz.get("Reaktionszeit")) for sz in scene_list]
-            d["Options"].append("Keine")
-            self.bothering_options_dict_list.append(d)
-        
-        return self.bothering_options_dict_list
+        reactions = [sz.get("Disturbed") for s in self["Durchgange"] for sz in s["Scenes"]]
+        return bool(reactions) and None not in reactions
         
         
     def save(self):
@@ -411,7 +373,6 @@ class App(ctk.CTk, AsyncCTk):
             "maxAussteuerung_faktor_pixel1": 0.7,
             "DMX_brightness_reading": 255,
             "DMX_brightness_roomlight": 255,
-            "learn_proband_file": "ProbandLernen.txt" 
         }
 
     def setup_state(self):
@@ -423,10 +384,9 @@ class App(ctk.CTk, AsyncCTk):
         self.active_scene = None
         self.sequence_task = None
 
-        self.phase_lernen = Phase(self.settings["learn_proband_file"])
-        self.phase_lernen.save = lambda: None # do not save learning sequence
-        self.phase_grob = None
-        self.phase_fein = None
+        self.phase_learning_block = None
+        self.phase_e_block = None
+        self.phase_combination_block = None
 
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
@@ -452,16 +412,17 @@ class App(ctk.CTk, AsyncCTk):
         self.load_proband_button = ctk.CTkButton(self.seq_crtl_frame, text="Load subject phase", command=self.load_proband)
         self.load_proband_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
 
-        self.lern_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning phase", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_lernen), state="disabled")
-        self.lern_phase_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
+        self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_learning_block), state="disabled")
+        self.learning_block_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
+        self.add_sequence_nav_buttons(self.learning_block_button, "learning_block", sequence_buttons_settings)
 
-        self.grob_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Grob Phases", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_grob), state="disabled")
-        self.grob_phase_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
-        self.add_sequence_nav_buttons(self.grob_phase_button, "grob", sequence_buttons_settings)
+        self.e_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="E Block", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_e_block), state="disabled")
+        self.e_block_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
+        self.add_sequence_nav_buttons(self.e_block_button, "e_block", sequence_buttons_settings)
 
-        self.fein_phase_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Fein Phases", **phase_buttons_settings, command=self.generate_and_load_phase_fein , state="disabled")
-        self.fein_phase_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
-        self.add_sequence_nav_buttons(self.fein_phase_button, "fein", sequence_buttons_settings)
+        self.combination_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Combination Block", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_combination_block), state="disabled")
+        self.combination_block_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
+        self.add_sequence_nav_buttons(self.combination_block_button, "combination_block", sequence_buttons_settings)
 
         self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Durchgang", command=self.run_sequence, state="disabled")
         self.sequence_start_reset_button.grid(row=4, column=0, padx=10, pady=10, sticky="n")
@@ -485,7 +446,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Durchgang", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.sequence_scene_label.grid(row=1, column=0, padx=10, pady=0, sticky='w')
 
-        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Type","Combination Factor", "E","E Monitor","Disturbing", "Reaction Time"], row_num=25)
+        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Combination Factor", "Type", "E", "E Monitor", "Disturbing", "Reaction Time"], row_num=25)
         self.sequence_table.grid(row=2, column=0, padx=0, pady=10, sticky="w")
         self.sequence_table.set_callback(self.row_click)
 
@@ -554,8 +515,8 @@ class App(ctk.CTk, AsyncCTk):
     def set_scene_monitor(self):
         if self.monitor_I and self.active_scene is not None:
             print(self.monitor_I)
-            spot = self.active_scene.get("Spot")
-            factor = self.settings.get("monitor_E_factor_spot_{}".format(spot)) if spot in [1,2,3,4] else self.settings.get("monitor_E_factor_diffus")
+            scene_type = self.active_scene.get("Type")
+            factor = self.settings["monitor_E_factor_diffus"] if scene_type == "Diffuse" else self.settings["monitor_E_factor_spot_1"]
             EM = self.monitor_I * factor
             EM = f"{EM:.2e}" # format E monitor in exponential notation for the table
             print(EM)
@@ -571,8 +532,8 @@ class App(ctk.CTk, AsyncCTk):
             self.diffus_window = self.show_check_window(self.diffus_window, title, label)
         if zeit is not None:
             title, label = {
-                "Abend": ("Subject position: sitting", "Subject is sitting"),
-                "Nacht": ("Subject position: lying down", "Subject is lying down"),
+                "Evening": ("Subject position: sitting", "Subject is sitting"),
+                "Night": ("Subject position: lying down", "Subject is lying down"),
             }[zeit]
             self.position_window = self.show_check_window(self.position_window, title, label)
 
@@ -599,36 +560,23 @@ class App(ctk.CTk, AsyncCTk):
 
     def load_proband(self):
         phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
-        if phase.phase_type == "grob":
-            self.phase_grob = phase
-            if self.phase_grob["Lerndurchgang"] == True:
-                self.lern_phase_button.turn_on()
-                self.grob_phase_button.enable()
-            if self.phase_grob.check_completion() == True:
-                self.grob_phase_button.turn_on()
-                self.fein_phase_button.enable()
-                
-            
-            self.lern_phase_button.enable()
-        if phase.phase_type == "fein":
-            pass # maybe implement later
+        if phase.phase_type == "Learning Block":
+            self.phase_learning_block = phase
+            self.learning_block_button.enable()
+            self.set_phase(self.phase_learning_block)
+        elif phase.phase_type == "E_Block":
+            self.phase_e_block = phase
+            self.e_block_button.enable()
+            self.set_phase(self.phase_e_block)
+        elif phase.phase_type == "Combination_Block":
+            self.phase_combination_block = phase
+            self.combination_block_button.enable()
+            self.set_phase(self.phase_combination_block)
+        else:
+            print(f"Unsupported phase type: {phase.phase_type}")
         
     def generate_and_load_phase_fein(self):
-        prid = self.phase_grob["ID"]
-
-        bothering_options_dict_list = self.phase_grob.query_lowest_bothering_scenes()
-        cwindow = CheckWindowDropDown(self,title="Schwellen für Störende Szenen prüfen und auswählen",
-                            options_dictlist = bothering_options_dict_list,callback=self.phase_grob.process_lowest_bothering_scenes_cb)
-        self.wait_window(cwindow)
-        fein_file = erzeuge_proband_fein(prid,
-            [self.phase_grob.lowest_bothering_Es[k] for k in ["Spot1 Abend","Spot2 Abend","Spot3 Abend","Spot4 Abend"]],
-            [self.phase_grob.lowest_bothering_Es[k] for k in ["Spot1 Nacht","Spot2 Nacht","Spot3 Nacht","Spot4 Nacht"]],
-            self.phase_grob.lowest_bothering_Es["Diffus Abend"],
-            self.phase_grob.lowest_bothering_Es["Diffus Nacht"])
-        
-        self.phase_fein = Phase(fein_file)
-        self.fein_phase_button.set_command(lambda:self.set_phase(self.phase_fein))
-        self.set_phase(self.phase_fein)
+        pass
         
     def set_next_sequence(self):
         self.change_sequence(1)
@@ -646,30 +594,31 @@ class App(ctk.CTk, AsyncCTk):
         self.set_sequence()
         
     def set_phase(self,phase):
+        if phase is None:
+            return
         self.active_phase = phase
         self.set_sequence()
-        self.proband_label.configure(text="Proband {id}: {stufung}".format(id=self.active_phase["ID"], stufung=self.active_phase["Abstufung"]))
+        self.proband_label.configure(text="Proband {id}: {phase}".format(id=self.active_phase["ID"], phase=self.active_phase["Phase"]))
     
     def set_sequence_scene_label(self):
         if self.active_sequence is None:
             return
-        progress = sum(s.get("Stoert") is not None for s in self.active_sequence["Szenen"])
-        label = "Durchgang {did}: {Zeit} | {diffus}, Fortschritt {pgr}/{num}".format(did=self.active_sequence["ID"],
-                                                                                Zeit=self.active_sequence["Zeit"],
-                                                                                diffus="Diffus" if self.active_sequence["Diffus"] else "Gerichtet",
+        scenes = self.active_sequence["Scenes"]
+        progress = sum(s.get("Disturbed") is not None for s in scenes)
+        label = "Durchgang {did}: {time} | {color}, Progress {pgr}/{num}".format(did=self.active_sequence["ID"],
+                                                                                time=self.active_sequence["Time"],
+                                                                                color=self.active_sequence["Color"],
                                                                                 pgr=progress,
-                                                                                num=len(self.active_sequence["Szenen"]))
+                                                                                num=len(scenes))
         self.sequence_scene_label.configure(text=label)
         
     def set_sequence(self):
         self.active_sequence = self.active_phase.get_current_sequence()
-        seq_values = [[s.get("ID"),s.get("Spot"), None, s.get("E"), s.get("E_monitor"),s.get("Stoert"),s.get("Reaktionszeit")] for s in self.active_sequence["Szenen"]]
+        seq_values = [[idx + 1, s.get("Combination_Factor"), s.get("Type"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(self.active_sequence["Scenes"])]
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
-        #self.sequence_label.configure(text="Durchgang {id}".format(id=self.active_sequence["ID"]))
-        #self.sequence_table.update_title_proband("Proband {id}: {stufung}".format(id=self.proband["ID"], stufung=self.proband["Abstufung"]))
-        self.sequence_start_reset_button.configure(state="normal")
+        self.sequence_start_reset_button.configure(state="normal" if self.active_sequence["Scenes"] else "disabled")
     
     def stop_sequence(self):
         self.set_sequence_paused(True)
@@ -699,13 +648,16 @@ class App(ctk.CTk, AsyncCTk):
         pause_duration = self.settings["sequence_pause_duration"]
         try:
             scenes, cur_next_scenes = await self.prepare_sequence_run()
-            await self.run_scene_loop(scenes, cur_next_scenes)
+            if scenes:
+                await self.run_scene_loop(scenes, cur_next_scenes)
         finally:
             await self.cleanup_after_sequence(pause_duration)
 
     async def prepare_sequence_run(self):
         self.check_sequence_setup()
-        scenes = self.active_sequence["Szenen"]
+        scenes = self.active_sequence["Scenes"]
+        if not scenes:
+            return [], []
         if self.current_scene_idx is None:
             self.current_scene_idx = 0
 
@@ -713,20 +665,16 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.select_row(self.current_scene_idx)
         cur_next_scenes = [cur_next for cur_next in pairwise([*scenes,None])]
 
-        self.set_reading_light(self.time_position_status == "Abend")
+        self.set_reading_light(self.time_position_status == "Evening")
         self.set_roomlight_level(self.ROOMLIGHT_OFF)
         await self.run_initial_isi()
         return scenes, cur_next_scenes
 
     def check_sequence_setup(self):
-        if self.diffus_status != self.active_sequence["Diffus"]:
-            self.diffus_status = self.active_sequence["Diffus"]
-            self.open_check_window(diffus=self.diffus_status)
-
-        if self.time_position_status != self.active_sequence["Zeit"]:
+        if self.time_position_status != self.active_sequence["Time"]:
             print("Time Position Status: ", self.time_position_status)
-            print("Active Sequence Zeit: ", self.active_sequence["Zeit"])
-            self.time_position_status = self.active_sequence["Zeit"]
+            print("Active Sequence Time: ", self.active_sequence["Time"])
+            self.time_position_status = self.active_sequence["Time"]
             self.open_check_window(zeit=self.time_position_status)
 
     async def run_initial_isi(self):
@@ -823,16 +771,13 @@ class App(ctk.CTk, AsyncCTk):
         self.pause_stop_event.clear()
 
     def update_phase_buttons_after_sequence(self):
-        self.lern_phase_button.enable()
-        if self.phase_lernen.check_completion() == True:
-            self.phase_grob["Lerndurchgang"] = True
-        if self.phase_grob["Lerndurchgang"] == True:
-            self.lern_phase_button.turn_on()
-            self.grob_phase_button.enable()
-        if self.phase_grob.check_completion() == True:
-            self.grob_phase_button.turn_on()
-            self.fein_phase_button.enable()
-        for button in [self.lern_phase_button, self.grob_phase_button,self.fein_phase_button]:
+        if self.phase_learning_block is not None and self.phase_learning_block.check_completion() == True:
+            self.learning_block_button.turn_on()
+        if self.phase_e_block is not None and self.phase_e_block.check_completion() == True:
+            self.e_block_button.turn_on()
+        if self.phase_combination_block is not None and self.phase_combination_block.check_completion() == True:
+            self.combination_block_button.turn_on()
+        for button in [self.learning_block_button, self.e_block_button, self.combination_block_button]:
             if button.selected:
                 button.enable_children()
 
@@ -846,9 +791,10 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_start_reset_button.configure(text="Durchgang zurücksetzen", command=self.reset_sequence)
         self.load_proband_button.configure(state="disabled")
         # disable sequence change buttons
-        self.grob_phase_button.disable_children()
-        self.fein_phase_button.disable_children()
-        for button in [self.lern_phase_button, self.grob_phase_button,self.fein_phase_button]:
+        self.learning_block_button.disable_children()
+        self.e_block_button.disable_children()
+        self.combination_block_button.disable_children()
+        for button in [self.learning_block_button, self.e_block_button, self.combination_block_button]:
             if not button.selected:
                 button.disable()
         
@@ -919,9 +865,9 @@ class App(ctk.CTk, AsyncCTk):
         return "Nein", ""
 
     def save_scene_reaction(self, stoert, reaction_time):
-        self.active_scene["Stoert"] = stoert
+        self.active_scene["Disturbed"] = stoert
         self.sequence_table.update_cell(stoert, "Disturbing")
-        self.active_scene["Reaktionszeit"] = reaction_time
+        self.active_scene["Reaction Time"] = reaction_time
         self.sequence_table.update_cell(reaction_time,"Reaction Time")
         # save current results to file and check the progress
         if self.active_phase is not None:
@@ -929,9 +875,9 @@ class App(ctk.CTk, AsyncCTk):
         
     def clear_scene_reaction(self):
         if self.active_scene is not None: # are we even running a scene?
-            self.active_scene["Stoert"] = ""
+            self.active_scene["Disturbed"] = ""
             self.sequence_table.update_cell("", "Disturbing")
-            self.active_scene["Reaktionszeit"] = ""
+            self.active_scene["Reaction Time"] = ""
             self.sequence_table.update_cell("","Reaction Time")
 
     def load_qlc_project(self):
@@ -1027,14 +973,19 @@ class App(ctk.CTk, AsyncCTk):
     def set_scene(self, scene):
         self.set_all_intensities(0)
         self.pixel2_7_intensity.set_values([0])
-        spot = scene["Spot"]
+        scene_type = scene["Type"]
         E = scene["E"]
 
-        if spot == "diffus": 
+        diffus = scene_type == "Diffuse"
+        if self.diffus_status != diffus:
+            self.diffus_status = diffus
+            self.open_check_window(diffus=diffus)
+
+        if diffus:
             self.set_diffus_scene(E)
             return
 
-        intensity_channel, maxE = self.get_spot_channel_and_maxE(spot)
+        intensity_channel, maxE = self.get_spot_channel_and_maxE(1)
         center_pixel_dmx, other_pixel_dmx = self.calculate_spot_dmx(E, maxE)
         intensity_channel.set_values(center_pixel_dmx.to_bytes(2,'big'))
         self.pixel2_7_intensity.set_values([other_pixel_dmx])
