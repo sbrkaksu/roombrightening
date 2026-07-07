@@ -872,10 +872,10 @@ class App(ctk.CTk, AsyncCTk):
                 return None
             self.scene_disturbing.set()
             reaction_timestamp = timer()
-            return "Ja", round(reaction_timestamp - self.scene_start_timestamp,3)
+            return "Yes", round(reaction_timestamp - self.scene_start_timestamp,3)
         if self.scene_disturbing.is_set():
             return None
-        return "Nein", ""
+        return "No", ""
 
     def save_scene_reaction(self, stoert, reaction_time):
         self.active_scene["Disturbed"] = stoert

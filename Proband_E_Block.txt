@@ -1,0 +1,5 @@
+{'ID': 1,
+ 'Phase': 'E_Block',
+ 'LearnDurchgang': False,
+ 'Durchgange': [{'ID': 1, 'Time': 'Evening', 'Color': '3000 K', 'Scenes': []},
+                {'ID': 2, 'Time': 'Night', 'Color': '3000 K', 'Scenes': []}]}
