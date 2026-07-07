@@ -61,19 +61,27 @@ class ClickableTable(ctk.CTkFrame):
         self.row_num = row_num
         self.col_num = len(header_labels)
         self.selected_row = None
+        self.column_widths = [max(85, len(label) * 8 + 20) for label in header_labels]
         
         #table header
         self.table_header = CTkTable(self, row=1, column=self.col_num, header_color='white', corner_radius=0, height=10, width=85)
-        self.table_header.grid(row=0, column=0, padx=10, pady=0, sticky="n")
+        self.table_header.grid(row=0, column=0, padx=5, pady=1, sticky="n")
         self.table_header.update_values([header_labels])
         self.header_dict = dict(zip(header_labels, range(len(header_labels))))
 
         #table body
         self.table = CTkTable(self, row=self.row_num, column=self.col_num, corner_radius=0, height=10, width=85 ,hover_color= "#92d5e0")
         self.table.grid(row=1, column=0, padx=10, pady=(0,10), sticky="n")
+        self.apply_column_widths()
         
         if callback is not None:
             self.set_callback(callback)
+
+    def apply_column_widths(self):
+        for col, width in enumerate(self.column_widths):
+            self.table_header.frame[0, col].configure(width=width, require_redraw=True)
+            for row in range(self.table.rows):
+                self.table.frame[row, col].configure(width=width, require_redraw=True)
         
     def set_callback(self, callback):
         for i in range(self.table.rows):
@@ -375,7 +383,7 @@ class App(ctk.CTk, AsyncCTk):
 
     def setup_window(self):
         self.title("Study Room Brightening")
-        self.geometry("1100x750") 
+        self.geometry("1160x750") 
         self.resizable(False, False)
         self.style = ctk.set_appearance_mode("light") #force to work in light mode
 
@@ -477,7 +485,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Durchgang", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.sequence_scene_label.grid(row=1, column=0, padx=10, pady=0, sticky='w')
 
-        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Szene", "Spot", "E","E Monitor","Störend", "Reaktionszeit"], row_num=25)
+        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Type","Combination Factor", "E","E Monitor","Disturbing", "Reaction Time"], row_num=25)
         self.sequence_table.grid(row=2, column=0, padx=0, pady=10, sticky="w")
         self.sequence_table.set_callback(self.row_click)
 
