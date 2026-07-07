@@ -1,7 +1,9 @@
 # Data parsing, formatting and file handling
 from ast import literal_eval #dict type security for subject file reading
+import os
 from os.path import splitext, exists #used for saving result files with correct naming and preventing overwriting 
 from re import compile #used for parsing the monitor input with regular expressions
+import sys
 
 # Timing, async flow
 import asyncio #used for asynchronous tasks such as running the scene sequences and reading the monitor input without blocking
@@ -586,6 +588,21 @@ class App(ctk.CTk, AsyncCTk):
             print("Complete the Learning Block before starting E Block.")
             return
         self.set_phase(self.phase_e_block)
+
+    def select_random_staircase(self, staircases):
+        seed = int.from_bytes(os.urandom(128), sys.byteorder)
+        rng = np.random.default_rng(seed)
+
+        available_staircases = []
+        for staircase in staircases:
+            if not staircase.is_finished():
+                available_staircases.append(staircase)
+
+        if not available_staircases:
+            return None
+
+        index = int(rng.integers(0, len(available_staircases)))
+        return available_staircases[index]
         
     def generate_and_load_phase_fein(self):
         pass
