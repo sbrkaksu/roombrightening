@@ -482,9 +482,7 @@ class App(ctk.CTk, AsyncCTk):
         self.bind("<F20>", lambda e: self.set_scene_reaction(disturbing=True))
 
     def setup_check_window_state(self):
-        self.diffus_window = None
         self.position_window = None
-        self.diffus_status = None
         self.time_position_status = None
 
     @async_handler
@@ -524,13 +522,7 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_table.update_cell(EM, "E Monitor")
             self.active_scene["E_monitor"] = EM
     
-    def open_check_window(self,diffus = None, zeit = None):
-        if diffus is not None:
-            title, label = {
-                True: ("Insert diffuser disc", "Diffuser disc is inserted"),
-                False: ("Remove diffuser disc", "Diffuser disc is removed"),
-            }[diffus]
-            self.diffus_window = self.show_check_window(self.diffus_window, title, label)
+    def open_check_window(self, zeit=None):
         if zeit is not None:
             title, label = {
                 "Evening": ("Subject position: sitting", "Subject is sitting"),
@@ -998,10 +990,6 @@ class App(ctk.CTk, AsyncCTk):
         E = scene["E"]
 
         diffus = scene_type == "Diffuse"
-        if self.diffus_status != diffus:
-            self.diffus_status = diffus
-            self.open_check_window(diffus=diffus)
-
         if diffus:
             self.set_diffus_scene(E)
             return
