@@ -25,6 +25,7 @@ import serial #used for communication with the measurement monitor via serial po
 
 # Generates fine-grid block
 from Stage_ProbandGenerator import FormatPrinter
+from trial import AdaptiveStaircase
 
 #loops through all children of a widget and its children in GUI
 def all_children(wid, finList=None):
