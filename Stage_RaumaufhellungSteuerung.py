@@ -373,6 +373,7 @@ class App(ctk.CTk, AsyncCTk):
             "maxAussteuerung_faktor_pixel1": 0.7,
             "DMX_brightness_reading": 255,
             "DMX_brightness_roomlight": 255,
+            "learn_proband_file": "ProbandLernenB.txt",
         }
 
     def setup_state(self):
@@ -412,11 +413,11 @@ class App(ctk.CTk, AsyncCTk):
         self.load_proband_button = ctk.CTkButton(self.seq_crtl_frame, text="Load subject phase", command=self.load_proband)
         self.load_proband_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
 
-        self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_learning_block), state="disabled")
+        self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=self.load_learning_block, state="disabled")
         self.learning_block_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
         self.add_sequence_nav_buttons(self.learning_block_button, "learning_block", sequence_buttons_settings)
 
-        self.e_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="E Block", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_e_block), state="disabled")
+        self.e_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="E Block", **phase_buttons_settings, command=self.select_e_block, state="disabled")
         self.e_block_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
         self.add_sequence_nav_buttons(self.e_block_button, "e_block", sequence_buttons_settings)
 
@@ -560,20 +561,38 @@ class App(ctk.CTk, AsyncCTk):
 
     def load_proband(self):
         phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
-        if phase.phase_type == "Learning Block":
-            self.phase_learning_block = phase
-            self.learning_block_button.enable()
-            self.set_phase(self.phase_learning_block)
-        elif phase.phase_type == "E_Block":
+        if phase.phase_type == "E_Block":
             self.phase_e_block = phase
-            self.e_block_button.enable()
-            self.set_phase(self.phase_e_block)
+            self.learning_block_button.enable()
+            self.e_block_button.disable()
+            self.active_phase = None
+            self.active_sequence = None
+            self.proband_label.configure(text="Proband {id}: E_Block loaded".format(id=self.phase_e_block["ID"]))
+            self.sequence_scene_label.configure(text="Select Learning Block")
+            self.sequence_table.update_table([])
+            self.sequence_start_reset_button.configure(state="disabled")
         elif phase.phase_type == "Combination_Block":
             self.phase_combination_block = phase
             self.combination_block_button.enable()
             self.set_phase(self.phase_combination_block)
         else:
             print(f"Unsupported phase type: {phase.phase_type}")
+
+    def load_learning_block(self):
+        learn_file = self.settings["learn_proband_file"]
+        if not exists(learn_file):
+            print(f"Learning block file not found: {learn_file}")
+            return
+        self.phase_learning_block = Phase(learn_file)
+        self.set_phase(self.phase_learning_block)
+
+    def select_e_block(self):
+        if self.phase_e_block is None:
+            return
+        if self.phase_learning_block is None or self.phase_learning_block.check_completion() is not True:
+            print("Complete the Learning Block before starting E Block.")
+            return
+        self.set_phase(self.phase_e_block)
         
     def generate_and_load_phase_fein(self):
         pass
@@ -773,6 +792,8 @@ class App(ctk.CTk, AsyncCTk):
     def update_phase_buttons_after_sequence(self):
         if self.phase_learning_block is not None and self.phase_learning_block.check_completion() == True:
             self.learning_block_button.turn_on()
+            if self.phase_e_block is not None:
+                self.e_block_button.enable()
         if self.phase_e_block is not None and self.phase_e_block.check_completion() == True:
             self.e_block_button.turn_on()
         if self.phase_combination_block is not None and self.phase_combination_block.check_completion() == True:
