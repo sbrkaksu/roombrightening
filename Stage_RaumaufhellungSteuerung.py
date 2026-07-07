@@ -392,6 +392,11 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_e_block = None
         self.phase_combination_block = None
 
+        self.staircase_direct_evening = None
+        self.staircase_diffuse_evening = None
+        self.staircase_direct_night = None
+        self.staircase_diffuse_night = None
+
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
         self.pause_stop_event = asyncio.Event()
@@ -558,6 +563,7 @@ class App(ctk.CTk, AsyncCTk):
         phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
         if phase.phase_type == "E_Block":
             self.phase_e_block = phase
+            self.create_e_block_staircases()
             self.learning_block_button.enable()
             self.e_block_button.disable()
             self.active_phase = None
@@ -572,6 +578,12 @@ class App(ctk.CTk, AsyncCTk):
             self.set_phase(self.phase_combination_block)
         else:
             print(f"Unsupported phase type: {phase.phase_type}")
+
+    def create_e_block_staircases(self):
+        self.staircase_direct_evening = AdaptiveStaircase(Phase="E_Block", time="evening", combination_factor=1)
+        self.staircase_diffuse_evening = AdaptiveStaircase(Phase="E_Block", time="evening", combination_factor=0)
+        self.staircase_direct_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=1)
+        self.staircase_diffuse_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=0)
 
     def load_learning_block(self):
         learn_file = self.settings["learn_proband_file"]
