@@ -634,9 +634,8 @@ class App(ctk.CTk, AsyncCTk):
             return
         scenes = self.active_sequence["Scenes"]
         progress = sum(s.get("Disturbed") is not None for s in scenes)
-        label = "Durchgang {did}: {time} | {color}, Progress {pgr}/{num}".format(did=self.active_sequence["ID"],
+        label = "Durchgang {did}: {time}, Progress {pgr}/{num}".format(did=self.active_sequence["ID"],
                                                                                 time=self.active_sequence["Time"],
-                                                                                color=self.active_sequence["Color"],
                                                                                 pgr=progress,
                                                                                 num=len(scenes))
         self.sequence_scene_label.configure(text=label)
