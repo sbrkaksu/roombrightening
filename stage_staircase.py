@@ -15,7 +15,7 @@ class AdaptiveStaircase:
         self.phase = Phase
         self.time = time
         self.combination_factor = kwargs.get("combination_factor", 1)
-        self.threshold = kwargs.get("threshold", None)  
+        self.type_of_illumination = "Direct" if self.combination_factor == 1 else "Diffuse" if self.combination_factor == 0 else "Combined"  
 
         #Stimilus values for the E threshold determination phase 
         self.stimuli_E_night  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
@@ -30,13 +30,13 @@ class AdaptiveStaircase:
         self.stimuli_combined = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 
                              0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
 
-        if self.phase == "E_threshold_determination_phase":
+        if self.phase == "E_Block":
             if self.time == "night":
                 self.chosen_stimuli = self.stimuli_E_night
             elif self.time == "evening":
                 self.chosen_stimuli = self.stimuli_E_evening
 
-        elif self.phase == "combination_threshold_determination_phase":
+        elif self.phase == "Combination_Block":
             self.chosen_stimuli = self.stimuli_combined
 
         # Parameters
@@ -54,6 +54,7 @@ class AdaptiveStaircase:
         self.response_sequence_history = []
         self.last_direction = None
         self.trial_count = 0
+        self.is_staircase_completed = False
 
     def is_finished(self):
         """Checks whether the target reversals or maximum trial count has been reached."""
@@ -91,34 +92,23 @@ class AdaptiveStaircase:
 
     def get_threshold(self):
         """Returns the calculated threshold value."""
-        if self.phase == "E_threshold_determination_phase": 
-            self.threshold = sum(self.reversal_points) / len(self.reversal_points)
-        elif self.phase == "combination_threshold_determination_phase":
-            self.threshold = self.threshold
+        self.threshold = sum(self.reversal_points) / len(self.reversal_points)
         return self.threshold
 
     def get_result(self):
         """Calculates the average result."""
 
         if not self.reversal_points:
-                return print("No reversals recorded, threshold calculation not possible.")
+                print("No reversals recorded, threshold calculation not possible.")
         else:
 
                 self.get_threshold()
+                self.is_staircase_completed = True
 
-                if self.phase == "E_threshold_determination_phase":
-
-                    print(f"Confirmed direction changes (reversals): {'Direct' if self.combination_factor == 1 else 'Diffuse'}")
-                    print(f" Reversals: {[round(x, 4) for x in self.reversal_points]} (Total {len(self.reversal_points)})")
-                    print("\n")
-                    print(f"Calculated threshold value for Illuminance (reversal average): {self.get_threshold(): .4f} lx")
-
-                elif self.phase == "combination_threshold_determination_phase":
-
-                    print(f"Confirmed direction changes (reversals): {'Combined'}")
-                    print(f" Reversals: {[round(x, 4) for x in self.reversal_points]} (Total {len(self.reversal_points)})")
-                    print("\n")
-                    print(f"Calculated threshold value for Combined Illumination (reversal average): {self.get_threshold(): .4f}")
+                print(f"Confirmed direction changes (reversals): {self.type_of_illumination}")
+                print(f" Reversals: {[round(x, 4) for x in self.reversal_points]} (Total {len(self.reversal_points)})")
+                print("\n")
+                print(f"Calculated threshold value for Illuminance (reversal average): {self.get_threshold(): .4f} lx")
 
                 print("\n")
                 print("\nFull stimulus history:")
@@ -127,6 +117,7 @@ class AdaptiveStaircase:
                 print("\nFull response sequence history:")
                 print(self.response_sequence_history)
                 print("=" * 70)
+        return self.is_staircase_completed
             
         
 
@@ -136,16 +127,10 @@ class AdaptiveStaircase:
         if not self.is_finished():
             print('-'* 10)
 
-            if self.phase == "E_threshold_determination_phase":
-                print('Direct' if self.combination_factor == 1 else 'Diffuse')
-                print('-'* 10)
-                print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
-                print(f"Current stimulus intensity: {self.current_value:.2f} lx ")
-            elif self.phase == "combination_threshold_determination_phase":
-                print('Combined')
-                print('-'* 10)
-                print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
-                print(f"Current stimulus intensity: {self.current_value:.2f} ")
+            print(self.type_of_illumination)
+            print('-'* 10)
+            print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
+            print(f"Current stimulus intensity: {self.current_value:.2f} lx ")
             
 class App(customtkinter.CTk):
     def __init__(self):
@@ -158,18 +143,26 @@ class App(customtkinter.CTk):
         self.is_running = False
         self.is_clicked = False
 
-        self.current_durchgang = 1
-        self.max_durchgang = 4
-
-        #self.is_E_threshold_determination_phase_completed = self.is_Durchgang_1_completed and self.is_Durchgang_2_completed
-        #self.is_combination_threshold_determination_phase_completed = False
+        self.is_durchgang_1_completed = False
+        self.is_durchgang_2_completed = False
+        self.is_durchgang_3_completed = False
+        self.is_durchgang_4_completed = False
 
         self.available_staircases = None  # To keep track of the currently active staircase
         self.Proband_E_block_trials =  []
         self.Proband_E_block_results =  []
+        self.threshold_memory_for_combination_block = []
         self.combination_block_trials = []
         self.combination_block_results = []
-        self.threshold_memory_for_combination_block = []
+
+        self.staircase_direct_evening = None
+        self.staircase_diffuse_evening = None
+        self.staircase_direct_night = None
+        self.staircase_diffuse_night = None
+        self.combined_evening_ex_durchange1_direct_evening = None
+        self.combined_evening_ex_durchange1_diffuse_evening = None
+        self.combined_evening_ex_durchange2_direct_night = None
+        self.combined_evening_ex_durchange2_diffuse_night = None
         
         
 
@@ -189,26 +182,86 @@ class App(customtkinter.CTk):
 
         self.protocol("WM_DELETE_WINDOW", self.stop)
 
+    def get_next_durchgang(self):
+            if not self.is_durchgang_1_completed:
+                    return 1
+            if not self.is_durchgang_2_completed:
+                    return 2
+            if not self.is_durchgang_3_completed:
+                    return 3
+            if not self.is_durchgang_4_completed:
+                    return 4
+            return None
+
+    def describe_durchgang(self, durchgang):
+            if durchgang == 1:
+                    return "Durchgang 1 (evening, E_Block)"
+            if durchgang == 2:
+                    return "Durchgang 2 (night, E_Block)"
+            if durchgang == 3:
+                    return "Durchgang 3 (evening, Combination_Block)"
+            if durchgang == 4:
+                    return "Durchgang 4 (night, Combination_Block)"
+            return "No Durchgang"
+
+    def mark_durchgang_completed(self, durchgang):
+            if durchgang == 1:
+                    self.is_durchgang_1_completed = True
+            elif durchgang == 2:
+                    self.is_durchgang_2_completed = True
+            elif durchgang == 3:
+                    self.is_durchgang_3_completed = True
+            elif durchgang == 4:
+                    self.is_durchgang_4_completed = True
+
     def create_staircases(self):
-            if self.current_durchgang == 1:
-                    self.staircase_direct_evening = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="evening", combination_factor=1)
-                    self.staircase_diffuse_evening = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="evening", combination_factor=0)
-                    self.available_staircases = [self.staircase_direct_evening, self.staircase_diffuse_evening]
-            elif self.current_durchgang == 2:
-                    self.staircase_direct_night = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="night", combination_factor=1)
-                    self.staircase_diffuse_night = AdaptiveStaircase(Phase="E_threshold_determination_phase", time="night", combination_factor=0)
-                    self.available_staircases = [self.staircase_direct_night, self.staircase_diffuse_night]
-            elif self.current_durchgang == 3:
-                    self.staircase_combined_evening = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="evening", combination_factor=0.5)
-                    self.available_staircases = [self.staircase_combined_evening]
-            elif self.current_durchgang == 4:
-                    self.staircase_combined_night = AdaptiveStaircase(Phase="combination_threshold_determination_phase", time="night", combination_factor=0.5)
-                    self.available_staircases = [self.staircase_combined_night]
-            else:
+            next_durchgang = self.get_next_durchgang()
+
+            if next_durchgang is None:
                     self.available_staircases = []
                     self.is_running = False
                     print("All Durchgang completed.")
                     return
+
+            self.available_staircases = []
+
+            if next_durchgang == 1:
+                    self.staircase_direct_evening = AdaptiveStaircase(Phase="E_Block", time="evening", combination_factor=1)
+                    self.staircase_diffuse_evening = AdaptiveStaircase(Phase="E_Block", time="evening", combination_factor=0)
+                    self.available_staircases = [
+                            self.staircase_direct_evening,
+                            self.staircase_diffuse_evening,
+                    ]
+            elif next_durchgang == 2:
+                    self.staircase_direct_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=1)
+                    self.staircase_diffuse_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=0)
+                    self.available_staircases = [
+                            self.staircase_direct_night,
+                            self.staircase_diffuse_night,
+                    ]
+            elif next_durchgang == 3:
+                    if not (self.staircase_direct_evening.is_staircase_completed and 
+                            self.staircase_diffuse_evening.is_staircase_completed):
+                        self.combined_evening_ex_durchange1_direct_evening = AdaptiveStaircase(Phase="Combination_Block", time="evening")
+                        self.combined_evening_ex_durchange1_diffuse_evening = AdaptiveStaircase(Phase="Combination_Block", time="evening")
+                        self.available_staircases = [
+                                self.combined_evening_ex_durchange1_direct_evening,
+                                self.combined_evening_ex_durchange1_diffuse_evening,
+                        ]
+            elif next_durchgang == 4:
+                    if not (
+                            self.staircase_direct_night
+                            and self.staircase_diffuse_night
+                            and self.staircase_direct_night.is_staircase_completed
+                            and self.staircase_diffuse_night.is_staircase_completed
+                    ):
+                        self.combined_evening_ex_durchange2_direct_night = AdaptiveStaircase(Phase="Combination_Block", time="night")
+                        self.combined_evening_ex_durchange2_diffuse_night = AdaptiveStaircase(Phase="Combination_Block", time="night")
+                        self.available_staircases = [
+                                self.combined_evening_ex_durchange2_direct_night,
+                                self.combined_evening_ex_durchange2_diffuse_night,
+                        ]
+
             self.is_running = True
 
     @async_handler
@@ -221,7 +274,8 @@ class App(customtkinter.CTk):
             self.button_start.configure(state="disabled")
             return
 
-        print(f"--- Durchgang {self.current_durchgang} started ---")
+        durchgang = self.get_next_durchgang()
+        print(f"--- {self.describe_durchgang(durchgang)} started ---")
         self.button_start.configure(state="disabled")
         
         # Instead of a separate monitor_loop, the loop is handled directly in the button's async function
@@ -288,42 +342,42 @@ class App(customtkinter.CTk):
         return selected_staircase
     
     def save_threshold_results(self):
-        if self.current_durchgang in (1, 2):
+        durchgang = self.get_next_durchgang()
+
+        if durchgang in (1, 2):
             for staircase in self.available_staircases:
                 self.Proband_E_block_trials.append({
-                    "Durchgang": self.current_durchgang,
+                    "Durchgang": durchgang,
                     "Time": staircase.time,
                     "Combination Factor": staircase.combination_factor,
                     "Threshold": staircase.threshold,
                 })
+                self.threshold_memory_for_combination_block.append(staircase.threshold)
             print(self.Proband_E_block_trials)
-        elif self.current_durchgang in (3, 4):
+        elif durchgang in (3, 4):
             for staircase in self.available_staircases:
-                self.combination_block_trials.append({
-                    "Durchgang": self.current_durchgang,
+                self.combination_block_results.append({
+                    "Durchgang": durchgang,
                     "Time": staircase.time,
                     "Combination Factor": staircase.combination_factor,
+                    "Type of Illumination": staircase.type_of_illumination,
+                    "Reversal Points": staircase.reversal_points,
                     "Threshold": staircase.threshold,
                 })
-            print(self.combination_block_trials)
-        """
-        elif self.current_durchgang == 2:
-            self.E_threshold_results.append(self.available_staircases[0].get_result())
-            self.E_threshold_results.append(self.available_staircases[1].get_result())
-        elif self.current_durchgang == 3:
-            self.combination_threshold_results.append(self.available_staircases[0].get_result())
-            self.combination_threshold_results.append(self.available_staircases[1].get_result())
-        """        
-        print(f"Durchgang {self.current_durchgang} completed.")
+            print(self.combination_block_results)
+        print(f"{self.describe_durchgang(durchgang)} completed.")
 
     def proceed_next_durchgang(self):
             self.is_running = False
-            self.current_durchgang += 1
+            completed_durchgang = self.get_next_durchgang()
+            self.mark_durchgang_completed(completed_durchgang)
             self.available_staircases = []  # Clear the list to indicate that both staircases are finished
 
-            if self.current_durchgang <= self.max_durchgang:
+            next_durchgang = self.get_next_durchgang()
+
+            if next_durchgang is not None:
                 self.button_start.configure(state="normal")
-                print(f"Ready for Durchgang {self.current_durchgang}. Press Start.")
+                print(f"Ready for {self.describe_durchgang(next_durchgang)}. Press Start.")
             else:
                 self.button_start.configure(state="disabled")
                 print("Experiment completed.")
