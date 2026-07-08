@@ -564,8 +564,11 @@ class App(ctk.CTk, AsyncCTk):
             if self.active_sequence is None: # if subject not loaded
                 print("Proband not loaded")
                 return
-        self.current_scene_idx = row_idx
-        self.sequence_table.select_row(self.current_scene_idx)
+        if self.active_phase.phase_type == "E_Block":
+            self.current_scene_idx = self.table_scene_offset + row_idx
+        else:
+            self.current_scene_idx = row_idx
+        self.sequence_table.select_row(row_idx)
 
     def load_proband(self):
         phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
@@ -648,10 +651,51 @@ class App(ctk.CTk, AsyncCTk):
         pass
         
     def set_next_sequence(self):
+        if self.active_phase is not None and self.active_phase.phase_type == "E_Block":
+            self.change_e_block_page_or_sequence(1)
+            return
         self.change_sequence(1)
     
     def set_prev_sequence(self):
+        if self.active_phase is not None and self.active_phase.phase_type == "E_Block":
+            self.change_e_block_page_or_sequence(-1)
+            return
         self.change_sequence(-1)
+
+    def change_e_block_page_or_sequence(self, step):
+        scenes = self.active_sequence["Scenes"]
+        scene_limit = self.settings["adaptive_batch_scene_limit"]
+
+        if step > 0:
+            if (
+                self.table_scene_offset == len(scenes)
+                and not self.active_sequence.get("Adaptive_Completed", False)
+            ):
+                return
+            next_page_offset = self.table_scene_offset + scene_limit
+            has_next_page = next_page_offset < len(scenes)
+            can_open_empty_page = (
+                next_page_offset == len(scenes)
+                and len(scenes) > 0
+                and not self.active_sequence.get("Adaptive_Completed", False)
+            )
+            if has_next_page or can_open_empty_page:
+                self.table_scene_offset = next_page_offset
+            else:
+                self.active_phase.next_sequence()
+                self.table_scene_offset = 0
+        elif self.table_scene_offset >= scene_limit:
+            self.table_scene_offset -= scene_limit
+        else:
+            self.active_phase.prev_sequence()
+            previous_scenes = self.active_phase.get_current_sequence()["Scenes"]
+            if previous_scenes:
+                self.table_scene_offset = ((len(previous_scenes) - 1) // scene_limit) * scene_limit
+            else:
+                self.table_scene_offset = 0
+
+        self.current_scene_idx = None
+        self.set_sequence()
 
     def change_sequence(self, step):
         if self.active_phase is None:
@@ -700,8 +744,13 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
-        e_block_can_start = self.active_phase.phase_type == "E_Block" and not self.active_sequence.get("Adaptive_Completed", False)
-        self.sequence_start_reset_button.configure(state="normal" if scenes or e_block_can_start else "disabled")
+        e_block_can_start = (
+            self.active_phase.phase_type == "E_Block"
+            and not self.active_sequence.get("Adaptive_Completed", False)
+            and self.table_scene_offset == len(scenes)
+        )
+        can_start = e_block_can_start if self.active_phase.phase_type == "E_Block" else bool(scenes)
+        self.sequence_start_reset_button.configure(state="normal" if can_start else "disabled")
     
     def stop_sequence(self):
         self.set_sequence_paused(True)
@@ -925,6 +974,12 @@ class App(ctk.CTk, AsyncCTk):
         self.active_scene = None
         self.current_scene_idx = None
         self.set_sequence_scene_label()
+        if self.active_phase.phase_type == "E_Block":
+            can_start = (
+                not self.active_sequence.get("Adaptive_Completed", False)
+                and self.table_scene_offset == len(self.active_sequence["Scenes"])
+            )
+            self.sequence_start_reset_button.configure(state="normal" if can_start else "disabled")
         self.update_phase_buttons_after_sequence()
 
         await self.await_countdown_timer(start_time=pause_duration,
