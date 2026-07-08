@@ -307,6 +307,8 @@ class Phase(dict):
         with open(fname, 'w') as f:
             f.write(printer.pformat(self))
 
+        if self.phase_type == "Learning Block":
+            return
         
         if self.check_completion() == True:
             self.complete = True
