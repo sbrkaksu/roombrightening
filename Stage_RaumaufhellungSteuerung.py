@@ -361,9 +361,6 @@ class App(ctk.CTk, AsyncCTk):
             "monitor_serial_port":      'COM3',
             "monitor_baud_rate":        9600,
             "monitor_E_factor_spot_1":  2.41e7,
-            "monitor_E_factor_spot_2":  2.41e7,
-            "monitor_E_factor_spot_3":  3.63e7,
-            "monitor_E_factor_spot_4":  2.70e7,
             "monitor_E_factor_diffus":  1.26e7,
             "scene_duration":           1, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
@@ -371,9 +368,6 @@ class App(ctk.CTk, AsyncCTk):
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
             "sequence_pause_duration":  5.0, # 45 seconds
             "maxE_spot1": 168.9,
-            "maxE_spot2": 116.9,
-            "maxE_spot3": 192.4,
-            "maxE_spot4": 88,
             "maxE_diffus": 610,
             "maxAussteuerung_faktor_pixel1": 0.7,
             "DMX_brightness_reading": 255,
@@ -1001,9 +995,6 @@ class App(ctk.CTk, AsyncCTk):
         self.qlc_input = self.qlc_node.add_universe(10)
 
         self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) #  0:0
-        self.spot2_intensity    = self.qlc_input.add_channel(start=3, width=2) #  0:47
-        self.spot3_intensity    = self.qlc_input.add_channel(start=5, width=2) # 47:0
-        self.spot4_intensity    = self.qlc_input.add_channel(start=7, width=2) # 47:47
         self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
         self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
@@ -1041,9 +1032,8 @@ class App(ctk.CTk, AsyncCTk):
             self.set_diffus_scene(E)
             return
 
-        intensity_channel, maxE = self.get_spot_channel_and_maxE(1)
-        center_pixel_dmx, other_pixel_dmx = self.calculate_spot_dmx(E, maxE)
-        intensity_channel.set_values(center_pixel_dmx.to_bytes(2,'big'))
+        center_pixel_dmx, other_pixel_dmx = self.calculate_spot_dmx(E)
+        self.spot1_intensity.set_values(center_pixel_dmx.to_bytes(2,'big'))
         self.pixel2_7_intensity.set_values([other_pixel_dmx])
 
     def set_diffus_scene(self, E):
@@ -1054,18 +1044,10 @@ class App(ctk.CTk, AsyncCTk):
         self.spot1_intensity.set_values(intensity.to_bytes(2,'big'))
         self.pixel2_7_intensity.set_values([255])
 
-    def get_spot_channel_and_maxE(self, spot):
-        spot_map = {
-            1: (self.spot1_intensity, self.settings["maxE_spot1"]),
-            2: (self.spot2_intensity, self.settings["maxE_spot2"]),
-            3: (self.spot3_intensity, self.settings["maxE_spot3"]),
-            4: (self.spot4_intensity, self.settings["maxE_spot4"]),
-        }
-        return spot_map[spot]
-
-    def calculate_spot_dmx(self, E, maxE):
+    def calculate_spot_dmx(self, E):
         dmx8_max = 2**8 - 1
         dmx16_max = 2**16 - 1
+        maxE = self.settings["maxE_spot1"]
         E_factor = E / maxE
         one_pixel_max_factor = self.settings["maxAussteuerung_faktor_pixel1"]
         if E_factor > one_pixel_max_factor:
@@ -1085,9 +1067,6 @@ class App(ctk.CTk, AsyncCTk):
         
     def set_all_intensities(self,i):
         self.spot1_intensity.set_values(i.to_bytes(2,'big'))
-        self.spot2_intensity.set_values(i.to_bytes(2,'big'))
-        self.spot3_intensity.set_values(i.to_bytes(2,'big'))
-        self.spot4_intensity.set_values(i.to_bytes(2,'big'))
 
     def set_isi(self):
         brightness = 2500
