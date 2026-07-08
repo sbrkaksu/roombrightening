@@ -419,7 +419,6 @@ class App(ctk.CTk, AsyncCTk):
 
         self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=self.load_learning_block, state="disabled")
         self.learning_block_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
-        self.add_sequence_nav_buttons(self.learning_block_button, "learning_block", sequence_buttons_settings)
 
         self.e_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="E Block", **phase_buttons_settings, command=self.select_e_block, state="disabled")
         self.e_block_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
