@@ -15,7 +15,7 @@ import numpy as np
 
 # GUI
 import customtkinter as ctk #GUI framework
-from tkinter import filedialog, font, DoubleVar #used for file dialogs, font configuration
+from tkinter import filedialog, font, DoubleVar, TclError #used for file dialogs, font configuration
 from CTkTable import CTkTable #custom table widget for displaying the scenes and their parameters
 from async_tkinter_loop import async_handler #decorator to allow async functions to be used as event handlers in Tkinter
 from async_tkinter_loop.mixins import AsyncCTk #mixin to allow the main application class to run asynchronous tasks
@@ -473,6 +473,7 @@ class App(ctk.CTk, AsyncCTk):
         self.countdown_timer_var.trace_add('write', self.print_countdown_timer)
         self.scene_countdown_end = 0.0
         self.scene_countdown_finished = asyncio.Event()
+        self.countdown_after_id = None
         self.countdown_label  = ctk.CTkLabel(self.table_frame, text="Test", font=(font.nametofont("TkDefaultFont"), 18))
         self.countdown_label.place(relx=0.89, y=18, anchor="nw")
         self.countdown_digits = ctk.CTkLabel(self.table_frame, text="00.0", font=(font.nametofont("TkDefaultFont"), 18))
@@ -835,8 +836,6 @@ class App(ctk.CTk, AsyncCTk):
 
             await self.run_single_scene(scene)
             await self.await_e_block_interstimulus_interval()
-            if self.sequence_stop_event.is_set():
-                continue
 
             self.set_scene_reaction(disturbing=False)
             self.active_staircase = None
@@ -849,15 +848,15 @@ class App(ctk.CTk, AsyncCTk):
     async def await_e_block_interstimulus_interval(self):
         isi_duration = self.settings["inter-stimulus-interval"]
         isi_fade_duration = self.settings["isi_fade_duration"]
-        await self.await_countdown_timer(start_time=isi_duration,
-                                         end_time=isi_fade_duration,
-                                         stop_event=self.sequence_stop_event,
-                                         label="ISI")
-        if self.sequence_stop_event.is_set():
-            self.active_scene = None
-            await self.sequence_continue_event.wait()
-            self.sequence_continue_event.clear()
-            self.sequence_stop_event.clear()
+        while True:
+            self.activate_isi()
+            await self.await_countdown_timer(start_time=isi_duration,
+                                             end_time=isi_fade_duration,
+                                             stop_event=self.sequence_stop_event,
+                                             label="ISI")
+            if not self.sequence_stop_event.is_set():
+                return
+            await self.wait_for_sequence_continue()
 
     async def prepare_sequence_run(self):
         self.check_sequence_setup()
@@ -886,28 +885,27 @@ class App(ctk.CTk, AsyncCTk):
     async def run_initial_isi(self):
         isi_duration = self.settings["inter-stimulus-interval"]
         isi_fade_duration = self.settings["isi_fade_duration"]
-        self.activate_isi()
-        await self.await_countdown_timer(start_time=isi_duration * 2,
-                                         end_time=isi_fade_duration,
-                                         stop_event=self.sequence_stop_event,
-                                         label="ISI")
-        self.fade_isi()
-        await self.await_countdown_timer(label="ISI")
+        while True:
+            self.activate_isi()
+            await self.await_countdown_timer(start_time=isi_duration * 2,
+                                             end_time=isi_fade_duration,
+                                             stop_event=self.sequence_stop_event,
+                                             label="ISI")
+            if self.sequence_stop_event.is_set():
+                await self.wait_for_sequence_continue()
+                continue
+
+            self.fade_isi()
+            await self.await_countdown_timer(stop_event=self.sequence_stop_event, label="ISI")
+            if not self.sequence_stop_event.is_set():
+                return
+            await self.wait_for_sequence_continue()
 
     async def run_scene_loop(self, scenes, cur_next_scenes):
         while self.current_scene_idx < len(scenes):
             scene,next_scene = cur_next_scenes[self.current_scene_idx]
             await self.run_single_scene(scene)
-            paused = await self.run_interstimulus_interval(cur_next_scenes)
-            if paused:
-                continue
-
-            if next_scene is not None:
-                self.set_scene(next_scene)
-            self.fade_isi()
-            await self.await_countdown_timer(stop_event=self.sequence_stop_event,label="ISI")
-            if self.sequence_stop_event.is_set():
-                continue
+            await self.run_interstimulus_interval(next_scene)
 
             self.set_scene_reaction(disturbing=False)
             self.sequence_table.deselect_row()
@@ -919,41 +917,53 @@ class App(ctk.CTk, AsyncCTk):
         table_row_idx = self.current_scene_idx - self.table_scene_offset
         self.sequence_table.select_row(table_row_idx)
         self.set_sequence_scene_label()
-        self.activate_scene()
-        self.active_scene = scene
-        self.scene_disturbing.clear()
-        self.scene_start_timestamp = timer()
-        await self.await_countdown_timer(start_time=scene_duration,
-                                         end_time=scene_fade_duration,
-                                         stop_event=self.sequence_stop_event,
-                                         label="Scene")
-        if not self.sequence_stop_event.is_set():
-            self.set_scene_monitor()
-        self.fade_scene()
-        await self.await_countdown_timer(label="Scene")
-        self.activate_isi()
+        while True:
+            self.activate_scene()
+            self.active_scene = scene
+            self.scene_disturbing.clear()
+            self.scene_start_timestamp = timer()
+            await self.await_countdown_timer(start_time=scene_duration,
+                                             end_time=scene_fade_duration,
+                                             stop_event=self.sequence_stop_event,
+                                             label="Scene")
+            if self.sequence_stop_event.is_set():
+                self.fade_scene()
+                await self.wait_for_sequence_continue()
+                continue
 
-    async def run_interstimulus_interval(self, cur_next_scenes):
+            self.set_scene_monitor()
+            self.fade_scene()
+            await self.await_countdown_timer(stop_event=self.sequence_stop_event, label="Scene")
+            if not self.sequence_stop_event.is_set():
+                self.activate_isi()
+                return
+            await self.wait_for_sequence_continue()
+
+    async def run_interstimulus_interval(self, next_scene):
         isi_duration = self.settings["inter-stimulus-interval"]
         isi_fade_duration = self.settings["isi_fade_duration"]
-        await self.await_countdown_timer(start_time=isi_duration,
-                                         end_time=isi_fade_duration,
-                                         stop_event=self.sequence_stop_event,
-                                         label="ISI")
-        if self.sequence_stop_event.is_set():
-            await self.wait_for_sequence_continue(cur_next_scenes, isi_fade_duration)
-            return True
-        return False
+        while True:
+            self.activate_isi()
+            await self.await_countdown_timer(start_time=isi_duration,
+                                             end_time=isi_fade_duration,
+                                             stop_event=self.sequence_stop_event,
+                                             label="ISI")
+            if self.sequence_stop_event.is_set():
+                await self.wait_for_sequence_continue()
+                continue
 
-    async def wait_for_sequence_continue(self, cur_next_scenes, isi_fade_duration):
-        self.active_scene = None
+            if next_scene is not None:
+                self.set_scene(next_scene)
+            self.fade_isi()
+            await self.await_countdown_timer(stop_event=self.sequence_stop_event, label="ISI")
+            if not self.sequence_stop_event.is_set():
+                return
+            await self.wait_for_sequence_continue()
+
+    async def wait_for_sequence_continue(self):
         await self.sequence_continue_event.wait()
         self.sequence_continue_event.clear()
         self.sequence_stop_event.clear()
-        scene,_ = cur_next_scenes[self.current_scene_idx]
-        self.set_scene(scene)
-        self.fade_isi()
-        await asyncio.sleep(isi_fade_duration)
 
     async def cleanup_after_sequence(self, pause_duration):
         self.set_roomlight_level(self.ROOMLIGHT_DIM)
@@ -1031,12 +1041,21 @@ class App(ctk.CTk, AsyncCTk):
         self.scene_countdown_finished.clear()
         if(start_time != None):
             self.countdown_timer_var.set(start_time)
-        self.after(100, self.countdown_timer_cb) # starts the timer
+        self.cancel_countdown_callback()
+        self.countdown_after_id = self.after(100, self.countdown_timer_cb) # starts the timer
         if stop_event is not None:
-            await asyncio.wait(
-                [asyncio.create_task(self.scene_countdown_finished.wait()),
-                asyncio.create_task(stop_event.wait())],return_when=asyncio.FIRST_COMPLETED)
+            timer_finished_task = asyncio.create_task(self.scene_countdown_finished.wait())
+            stop_task = asyncio.create_task(stop_event.wait())
+            _, pending_tasks = await asyncio.wait(
+                [timer_finished_task, stop_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for pending_task in pending_tasks:
+                pending_task.cancel()
+            if pending_tasks:
+                await asyncio.gather(*pending_tasks, return_exceptions=True)
             if stop_event.is_set():
+                self.cancel_countdown_callback()
                 self.countdown_timer_var.set(0) # reset to zero
                 self.countdown_label.configure(text="")
                 self.timer_running = False
@@ -1048,13 +1067,23 @@ class App(ctk.CTk, AsyncCTk):
         self.countdown_timer_var.set(self.scene_countdown_end) # leave it at end_time
 
     def countdown_timer_cb(self):
+        self.countdown_after_id = None
         timer_value = self.countdown_timer_var.get()
         timer_value -= 0.1
         if timer_value > self.scene_countdown_end:
             self.countdown_timer_var.set(round(timer_value,1))
-            self.after(100, self.countdown_timer_cb)  # decrement countdown every 100 ms
+            self.countdown_after_id = self.after(100, self.countdown_timer_cb)  # decrement countdown every 100 ms
         else:
             self.scene_countdown_finished.set()
+
+    def cancel_countdown_callback(self):
+        if self.countdown_after_id is None:
+            return
+        try:
+            self.after_cancel(self.countdown_after_id)
+        except TclError:
+            pass
+        self.countdown_after_id = None
     
     def set_scene_reaction(self, disturbing):
         if self.active_scene is None: # are we even running a scene?
