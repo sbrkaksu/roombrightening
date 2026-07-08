@@ -915,8 +915,8 @@ class App(ctk.CTk, AsyncCTk):
         self.reading_light_intensity.set_values([0]) #turn off reading light during pause
         self.sequence_table.deselect_row()
         self.sequence_stop_event.clear()
-        self.sequence_start_reset_button.configure(text="Durchgang starten", command=self.run_sequence)
-        self.sequence_stop_continue_button.configure(text="Durchgang anhalten", command=self.stop_sequence,
+        self.sequence_start_reset_button.configure(text="Start Durchgang", command=self.run_sequence)
+        self.sequence_stop_continue_button.configure(text="Pause Durchgang", command=self.stop_sequence,
                                                     state="disabled", fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
         self.load_proband_button.configure(state="normal")
         self.roomlight_button.configure(state="normal")
