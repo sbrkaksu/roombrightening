@@ -92,5 +92,4 @@ if __name__ == "__main__":
     generate_learn_proband()
     generate_probanden_E_block()
     generate_probanden_Combination_block()
-    generate_probanden_E_block_results()
-    generate_probanden_Combination_block_results()
+

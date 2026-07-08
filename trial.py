@@ -4,6 +4,23 @@ import asyncio
 from async_tkinter_loop import async_handler
 import sys
 import os
+from ast import literal_eval
+from os.path import splitext, exists
+from Formatter import FormatPrinter
+
+printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)
+
+superscript_map = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵",
+                   "6": "⁶","7": "⁷", "8": "⁸", "9": "⁹","+": "⁺","-": "⁻"}
+
+superscript_trans = str.maketrans(''.join(superscript_map.keys()),''.join(superscript_map.values()))
+def pprint_scientific(f):
+    b,e = np.format_float_scientific(f, precision=2, min_digits=2, exp_digits=1).split('e', 1)
+    return "{} ⋅10{}".format(b, e.translate(superscript_trans)) 
+
+#formatting E values in the table with above formatter
+table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} ) 
+
 
 # ==========================================
 # 1. ALGORITHM CLASS
@@ -132,6 +149,51 @@ class AdaptiveStaircase:
             print(f"\n[Step {self.trial_count + 1}/{self.max_trials}] | Reversals: {len(self.reversal_points)}/{self.target_reversals}")
             print(f"Current stimulus intensity: {self.current_value:.2f} lx ")
             
+class Phase(dict):
+    def __init__(self,proband_file, *args, **kwargs):
+        __slots__ = ()
+        self.filename = proband_file
+        with open(self.filename, 'r') as f:
+            s = f.read()
+            super().__init__(literal_eval(s))
+        self.phase_type = self["Phase"]
+        self.seq_num = len(self["Durchgange"])
+        self.seq_idx = 0
+        self.complete = False
+    
+    def get_current_sequence(self):
+        return self["Durchgange"][self.seq_idx]
+    
+    def next_sequence(self):
+        self.seq_idx += 1
+        if self.seq_idx >= self.seq_num:
+            self.seq_idx -= self.seq_num
+
+    def prev_sequence(self):
+        self.seq_idx -= 1
+        if self.seq_idx < 0:
+            self.seq_idx += self.seq_num
+    
+    def check_completion(self):
+        pass
+        
+    def save(self):
+        filename_base = splitext(self.filename)[0]
+        fname = self.filename
+        with open(fname, 'w') as f:
+            f.write(printer.pformat(self))
+
+        
+        if self.check_completion() == True:
+            self.complete = True
+            fname = f"{filename_base}_result_complete.txt"
+            counter = 1
+            while exists(fname):
+                fname = f"{filename_base}_result_complete_{counter}.txt"
+                counter += 1
+        with open(fname, 'w') as f:
+            f.write(printer.pformat(self))
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -164,7 +226,9 @@ class App(customtkinter.CTk):
         self.combined_evening_ex_durchange2_direct_night = None
         self.combined_evening_ex_durchange2_diffuse_night = None
         
-        
+        self.phase_learning = None
+        self.phase_E_block = None
+        self.phase_combination_block = None
 
         self.button_start = customtkinter.CTkButton(
             self, 
@@ -242,16 +306,12 @@ class App(customtkinter.CTk):
             elif next_durchgang == 3:
                     if not (self.staircase_direct_evening.is_staircase_completed and 
                             self.staircase_diffuse_evening.is_staircase_completed):
-                            self.available_staircases = []
-                            self.is_running = False
-                            print(f"Missing threshold memory for {self.describe_durchgang(3)}.")
-                            return
-                    self.combined_evening_ex_durchange1_direct_evening = AdaptiveStaircase(Phase="Combination_Block", time="evening")
-                    self.combined_evening_ex_durchange1_diffuse_evening = AdaptiveStaircase(Phase="Combination_Block", time="evening")
-                    self.available_staircases = [
-                            self.combined_evening_ex_durchange1_direct_evening,
-                            self.combined_evening_ex_durchange1_diffuse_evening,
-                    ]
+                        self.combined_evening_ex_durchange1_direct_evening = AdaptiveStaircase(Phase="Combination_Block", time="evening")
+                        self.combined_evening_ex_durchange1_diffuse_evening = AdaptiveStaircase(Phase="Combination_Block", time="evening")
+                        self.available_staircases = [
+                                self.combined_evening_ex_durchange1_direct_evening,
+                                self.combined_evening_ex_durchange1_diffuse_evening,
+                        ]
             elif next_durchgang == 4:
                     if not (
                             self.staircase_direct_night
@@ -259,16 +319,12 @@ class App(customtkinter.CTk):
                             and self.staircase_direct_night.is_staircase_completed
                             and self.staircase_diffuse_night.is_staircase_completed
                     ):
-                            self.available_staircases = []
-                            self.is_running = False
-                            print(f"Missing threshold memory for {self.describe_durchgang(4)}.")
-                            return
-                    self.combined_evening_ex_durchange2_direct_night = AdaptiveStaircase(Phase="Combination_Block", time="night")
-                    self.combined_evening_ex_durchange2_diffuse_night = AdaptiveStaircase(Phase="Combination_Block", time="night")
-                    self.available_staircases = [
-                            self.combined_evening_ex_durchange2_direct_night,
-                            self.combined_evening_ex_durchange2_diffuse_night,
-                    ]
+                        self.combined_evening_ex_durchange2_direct_night = AdaptiveStaircase(Phase="Combination_Block", time="night")
+                        self.combined_evening_ex_durchange2_diffuse_night = AdaptiveStaircase(Phase="Combination_Block", time="night")
+                        self.available_staircases = [
+                                self.combined_evening_ex_durchange2_direct_night,
+                                self.combined_evening_ex_durchange2_diffuse_night,
+                        ]
 
             self.is_running = True
 
