@@ -680,7 +680,7 @@ class App(ctk.CTk, AsyncCTk):
         else:
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
             scene_count = len(scenes)
-        label = "Durchgang {did}: {time}, Progress {pgr}/{num}".format(did=self.active_sequence["ID"],
+        label = "Durchgang {did}: {time}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
                                                                                 time=self.active_sequence["Time"],
                                                                                 pgr=progress,
                                                                                 num=scene_count)
