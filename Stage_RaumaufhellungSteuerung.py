@@ -662,38 +662,34 @@ class App(ctk.CTk, AsyncCTk):
             return
         self.change_sequence(-1)
 
-    def change_e_block_page_or_sequence(self, step):
-        scenes = self.active_sequence["Scenes"]
+    def get_e_block_pages(self):
+        pages = []
         scene_limit = self.settings["adaptive_batch_scene_limit"]
 
-        if step > 0:
-            if (
-                self.table_scene_offset == len(scenes)
-                and not self.active_sequence.get("Adaptive_Completed", False)
-            ):
-                return
-            next_page_offset = self.table_scene_offset + scene_limit
-            has_next_page = next_page_offset < len(scenes)
-            can_open_empty_page = (
-                next_page_offset == len(scenes)
-                and len(scenes) > 0
-                and not self.active_sequence.get("Adaptive_Completed", False)
-            )
-            if has_next_page or can_open_empty_page:
-                self.table_scene_offset = next_page_offset
+        for sequence_idx, sequence in enumerate(self.active_phase["Durchgange"]):
+            scenes = sequence["Scenes"]
+            if scenes:
+                for page_offset in range(0, len(scenes), scene_limit):
+                    pages.append((sequence_idx, page_offset))
+                if (
+                    len(scenes) % scene_limit == 0
+                    and not sequence.get("Adaptive_Completed", False)
+                ):
+                    pages.append((sequence_idx, len(scenes)))
             else:
-                self.active_phase.next_sequence()
-                self.table_scene_offset = 0
-        elif self.table_scene_offset >= scene_limit:
-            self.table_scene_offset -= scene_limit
-        else:
-            self.active_phase.prev_sequence()
-            previous_scenes = self.active_phase.get_current_sequence()["Scenes"]
-            if previous_scenes:
-                self.table_scene_offset = ((len(previous_scenes) - 1) // scene_limit) * scene_limit
-            else:
-                self.table_scene_offset = 0
+                pages.append((sequence_idx, 0))
 
+        return pages
+
+    def change_e_block_page_or_sequence(self, step):
+        pages = self.get_e_block_pages()
+        current_page = (self.active_phase.seq_idx, self.table_scene_offset)
+        current_page_idx = pages.index(current_page)
+        next_page_idx = (current_page_idx + step) % len(pages)
+        sequence_idx, page_offset = pages[next_page_idx]
+
+        self.active_phase.seq_idx = sequence_idx
+        self.table_scene_offset = page_offset
         self.current_scene_idx = None
         self.set_sequence()
 
