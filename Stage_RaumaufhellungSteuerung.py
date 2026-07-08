@@ -131,7 +131,10 @@ class CheckWindow(ctk.CTkToplevel):
         super().transient(parent) # always on top of parent window
         super().grab_set() # block parent window
         
-        self.geometry("300x200")
+        parent.update_idletasks()
+        popup_x = parent.winfo_rootx() + 20
+        popup_y = parent.winfo_rooty() + 20
+        self.geometry(f"300x200+{popup_x}+{popup_y}")
         self.title(title)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
