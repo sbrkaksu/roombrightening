@@ -675,15 +675,17 @@ class App(ctk.CTk, AsyncCTk):
             return
         scenes = self.active_sequence["Scenes"]
         if self.active_phase.phase_type == "E_Block":
-            progress = self.current_scene_idx - self.table_scene_offset + 1 if self.current_scene_idx is not None else 0
-            scene_count = self.settings["adaptive_batch_scene_limit"]
+            progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
+            label = "Durchgang {did}: {time}, Trial {pgr}".format(did=self.active_sequence["ID"],
+                                                                  time=self.active_sequence["Time"],
+                                                                  pgr=progress)
         else:
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
             scene_count = len(scenes)
-        label = "Durchgang {did}: {time}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
-                                                                                time=self.active_sequence["Time"],
-                                                                                pgr=progress,
-                                                                                num=scene_count)
+            label = "Durchgang {did}: {time}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
+                                                                        time=self.active_sequence["Time"],
+                                                                        pgr=progress,
+                                                                        num=scene_count)
         self.sequence_scene_label.configure(text=label)
         
     def set_sequence(self):
