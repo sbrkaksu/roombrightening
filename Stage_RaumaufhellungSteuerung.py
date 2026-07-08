@@ -719,7 +719,7 @@ class App(ctk.CTk, AsyncCTk):
             return
         scenes = self.active_sequence["Scenes"]
         if self.active_phase.phase_type == "E_Block":
-            progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
+            progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
             label = "Durchgang {did}: {time}, Trial {pgr}".format(did=self.active_sequence["ID"],
                                                                   time=self.active_sequence["Time"],
                                                                   pgr=progress)
