@@ -26,7 +26,7 @@ import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
 # Generates fine-grid block
-from Stage_ProbandGenerator import FormatPrinter
+from Stage_ProbandGenerator import FormatPrinter, scene as create_scene
 from trial import AdaptiveStaircase
 
 #loops through all children of a widget and its children in GUI
@@ -117,6 +117,12 @@ class ClickableTable(ctk.CTkFrame):
         if isinstance(col, str):
             col = self.header_dict[col]
         self.table.insert(row_idx, col, str(table_printer.pformat(value)))
+
+    def update_row(self, values, row_idx):
+        for col, value in enumerate(values):
+            if value is None:
+                value = " "
+            self.table.frame[row_idx, col].configure(text=str(table_printer.pformat(value)), require_redraw=True)
 
  # Creates a pop-up window with a confirm button       
 class CheckWindow(ctk.CTkToplevel):
@@ -297,6 +303,10 @@ class Phase(dict):
             self.seq_idx += self.seq_num
     
     def check_completion(self):
+        if self.phase_type == "E_Block":
+            completed = [durchgang.get("Adaptive_Completed") for durchgang in self["Durchgange"]]
+            return bool(completed) and None not in completed and False not in completed
+
         reactions = [sz.get("Disturbed") for s in self["Durchgange"] for sz in s["Scenes"]]
         return bool(reactions) and None not in reactions
         
@@ -362,7 +372,7 @@ class App(ctk.CTk, AsyncCTk):
             "monitor_baud_rate":        9600,
             "monitor_E_factor_spot_1":  2.41e7,
             "monitor_E_factor_diffus":  1.26e7,
-            "scene_duration":           1, #4.5, # seconds
+            "scene_duration":           1.5, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
             "inter-stimulus-interval":  0.5, #2.5, #seconds
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
@@ -373,6 +383,7 @@ class App(ctk.CTk, AsyncCTk):
             "DMX_brightness_reading": 255,
             "DMX_brightness_roomlight": 255,
             "learn_proband_file": "ProbandLernenB.txt",
+            "adaptive_batch_scene_limit": 16,
         }
 
     def setup_state(self):
@@ -382,6 +393,8 @@ class App(ctk.CTk, AsyncCTk):
         self.active_phase = None
         self.active_sequence = None
         self.active_scene = None
+        self.active_staircase = None
+        self.table_scene_offset = 0
         self.sequence_task = None
 
         self.phase_learning_block = None
@@ -653,6 +666,7 @@ class App(ctk.CTk, AsyncCTk):
         if phase is None:
             return
         self.active_phase = phase
+        self.table_scene_offset = 0
         self.set_sequence()
         self.proband_label.configure(text="Proband {id}: {phase}".format(id=self.active_phase["ID"], phase=self.active_phase["Phase"]))
     
@@ -669,11 +683,18 @@ class App(ctk.CTk, AsyncCTk):
         
     def set_sequence(self):
         self.active_sequence = self.active_phase.get_current_sequence()
-        seq_values = [[idx + 1, s.get("Combination_Factor"), s.get("Type"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(self.active_sequence["Scenes"])]
+        scenes = self.active_sequence["Scenes"]
+        if self.active_phase.phase_type == "E_Block":
+            scene_limit = self.settings["adaptive_batch_scene_limit"]
+            visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
+            seq_values = [[self.table_scene_offset + idx + 1, s.get("Combination_Factor"), s.get("Type"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
+        else:
+            seq_values = [[idx + 1, s.get("Combination_Factor"), s.get("Type"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
-        self.sequence_start_reset_button.configure(state="normal" if self.active_sequence["Scenes"] else "disabled")
+        e_block_can_start = self.active_phase.phase_type == "E_Block" and not self.active_sequence.get("Adaptive_Completed", False)
+        self.sequence_start_reset_button.configure(state="normal" if scenes or e_block_can_start else "disabled")
     
     def stop_sequence(self):
         self.set_sequence_paused(True)
@@ -702,11 +723,89 @@ class App(ctk.CTk, AsyncCTk):
     async def run_sequence_task(self):
         pause_duration = self.settings["sequence_pause_duration"]
         try:
-            scenes, cur_next_scenes = await self.prepare_sequence_run()
-            if scenes:
-                await self.run_scene_loop(scenes, cur_next_scenes)
+            if self.active_phase.phase_type == "E_Block":
+                await self.run_e_block_sequence_loop()
+            else:
+                scenes, cur_next_scenes = await self.prepare_sequence_run()
+                if scenes:
+                    await self.run_scene_loop(scenes, cur_next_scenes)
         finally:
             await self.cleanup_after_sequence(pause_duration)
+
+    def create_e_block_scene(self, staircase):
+        return create_scene(
+            combination_factor=staircase.combination_factor,
+            type=staircase.type_of_illumination,
+            E=staircase.current_value,
+            disturbed=None,
+            reaction_time=None,
+        )
+
+    def update_e_block_scene_row(self, scene):
+        table_row_idx = self.current_scene_idx - self.table_scene_offset
+        row_values = [
+            self.current_scene_idx + 1,
+            scene.get("Combination_Factor"),
+            scene.get("Type"),
+            scene.get("E"),
+            scene.get("E_monitor"),
+            scene.get("Disturbed"),
+            scene.get("Reaction Time"),
+        ]
+        self.sequence_table.update_row(row_values, table_row_idx)
+        self.set_sequence_scene_label()
+
+    async def run_e_block_sequence_loop(self):
+        self.check_sequence_setup()
+        self.set_reading_light(self.time_position_status == "Evening")
+        self.set_roomlight_level(self.ROOMLIGHT_OFF)
+        await self.run_initial_isi()
+
+        scenes = self.active_sequence["Scenes"]
+        self.table_scene_offset = len(scenes)
+        scene_limit = self.settings["adaptive_batch_scene_limit"]
+
+        for _ in range(scene_limit):
+            staircases = self.get_active_e_block_staircases()
+            staircase = self.select_random_staircase(staircases)
+
+            if staircase is None:
+                self.active_sequence["Adaptive_Completed"] = True
+                self.active_phase.save()
+                break
+
+            scene = self.create_e_block_scene(staircase)
+            scenes.append(scene)
+            self.active_staircase = staircase
+            self.current_scene_idx = len(scenes) - 1
+            self.update_e_block_scene_row(scene)
+            self.set_scene(scene)
+
+            await self.run_single_scene(scene)
+            await self.await_e_block_interstimulus_interval()
+            if self.sequence_stop_event.is_set():
+                continue
+
+            self.set_scene_reaction(disturbing=False)
+            self.active_staircase = None
+            self.sequence_table.deselect_row()
+
+        if self.select_random_staircase(self.get_active_e_block_staircases()) is None:
+            self.active_sequence["Adaptive_Completed"] = True
+            self.active_phase.save()
+
+    async def await_e_block_interstimulus_interval(self):
+        isi_duration = self.settings["inter-stimulus-interval"]
+        isi_fade_duration = self.settings["isi_fade_duration"]
+        await self.await_countdown_timer(start_time=isi_duration,
+                                         end_time=isi_fade_duration,
+                                         stop_event=self.sequence_stop_event,
+                                         label="ISI")
+        if self.sequence_stop_event.is_set():
+            self.active_scene = None
+            await self.sequence_continue_event.wait()
+            self.sequence_continue_event.clear()
+            self.sequence_stop_event.clear()
 
     async def prepare_sequence_run(self):
         self.check_sequence_setup()
@@ -765,7 +864,8 @@ class App(ctk.CTk, AsyncCTk):
     async def run_single_scene(self, scene):
         scene_duration = self.settings["scene_duration"]
         scene_fade_duration = self.settings["scene_fade_duration"]
-        self.sequence_table.select_row(self.current_scene_idx)
+        table_row_idx = self.current_scene_idx - self.table_scene_offset
+        self.sequence_table.select_row(table_row_idx)
         self.set_sequence_scene_label()
         self.activate_scene()
         self.active_scene = scene
@@ -926,9 +1026,17 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.update_cell(stoert, "Disturbing")
         self.active_scene["Reaction Time"] = reaction_time
         self.sequence_table.update_cell(reaction_time,"Reaction Time")
+        self.update_active_staircase(stoert)
         # save current results to file and check the progress
         if self.active_phase is not None:
             self.active_phase.save()
+
+    def update_active_staircase(self, stoert):
+        if self.active_staircase is None:
+            return
+
+        response = "+" if stoert == "Yes" else "-"
+        self.active_staircase.update(response)
         
     def clear_scene_reaction(self):
         if self.active_scene is not None: # are we even running a scene?
