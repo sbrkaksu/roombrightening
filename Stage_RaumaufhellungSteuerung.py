@@ -487,7 +487,7 @@ class App(ctk.CTk, AsyncCTk):
         self.after(100,self.artnet_interface_helperbutton.invoke) # workaround, because async does not work in __init__
 
     def setup_roomlight_controls(self):
-        self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Raumlicht", command=lambda:self.set_roomlight_level(self.ROOMLIGHT_BRIGHT))
+        self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Roomlight", command=lambda:self.set_roomlight_level(self.ROOMLIGHT_BRIGHT))
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
 
     def setup_monitor_controls(self):
@@ -879,11 +879,11 @@ class App(ctk.CTk, AsyncCTk):
         await self.await_countdown_timer(start_time=scene_duration,
                                          end_time=scene_fade_duration,
                                          stop_event=self.sequence_stop_event,
-                                         label="Szene")
+                                         label="Scene")
         if not self.sequence_stop_event.is_set():
             self.set_scene_monitor()
         self.fade_scene()
-        await self.await_countdown_timer(label="Szene")
+        await self.await_countdown_timer(label="Scene")
         self.activate_isi()
 
     async def run_interstimulus_interval(self, cur_next_scenes):
@@ -950,7 +950,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_task = asyncio.create_task(self.run_sequence_task(), name="run_sequence")
         # switch button to stop sequence
         self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
-        self.sequence_start_reset_button.configure(text="Durchgang zurücksetzen", command=self.reset_sequence)
+        self.sequence_start_reset_button.configure(text="Reset Durchgang", command=self.reset_sequence)
         self.load_proband_button.configure(state="disabled")
         # disable sequence change buttons
         self.learning_block_button.disable_children()
