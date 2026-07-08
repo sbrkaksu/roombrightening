@@ -585,6 +585,26 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_direct_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=1)
         self.staircase_diffuse_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=0)
 
+    def get_active_e_block_staircases(self):
+        staircases = []
+
+        if self.active_sequence["Time"] == "Evening":
+            staircases = [
+                self.staircase_direct_evening,
+                self.staircase_diffuse_evening,
+            ]
+
+        elif self.active_sequence["Time"] == "Night":
+            staircases = [
+                self.staircase_direct_night,
+                self.staircase_diffuse_night,
+            ]
+
+        else:
+            print(f"Unsupported E Block time: {self.active_sequence['Time']}")
+
+        return staircases
+
     def load_learning_block(self):
         learn_file = self.settings["learn_proband_file"]
         if not exists(learn_file):
