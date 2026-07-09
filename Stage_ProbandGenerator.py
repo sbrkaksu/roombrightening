@@ -58,10 +58,12 @@ def generate_probanden_E_block_results():
      
         proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
             {'ID': 1, "Time": "Evening", "Color": "3000 K", "Results" : [
-                  {"E_threshold": None, "Reversals (lx)": [], "Reversal Points" : None},
+                  {"Combination_Factor": 1, "Type": "Direct", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
+                  {"Combination_Factor": 0, "Type": "Diffuse", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
             ]},
             {'ID': 2, "Time": "Night", "Color": "3000 K", "Results" : [
-                  {"E_threshold": None, "Reversals (lx)": [], "Reversal Points" : None},
+                  {"Combination_Factor": 1, "Type": "Direct", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
+                  {"Combination_Factor": 0, "Type": "Diffuse", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
             ]},
         ]}
 
