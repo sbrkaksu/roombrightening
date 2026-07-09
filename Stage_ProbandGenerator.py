@@ -8,7 +8,8 @@ printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)
 
 #generates ProbandLernen.txt for Learning Phase
 def generate_learn_proband():
-    rng = np.random.default_rng()
+    seed = int.from_bytes(os.urandom(128), sys.byteorder)
+    rng = np.random.default_rng(seed)
     stimuli_learning = [ 0.1, 0.147, 0.215, 0.316, 0.464, 0.681, 
             1, 1.47, 2.15, 3.16, 4.64, 6.81, 
             10, 14.7, 21.5, 31.6, 46.4, 68.1, 
