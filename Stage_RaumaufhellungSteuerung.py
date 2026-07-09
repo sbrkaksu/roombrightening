@@ -40,7 +40,10 @@ def all_children(wid, finList=None):
 
 
 #4 digits after the decimal point for E values when saving files
+"""
 printer = FormatPrinter({float: "{:.4e}"},sort_dicts=False)
+"""
+printer = FormatPrinter({float: "{}"}, sort_dicts=False)
 
 superscript_map = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵",
                    "6": "⁶","7": "⁷", "8": "⁸", "9": "⁹","+": "⁺","-": "⁻"}
@@ -53,7 +56,10 @@ def pprint_scientific(f):
     return "{} ⋅10{}".format(b, e.translate(superscript_trans)) 
 
 #formatting E values in the table with above formatter
+"""
 table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} ) 
+"""
+table_printer = FormatPrinter({float: "{}", str: "{}"})
 
 #Creates a clickable table with header and specified number of rows
 class ClickableTable(ctk.CTkFrame):
