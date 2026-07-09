@@ -54,16 +54,35 @@ def generate_probanden_E_block():
         with open("Proband_E_Block.txt", "w") as file:
             file.write(printer.pformat(proband))
 
-def generate_probanden_E_block_results():
+def generate_probanden_E_block_results(staircase_direct_evening,staircase_diffuse_evening,
+                                       staircase_direct_night, staircase_diffuse_night):
      
         proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
             {'ID': 1, "Time": "Evening", "Color": "3000 K", "Results" : [
-                  {"Combination_Factor": 1, "Type": "Direct", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
-                  {"Combination_Factor": 0, "Type": "Diffuse", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
+                  {"Combination_Factor": staircase_direct_evening.combination_factor, 
+                   "Type": staircase_direct_evening.type_of_illumination, 
+                   "E_threshold": staircase_direct_evening.get_threshold(), 
+                   "Reversals": staircase_direct_evening.reversal_points, 
+                   "Response_Sequence": staircase_direct_evening.response_sequence_history},
+
+                  {"Combination_Factor": staircase_diffuse_evening.combination_factor, 
+                   "Type": staircase_diffuse_evening.type_of_illumination, 
+                   "E_threshold": staircase_diffuse_evening.get_threshold(), 
+                   "Reversals": staircase_diffuse_evening.reversal_points, 
+                   "Response_Sequence": staircase_diffuse_evening.response_sequence_history},
             ]},
             {'ID': 2, "Time": "Night", "Color": "3000 K", "Results" : [
-                  {"Combination_Factor": 1, "Type": "Direct", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
-                  {"Combination_Factor": 0, "Type": "Diffuse", "E_threshold": None, "Reversals": [], "Response_Sequence": []},
+                  {"Combination_Factor": staircase_direct_night.combination_factor, 
+                   "Type": staircase_direct_night.type_of_illumination, 
+                   "E_threshold": staircase_direct_night.get_threshold(), 
+                   "Reversals": staircase_direct_night.reversal_points, 
+                   "Response_Sequence": staircase_direct_night.response_sequence_history},
+                   
+                  {"Combination_Factor": staircase_diffuse_night.combination_factor, 
+                   "Type": staircase_diffuse_night.type_of_illumination, 
+                   "E_threshold": staircase_diffuse_night.get_threshold(), 
+                   "Reversals": staircase_diffuse_night.reversal_points, 
+                   "Response_Sequence": staircase_diffuse_night.response_sequence_history},
             ]},
         ]}
 
