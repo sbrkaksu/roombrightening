@@ -472,7 +472,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Durchgang", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.sequence_scene_label.grid(row=1, column=0, padx=10, pady=0, sticky='w')
 
-        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Combination Factor", "Type", "E", "E Monitor", "Disturbing", "Reaction Time"], row_num=25)
+        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Type", "Combination Factor", "E", "E Monitor", "Disturbing", "Reaction Time"], row_num=25)
         self.sequence_table.grid(row=2, column=0, padx=0, pady=10, sticky="w")
         self.sequence_table.set_callback(self.row_click)
 
@@ -744,9 +744,9 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_phase.phase_type == "E_Block":
             scene_limit = self.settings["adaptive_batch_scene_limit"]
             visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
-            seq_values = [[self.table_scene_offset + idx + 1, s.get("Combination_Factor"), s.get("Type"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
+            seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Combination_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
         else:
-            seq_values = [[idx + 1, s.get("Combination_Factor"), s.get("Type"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
+            seq_values = [[idx + 1, s.get("Type"), s.get("Combination_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
@@ -807,8 +807,8 @@ class App(ctk.CTk, AsyncCTk):
         table_row_idx = self.current_scene_idx - self.table_scene_offset
         row_values = [
             self.current_scene_idx + 1,
-            scene.get("Combination_Factor"),
             scene.get("Type"),
+            scene.get("Combination_Factor"),
             scene.get("E"),
             scene.get("E_monitor"),
             scene.get("Disturbed"),
