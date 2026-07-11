@@ -294,12 +294,12 @@ class Phase(dict):
             s = f.read()
             super().__init__(literal_eval(s))
         self.phase_type = self["Phase"]
-        self.seq_num = len(self["Durchgange"])
+        self.seq_num = len(self["Rounds"])
         self.seq_idx = 0
         self.complete = False
     
     def get_current_sequence(self):
-        return self["Durchgange"][self.seq_idx]
+        return self["Rounds"][self.seq_idx]
     
     def next_sequence(self):
         self.seq_idx += 1
@@ -313,10 +313,10 @@ class Phase(dict):
     
     def check_completion(self):
         if self.phase_type == "E_Block":
-            completed = [durchgang.get("Adaptive_Completed") for durchgang in self["Durchgange"]]
+            completed = [round_data.get("Adaptive_Completed") for round_data in self["Rounds"]]
             return bool(completed) and None not in completed and False not in completed
 
-        reactions = [sz.get("Disturbed") for s in self["Durchgange"] for sz in s["Scenes"]]
+        reactions = [sz.get("Disturbed") for s in self["Rounds"] for sz in s["Scenes"]]
         return bool(reactions) and None not in reactions
         
         
@@ -450,10 +450,10 @@ class App(ctk.CTk, AsyncCTk):
         self.combination_block_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
         self.add_sequence_nav_buttons(self.combination_block_button, "combination_block", sequence_buttons_settings)
 
-        self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Durchgang", command=self.run_sequence, state="disabled")
+        self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Round", command=self.run_sequence, state="disabled")
         self.sequence_start_reset_button.grid(row=4, column=0, padx=10, pady=10, sticky="n")
 
-        self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Pause Durchgang", command=self.stop_sequence, state="disabled")
+        self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Pause Round", command=self.stop_sequence, state="disabled")
         self.sequence_stop_continue_button.grid(row=5, column=0, padx=10, pady=10, sticky="n")
 
     def add_sequence_nav_buttons(self, parent, prefix, settings):
@@ -469,7 +469,7 @@ class App(ctk.CTk, AsyncCTk):
         self.table_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nw")
         self.participant_label = ctk.CTkLabel(self.table_frame, text="Participant", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.participant_label.grid(row=0, column=0, padx=10, pady=(10,0),sticky='w')
-        self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Durchgang", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
+        self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Round", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.sequence_scene_label.grid(row=1, column=0, padx=10, pady=0, sticky='w')
 
         self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Type", "Combination Factor", "E", "E Monitor", "Disturbing", "Reaction Time"], row_num=25)
@@ -676,7 +676,7 @@ class App(ctk.CTk, AsyncCTk):
         pages = []
         scene_limit = self.settings["adaptive_batch_scene_limit"]
 
-        for sequence_idx, sequence in enumerate(self.active_phase["Durchgange"]):
+        for sequence_idx, sequence in enumerate(self.active_phase["Rounds"]):
             scenes = sequence["Scenes"]
             if scenes:
                 for page_offset in range(0, len(scenes), scene_limit):
@@ -726,13 +726,13 @@ class App(ctk.CTk, AsyncCTk):
         scenes = self.active_sequence["Scenes"]
         if self.active_phase.phase_type == "E_Block":
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
-            label = "Durchgang {did}: {state}, Trial {pgr}".format(did=self.active_sequence["ID"],
+            label = "Round {did}: {state}, Trial {pgr}".format(did=self.active_sequence["ID"],
                                                                    state=self.active_sequence["State"],
                                                                   pgr=progress)
         else:
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
             scene_count = len(scenes)
-            label = "Durchgang {did}: {state}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
+            label = "Round {did}: {state}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
                                                                         state=self.active_sequence["State"],
                                                                         pgr=progress,
                                                                         num=scene_count)
@@ -768,13 +768,13 @@ class App(ctk.CTk, AsyncCTk):
 
     def set_sequence_paused(self, paused):
         if paused:
-            self.sequence_stop_continue_button.configure(text="Continue Durchgang",
+            self.sequence_stop_continue_button.configure(text="Continue Round",
                                                       command=self.continue_sequence,
                                                       fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
             self.roomlight_button.configure(state="normal")
             self.set_roomlight_level(self.ROOMLIGHT_DIM)
         else:
-            self.sequence_stop_continue_button.configure(text="Pause Durchgang", command=self.stop_sequence, fg_color="red")
+            self.sequence_stop_continue_button.configure(text="Pause Round", command=self.stop_sequence, fg_color="red")
             self.roomlight_button.configure(state="disabled")
             self.set_roomlight_level(self.ROOMLIGHT_OFF)
         
@@ -984,8 +984,8 @@ class App(ctk.CTk, AsyncCTk):
         self.reading_light_intensity.set_values([0]) #turn off reading light during pause
         self.sequence_table.deselect_row()
         self.sequence_stop_event.clear()
-        self.sequence_start_reset_button.configure(text="Start Durchgang", command=self.run_sequence)
-        self.sequence_stop_continue_button.configure(text="Pause Durchgang", command=self.stop_sequence,
+        self.sequence_start_reset_button.configure(text="Start Round", command=self.run_sequence)
+        self.sequence_stop_continue_button.configure(text="Pause Round", command=self.stop_sequence,
                                                     state="disabled", fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
         self.load_participant_button.configure(state="normal")
         self.roomlight_button.configure(state="normal")
@@ -1027,7 +1027,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_task = asyncio.create_task(self.run_sequence_task(), name="run_sequence")
         # switch button to stop sequence
         self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
-        self.sequence_start_reset_button.configure(text="Reset Durchgang", command=self.reset_sequence)
+        self.sequence_start_reset_button.configure(text="Reset Round", command=self.reset_sequence)
         self.load_participant_button.configure(state="disabled")
         # disable sequence change buttons
         self.learning_block_button.disable_children()
