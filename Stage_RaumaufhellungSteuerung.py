@@ -601,10 +601,10 @@ class App(ctk.CTk, AsyncCTk):
             print(f"Unsupported phase type: {phase.phase_type}")
 
     def create_e_block_staircases(self):
-        self.staircase_direct_evening = AdaptiveStaircase(Phase="E_Block", time="evening", combination_factor=1)
-        self.staircase_diffuse_evening = AdaptiveStaircase(Phase="E_Block", time="evening", combination_factor=0)
-        self.staircase_direct_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=1)
-        self.staircase_diffuse_night = AdaptiveStaircase(Phase="E_Block", time="night", combination_factor=0)
+        self.staircase_direct_evening = AdaptiveStaircase(phase="E_Block", time="evening", combination_factor=1)
+        self.staircase_diffuse_evening = AdaptiveStaircase(phase="E_Block", time="evening", combination_factor=0)
+        self.staircase_direct_night = AdaptiveStaircase(phase="E_Block", time="night", combination_factor=1)
+        self.staircase_diffuse_night = AdaptiveStaircase(phase="E_Block", time="night", combination_factor=0)
 
     def get_active_e_block_staircases(self):
         staircases = []
