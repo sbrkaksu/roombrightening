@@ -803,6 +803,11 @@ class App(ctk.CTk, AsyncCTk):
             reaction_time=None,
         )
 
+    def calculate_light_components(self, E, combination_factor):
+        E_direct = E * combination_factor
+        E_diffuse = E * (1 - combination_factor)
+        return E_direct, E_diffuse
+
     def update_e_block_scene_row(self, scene):
         table_row_idx = self.current_scene_idx - self.table_scene_offset
         row_values = [
