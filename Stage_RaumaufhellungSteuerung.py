@@ -551,8 +551,8 @@ class App(ctk.CTk, AsyncCTk):
     def open_check_window(self, state=None):
         if state is not None:
             title, label = {
-                "Sitting": ("Subject position: sitting", "Subject is sitting"),
-                "Sleeping": ("Subject position: lying down", "Subject is lying down"),
+                "Sitting": ("Participant position: sitting", "Participant is sitting"),
+                "Sleeping": ("Participant position: sleeping", "Participant is sleeping"),
             }[state]
             self.position_window = self.show_check_window(self.position_window, title, label)
 
