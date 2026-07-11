@@ -8,7 +8,7 @@ class AdaptiveStaircase:
         self.phase = phase
         self.time = time
         self.combination_factor = kwargs.get("combination_factor", 1)
-        self.type_of_illumination = "Direct" if self.combination_factor == 1 else "Diffuse" if self.combination_factor == 0 else "Combined"  
+        self.type_of_illumination = self.get_type_from_combination_factor()
 
         #Stimilus values for the E threshold determination phase 
         self.stimuli_E_night  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
@@ -46,6 +46,13 @@ class AdaptiveStaircase:
         self.last_direction = None
         self.trial_count = 0
         self.threshold = None
+
+    def get_type_from_combination_factor(self):
+        if self.combination_factor == 0:
+            return "Diffuse"
+        if self.combination_factor == 1:
+            return "Direct"
+        return "Combined"
 
     def is_finished(self):
         """Checks whether the target reversals or maximum trial count has been reached."""

@@ -24,8 +24,8 @@ def generate_learn_proband():
     ])
     scenes = [
         scene(
-            combination_factor=1 if scene_type == "Direct" else 0,
             type=str(scene_type),
+            combination_factor=1 if scene_type == "Direct" else 0,
             E=float(E),
             disturbed=None,
             reaction_time=None,
