@@ -410,10 +410,10 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_e_block = None
         self.phase_combination_block = None
 
-        self.staircase_direct_evening = None
-        self.staircase_diffuse_evening = None
-        self.staircase_direct_night = None
-        self.staircase_diffuse_night = None
+        self.staircase_direct_sitting = None
+        self.staircase_diffuse_sitting = None
+        self.staircase_direct_sleeping = None
+        self.staircase_diffuse_sleeping = None
 
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
@@ -509,7 +509,7 @@ class App(ctk.CTk, AsyncCTk):
 
     def setup_check_window_state(self):
         self.position_window = None
-        self.time_position_status = None
+        self.state_position_status = None
 
     @async_handler
     async def read_monitor_continuously(self):
@@ -548,12 +548,12 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_table.update_cell(EM, "E Monitor")
             self.active_scene["E_monitor"] = EM
     
-    def open_check_window(self, zeit=None):
-        if zeit is not None:
+    def open_check_window(self, state=None):
+        if state is not None:
             title, label = {
-                "Evening": ("Subject position: sitting", "Subject is sitting"),
-                "Night": ("Subject position: lying down", "Subject is lying down"),
-            }[zeit]
+                "Sitting": ("Subject position: sitting", "Subject is sitting"),
+                "Sleeping": ("Subject position: lying down", "Subject is lying down"),
+            }[state]
             self.position_window = self.show_check_window(self.position_window, title, label)
 
     def show_check_window(self, window, title, label):
@@ -601,28 +601,28 @@ class App(ctk.CTk, AsyncCTk):
             print(f"Unsupported phase type: {phase.phase_type}")
 
     def create_e_block_staircases(self):
-        self.staircase_direct_evening = AdaptiveStaircase(phase="E_Block", time="evening", combination_factor=1)
-        self.staircase_diffuse_evening = AdaptiveStaircase(phase="E_Block", time="evening", combination_factor=0)
-        self.staircase_direct_night = AdaptiveStaircase(phase="E_Block", time="night", combination_factor=1)
-        self.staircase_diffuse_night = AdaptiveStaircase(phase="E_Block", time="night", combination_factor=0)
+        self.staircase_direct_sitting = AdaptiveStaircase(phase="E_Block", state="sitting", combination_factor=1)
+        self.staircase_diffuse_sitting = AdaptiveStaircase(phase="E_Block", state="sitting", combination_factor=0)
+        self.staircase_direct_sleeping = AdaptiveStaircase(phase="E_Block", state="sleeping", combination_factor=1)
+        self.staircase_diffuse_sleeping = AdaptiveStaircase(phase="E_Block", state="sleeping", combination_factor=0)
 
     def get_active_e_block_staircases(self):
         staircases = []
 
-        if self.active_sequence["Time"] == "Evening":
+        if self.active_sequence["State"] == "Sitting":
             staircases = [
-                self.staircase_direct_evening,
-                self.staircase_diffuse_evening,
+                self.staircase_direct_sitting,
+                self.staircase_diffuse_sitting,
             ]
 
-        elif self.active_sequence["Time"] == "Night":
+        elif self.active_sequence["State"] == "Sleeping":
             staircases = [
-                self.staircase_direct_night,
-                self.staircase_diffuse_night,
+                self.staircase_direct_sleeping,
+                self.staircase_diffuse_sleeping,
             ]
 
         else:
-            print(f"Unsupported E Block time: {self.active_sequence['Time']}")
+            print(f"Unsupported E Block state: {self.active_sequence['State']}")
 
         return staircases
 
@@ -726,14 +726,14 @@ class App(ctk.CTk, AsyncCTk):
         scenes = self.active_sequence["Scenes"]
         if self.active_phase.phase_type == "E_Block":
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
-            label = "Durchgang {did}: {time}, Trial {pgr}".format(did=self.active_sequence["ID"],
-                                                                  time=self.active_sequence["Time"],
+            label = "Durchgang {did}: {state}, Trial {pgr}".format(did=self.active_sequence["ID"],
+                                                                   state=self.active_sequence["State"],
                                                                   pgr=progress)
         else:
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
             scene_count = len(scenes)
-            label = "Durchgang {did}: {time}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
-                                                                        time=self.active_sequence["Time"],
+            label = "Durchgang {did}: {state}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
+                                                                        state=self.active_sequence["State"],
                                                                         pgr=progress,
                                                                         num=scene_count)
         self.sequence_scene_label.configure(text=label)
@@ -819,7 +819,7 @@ class App(ctk.CTk, AsyncCTk):
 
     async def run_e_block_sequence_loop(self):
         self.check_sequence_setup()
-        self.set_reading_light(self.time_position_status == "Evening")
+        self.set_reading_light(self.state_position_status == "Sitting")
         self.set_roomlight_level(self.ROOMLIGHT_OFF)
         await self.run_initial_isi()
 
@@ -879,17 +879,17 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.select_row(self.current_scene_idx)
         cur_next_scenes = [cur_next for cur_next in pairwise([*scenes,None])]
 
-        self.set_reading_light(self.time_position_status == "Evening")
+        self.set_reading_light(self.state_position_status == "Sitting")
         self.set_roomlight_level(self.ROOMLIGHT_OFF)
         await self.run_initial_isi()
         return scenes, cur_next_scenes
 
     def check_sequence_setup(self):
-        if self.time_position_status != self.active_sequence["Time"]:
-            print("Time Position Status: ", self.time_position_status)
-            print("Active Sequence Time: ", self.active_sequence["Time"])
-            self.time_position_status = self.active_sequence["Time"]
-            self.open_check_window(zeit=self.time_position_status)
+        if self.state_position_status != self.active_sequence["State"]:
+            print("State Position Status: ", self.state_position_status)
+            print("Active Sequence State: ", self.active_sequence["State"])
+            self.state_position_status = self.active_sequence["State"]
+            self.open_check_window(state=self.state_position_status)
 
     async def run_initial_isi(self):
         isi_duration = self.settings["inter-stimulus-interval"]
