@@ -2,20 +2,20 @@
 # 1. ALGORITHM CLASS
 # ==========================================
 class AdaptiveStaircase:
-    def __init__(self, phase, time, **kwargs):
+    def __init__(self, phase, state, **kwargs):
 
         #Actual Durchgang of the Experiment
         self.phase = phase
-        self.time = time
+        self.state = state
         self.combination_factor = kwargs.get("combination_factor", 1)
         self.type_of_illumination = self.get_type_from_combination_factor()
 
         #Stimilus values for the E threshold determination phase 
-        self.stimuli_E_night  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
+        self.stimuli_sleeping  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
                     0.1, 0.147, 0.215, 0.316, 0.464, 0.681, 
                     1.0, 1.47, 2.15, 3.16, 4.64, 6.81, 
                     10.0, 14.7, 21.5, 31.6]
-        self.stimuli_E_evening  = [ 0.1, 0.147, 0.215, 0.316, 0.464, 0.681, 
+        self.stimuli_sitting  = [ 0.1, 0.147, 0.215, 0.316, 0.464, 0.681, 
             1.0, 1.47, 2.15, 3.16, 4.64, 6.81, 
             10.0, 14.7, 21.5, 31.6, 46.4, 68.1, 
             100.0, 147.0, 215.0, 316.0]
@@ -24,10 +24,10 @@ class AdaptiveStaircase:
                              0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
 
         if self.phase == "E_Block":
-            if self.time == "night":
-                self.chosen_stimuli = self.stimuli_E_night
-            elif self.time == "evening":
-                self.chosen_stimuli = self.stimuli_E_evening
+            if self.state == "sleeping":
+                self.chosen_stimuli = self.stimuli_sleeping
+            elif self.state == "sitting":
+                self.chosen_stimuli = self.stimuli_sitting
 
         elif self.phase == "Combination_Block":
             self.chosen_stimuli = self.stimuli_combined
