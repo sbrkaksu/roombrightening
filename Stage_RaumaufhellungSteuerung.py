@@ -726,16 +726,23 @@ class App(ctk.CTk, AsyncCTk):
         scenes = self.active_sequence["Scenes"]
         if self.active_phase.phase_type == "E_Block":
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
-            label = "Round {did}: {state}, Trial {pgr}".format(did=self.active_sequence["ID"],
-                                                                   state=self.active_sequence["State"],
-                                                                  pgr=progress)
+            staircases = self.get_active_e_block_staircases()
+            staircase_labels = ", ".join(["CF={cf}".format(cf=staircase.combination_factor) for staircase in staircases])
+            label = "Round {did} | Trial {pgr} | State: {state} | Active Staircases: {staircases}".format(
+                did=self.active_sequence["ID"],
+                pgr=progress,
+                state=self.active_sequence["State"],
+                staircases=staircase_labels,
+            )
         else:
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
             scene_count = len(scenes)
-            label = "Round {did}: {state}, Trial {pgr}/{num}".format(did=self.active_sequence["ID"],
-                                                                        state=self.active_sequence["State"],
-                                                                        pgr=progress,
-                                                                        num=scene_count)
+            label = "Round {did} | Trial {pgr}/{num} | State: {state}".format(
+                did=self.active_sequence["ID"],
+                pgr=progress,
+                num=scene_count,
+                state=self.active_sequence["State"],
+            )
         self.sequence_scene_label.configure(text=label)
         
     def set_sequence(self):
