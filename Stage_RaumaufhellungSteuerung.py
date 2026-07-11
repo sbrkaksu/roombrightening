@@ -410,10 +410,10 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_e_block = None
         self.phase_combination_block = None
 
-        self.staircase_direct_sitting = None
-        self.staircase_diffuse_sitting = None
-        self.staircase_direct_sleeping = None
-        self.staircase_diffuse_sleeping = None
+        self.staircase_sitting_cf_1 = None
+        self.staircase_sitting_cf_0 = None
+        self.staircase_sleeping_cf_1 = None
+        self.staircase_sleeping_cf_0 = None
 
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
@@ -601,24 +601,24 @@ class App(ctk.CTk, AsyncCTk):
             print(f"Unsupported phase type: {phase.phase_type}")
 
     def create_e_block_staircases(self):
-        self.staircase_direct_sitting = AdaptiveStaircase(phase="E_Block", state="sitting", combination_factor=1)
-        self.staircase_diffuse_sitting = AdaptiveStaircase(phase="E_Block", state="sitting", combination_factor=0)
-        self.staircase_direct_sleeping = AdaptiveStaircase(phase="E_Block", state="sleeping", combination_factor=1)
-        self.staircase_diffuse_sleeping = AdaptiveStaircase(phase="E_Block", state="sleeping", combination_factor=0)
+        self.staircase_sitting_cf_1 = AdaptiveStaircase(phase="E_Block", state="sitting", combination_factor=1)
+        self.staircase_sitting_cf_0 = AdaptiveStaircase(phase="E_Block", state="sitting", combination_factor=0)
+        self.staircase_sleeping_cf_1 = AdaptiveStaircase(phase="E_Block", state="sleeping", combination_factor=1)
+        self.staircase_sleeping_cf_0 = AdaptiveStaircase(phase="E_Block", state="sleeping", combination_factor=0)
 
     def get_active_e_block_staircases(self):
         staircases = []
 
         if self.active_sequence["State"] == "Sitting":
             staircases = [
-                self.staircase_direct_sitting,
-                self.staircase_diffuse_sitting,
+                self.staircase_sitting_cf_1,
+                self.staircase_sitting_cf_0,
             ]
 
         elif self.active_sequence["State"] == "Sleeping":
             staircases = [
-                self.staircase_direct_sleeping,
-                self.staircase_diffuse_sleeping,
+                self.staircase_sleeping_cf_1,
+                self.staircase_sleeping_cf_0,
             ]
 
         else:
