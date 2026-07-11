@@ -54,35 +54,35 @@ def generate_participant_E_block():
         with open("Participant_E_Block.txt", "w") as file:
             file.write(printer.pformat(participant))
 
-def generate_participant_E_block_results(staircase_direct_evening,staircase_diffuse_evening,
-                                       staircase_direct_night, staircase_diffuse_night):
+def generate_participant_E_block_results(staircase_sitting_cf_1, staircase_sitting_cf_0,
+                                         staircase_sleeping_cf_1, staircase_sleeping_cf_0):
      
         participant = {"ID": 1, "Phase": "E_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Results" : [
-                  { "Type": staircase_direct_evening.type_of_illumination,
-                    "Combination_Factor": staircase_direct_evening.combination_factor,  
-                   "E_threshold": staircase_direct_evening.get_threshold(), 
-                   "Reversals": staircase_direct_evening.reversal_points, 
-                   "Response_Sequence": staircase_direct_evening.response_sequence_history},
+                  { "Type": staircase_sitting_cf_1.type_of_illumination,
+                    "Combination_Factor": staircase_sitting_cf_1.combination_factor,  
+                   "E_threshold": staircase_sitting_cf_1.get_threshold(), 
+                   "Reversals": staircase_sitting_cf_1.reversal_points, 
+                   "Response_Sequence": staircase_sitting_cf_1.response_sequence_history},
 
-                  { "Type": staircase_diffuse_evening.type_of_illumination,
-                    "Combination_Factor": staircase_diffuse_evening.combination_factor,  
-                   "E_threshold": staircase_diffuse_evening.get_threshold(), 
-                   "Reversals": staircase_diffuse_evening.reversal_points, 
-                   "Response_Sequence": staircase_diffuse_evening.response_sequence_history},
+                  { "Type": staircase_sitting_cf_0.type_of_illumination,
+                    "Combination_Factor": staircase_sitting_cf_0.combination_factor,  
+                   "E_threshold": staircase_sitting_cf_0.get_threshold(), 
+                   "Reversals": staircase_sitting_cf_0.reversal_points, 
+                   "Response_Sequence": staircase_sitting_cf_0.response_sequence_history},
             ]},
             {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Results" : [
-                  {"Type": staircase_direct_night.type_of_illumination, 
-                   "Combination_Factor": staircase_direct_night.combination_factor,  
-                   "E_threshold": staircase_direct_night.get_threshold(), 
-                   "Reversals": staircase_direct_night.reversal_points, 
-                   "Response_Sequence": staircase_direct_night.response_sequence_history},
+                  {"Type": staircase_sleeping_cf_1.type_of_illumination, 
+                   "Combination_Factor": staircase_sleeping_cf_1.combination_factor,  
+                   "E_threshold": staircase_sleeping_cf_1.get_threshold(), 
+                   "Reversals": staircase_sleeping_cf_1.reversal_points, 
+                   "Response_Sequence": staircase_sleeping_cf_1.response_sequence_history},
                    
-                  {"Type": staircase_diffuse_night.type_of_illumination,
-                   "Combination_Factor": staircase_diffuse_night.combination_factor,  
-                   "E_threshold": staircase_diffuse_night.get_threshold(), 
-                   "Reversals": staircase_diffuse_night.reversal_points, 
-                   "Response_Sequence": staircase_diffuse_night.response_sequence_history},
+                  {"Type": staircase_sleeping_cf_0.type_of_illumination,
+                   "Combination_Factor": staircase_sleeping_cf_0.combination_factor,  
+                   "E_threshold": staircase_sleeping_cf_0.get_threshold(), 
+                   "Reversals": staircase_sleeping_cf_0.reversal_points, 
+                   "Response_Sequence": staircase_sleeping_cf_0.response_sequence_history},
             ]},
         ]}
 
