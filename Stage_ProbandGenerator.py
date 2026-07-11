@@ -1,5 +1,5 @@
 import os, sys
-from pprint import PrettyPrinter #used for pretty-printing the proband data structures when saving to file
+from pprint import PrettyPrinter #used for pretty-printing the participant data structures when saving to file
 import numpy as np
 from Formatter import FormatPrinter
 
@@ -9,8 +9,8 @@ printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)
 printer = FormatPrinter({float: "{}"}, sort_dicts=False)
 
 
-#generates ProbandLernen.txt for Learning Phase
-def generate_learn_proband():
+#generates Participant_Learning_Block.txt for Learning Phase
+def generate_learning_participant():
     seed = int.from_bytes(os.urandom(128), sys.byteorder)
     rng = np.random.default_rng(seed)
     stimuli_learning = [ 0.1, 0.147, 0.215, 0.316, 0.464, 0.681, 
@@ -32,32 +32,32 @@ def generate_learn_proband():
         )
         for scene_type, E in zip(selected_types, selected_E_values)
     ]
-    proband = {"ID": -1, "Phase": "Learning Block", "LearnDurchgang": True, "Durchgange": [
+    participant = {"ID": -1, "Phase": "Learning Block", "LearnDurchgang": True, "Durchgange": [
         {'ID': -1, "State": "Sitting", "Color": "3000 K", "Scenes" : scenes},
     ]}
-    with open("ProbandLernenB.txt", "w") as file:
-        file.write(printer.pformat(proband))
+    with open("Participant_Learning_Block.txt", "w") as file:
+        file.write(printer.pformat(participant))
 
 
 def scene(type, combination_factor, E, disturbed, reaction_time):
     return {"Type": type, "Combination_Factor": combination_factor, "E": E, "Disturbed": disturbed, "Reaction Time": reaction_time}
-# Generates Probandens grob when this .py file is run
+# Generates participant files when this .py file is run
 
 
-def generate_probanden_E_block():
+def generate_participant_E_block():
      
-        proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
-        with open("Proband_E_Block.txt", "w") as file:
-            file.write(printer.pformat(proband))
+        with open("Participant_E_Block.txt", "w") as file:
+            file.write(printer.pformat(participant))
 
-def generate_probanden_E_block_results(staircase_direct_evening,staircase_diffuse_evening,
+def generate_participant_E_block_results(staircase_direct_evening,staircase_diffuse_evening,
                                        staircase_direct_night, staircase_diffuse_night):
      
-        proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Results" : [
                   { "Type": staircase_direct_evening.type_of_illumination,
                     "Combination_Factor": staircase_direct_evening.combination_factor,  
@@ -86,22 +86,22 @@ def generate_probanden_E_block_results(staircase_direct_evening,staircase_diffus
             ]},
         ]}
 
-        with open("Proband_E_Block_Results.txt", "w") as file:
-            file.write(printer.pformat(proband))
+        with open("Participant_E_Block_Results.txt", "w") as file:
+            file.write(printer.pformat(participant))
 
-def generate_probanden_Combination_block():
+def generate_participant_Combination_block():
      
-        proband = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
-        with open("Proband_Combination_Block.txt", "w") as file:
-            file.write(printer.pformat(proband))
+        with open("Participant_Combination_Block.txt", "w") as file:
+            file.write(printer.pformat(participant))
 
-def generate_probanden_Combination_block_results():
+def generate_participant_Combination_block_results():
      
-        proband = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Results" : [
                   {"E": None, "Reversals (lx)": [], "Reversal Points" : None},
             ]},
@@ -110,11 +110,11 @@ def generate_probanden_Combination_block_results():
             ]},
         ]}
 
-        with open("Proband_Combination_Block_Results.txt", "w") as file:
-            file.write(printer.pformat(proband))
+        with open("Participant_Combination_Block_Results.txt", "w") as file:
+            file.write(printer.pformat(participant))
 
 if __name__ == "__main__":
-    generate_learn_proband()
-    generate_probanden_E_block()
-    generate_probanden_Combination_block()
+    generate_learning_participant()
+    generate_participant_E_block()
+    generate_participant_Combination_block()
 
