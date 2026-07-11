@@ -436,7 +436,7 @@ class App(ctk.CTk, AsyncCTk):
         sequence_buttons_settings = {"height":25, "border_width":1, "text_color":"black", "border_color":"black",
                                         "fg_color":"transparent", "hover_color":"light blue"}
 
-        self.load_participant_button = ctk.CTkButton(self.seq_crtl_frame, text="Load participant phase", command=self.load_participant)
+        self.load_participant_button = ctk.CTkButton(self.seq_crtl_frame, text="Load Participant File", command=self.load_participant)
         self.load_participant_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
 
         self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=self.load_learning_block, state="disabled")
