@@ -33,7 +33,7 @@ def generate_learn_proband():
         for scene_type, E in zip(selected_types, selected_E_values)
     ]
     proband = {"ID": -1, "Phase": "Learning Block", "LearnDurchgang": True, "Durchgange": [
-        {'ID': -1, "Time": "Evening", "Color": "3000 K", "Scenes" : scenes},
+        {'ID': -1, "State": "Sitting", "Color": "3000 K", "Scenes" : scenes},
     ]}
     with open("ProbandLernenB.txt", "w") as file:
         file.write(printer.pformat(proband))
@@ -47,8 +47,8 @@ def scene(type, combination_factor, E, disturbed, reaction_time):
 def generate_probanden_E_block():
      
         proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
-            {'ID': 1, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
-            {'ID': 2, "Time": "Night", "Color": "3000 K", "Scenes" : []},
+            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
+            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
         with open("Proband_E_Block.txt", "w") as file:
@@ -58,7 +58,7 @@ def generate_probanden_E_block_results(staircase_direct_evening,staircase_diffus
                                        staircase_direct_night, staircase_diffuse_night):
      
         proband = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
-            {'ID': 1, "Time": "Evening", "Color": "3000 K", "Results" : [
+            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Results" : [
                   { "Type": staircase_direct_evening.type_of_illumination,
                     "Combination_Factor": staircase_direct_evening.combination_factor,  
                    "E_threshold": staircase_direct_evening.get_threshold(), 
@@ -71,7 +71,7 @@ def generate_probanden_E_block_results(staircase_direct_evening,staircase_diffus
                    "Reversals": staircase_diffuse_evening.reversal_points, 
                    "Response_Sequence": staircase_diffuse_evening.response_sequence_history},
             ]},
-            {'ID': 2, "Time": "Night", "Color": "3000 K", "Results" : [
+            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Results" : [
                   {"Type": staircase_direct_night.type_of_illumination, 
                    "Combination_Factor": staircase_direct_night.combination_factor,  
                    "E_threshold": staircase_direct_night.get_threshold(), 
@@ -92,8 +92,8 @@ def generate_probanden_E_block_results(staircase_direct_evening,staircase_diffus
 def generate_probanden_Combination_block():
      
         proband = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
-            {'ID': 3, "Time": "Evening", "Color": "3000 K", "Scenes" : []},
-            {'ID': 4, "Time": "Night", "Color": "3000 K", "Scenes" : []},
+            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
+            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
         with open("Proband_Combination_Block.txt", "w") as file:
@@ -102,10 +102,10 @@ def generate_probanden_Combination_block():
 def generate_probanden_Combination_block_results():
      
         proband = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
-            {'ID': 3, "Time": "Evening", "Color": "3000 K", "Results" : [
+            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Results" : [
                   {"E": None, "Reversals (lx)": [], "Reversal Points" : None},
             ]},
-            {'ID': 4, "Time": "Night", "Color": "3000 K", "Results" : [
+            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Results" : [
                   {"E": None, "Reversals (lx)": [], "Reversal Points" : None},
             ]},
         ]}
