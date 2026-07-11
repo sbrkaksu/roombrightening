@@ -32,7 +32,7 @@ def generate_learning_participant():
         )
         for scene_type, E in zip(selected_types, selected_E_values)
     ]
-    participant = {"ID": -1, "Phase": "Learning Block", "LearnDurchgang": True, "Durchgange": [
+    participant = {"ID": -1, "Phase": "Learning Block", "LearnRound": True, "Rounds": [
         {'ID': -1, "State": "Sitting", "Color": "3000 K", "Scenes" : scenes},
     ]}
     with open("Participant_Learning_Block.txt", "w") as file:
@@ -46,7 +46,7 @@ def scene(type, combination_factor, E, disturbed, reaction_time):
 
 def generate_participant_E_block():
      
-        participant = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "E_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
@@ -57,7 +57,7 @@ def generate_participant_E_block():
 def generate_participant_E_block_results(staircase_direct_evening,staircase_diffuse_evening,
                                        staircase_direct_night, staircase_diffuse_night):
      
-        participant = {"ID": 1, "Phase": "E_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "E_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Results" : [
                   { "Type": staircase_direct_evening.type_of_illumination,
                     "Combination_Factor": staircase_direct_evening.combination_factor,  
@@ -91,7 +91,7 @@ def generate_participant_E_block_results(staircase_direct_evening,staircase_diff
 
 def generate_participant_Combination_block():
      
-        participant = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "Combination_Block", "LearnRound": False, "Rounds": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
@@ -101,7 +101,7 @@ def generate_participant_Combination_block():
 
 def generate_participant_Combination_block_results():
      
-        participant = {"ID": 1, "Phase": "Combination_Block", "LearnDurchgang": False, "Durchgange": [
+        participant = {"ID": 1, "Phase": "Combination_Block", "LearnRound": False, "Rounds": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Results" : [
                   {"E": None, "Reversals (lx)": [], "Reversal Points" : None},
             ]},
