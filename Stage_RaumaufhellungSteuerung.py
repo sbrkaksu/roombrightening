@@ -1,5 +1,5 @@
 # Data parsing, formatting and file handling
-from ast import literal_eval #dict type security for subject file reading
+from ast import literal_eval #dict type security for participant file reading
 import os
 from os.path import splitext, exists #used for saving result files with correct naming and preventing overwriting 
 from re import compile #used for parsing the monitor input with regular expressions
@@ -287,9 +287,9 @@ class SwitchButton(ctk.CTkButton):
 
 # Class representing a phase of the experiment
 class Phase(dict):
-    def __init__(self,proband_file, *args, **kwargs):
+    def __init__(self, participant_file, *args, **kwargs):
         __slots__ = ()
-        self.filename = proband_file
+        self.filename = participant_file
         with open(self.filename, 'r') as f:
             s = f.read()
             super().__init__(literal_eval(s))
@@ -391,7 +391,7 @@ class App(ctk.CTk, AsyncCTk):
             "maxAussteuerung_faktor_pixel1": 0.7,
             "DMX_brightness_reading": 255,
             "DMX_brightness_roomlight": 255,
-            "learn_proband_file": "ProbandLernenB.txt",
+            "learn_participant_file": "Participant_Learning_Block.txt",
             "adaptive_batch_scene_limit": 16,
         }
 
@@ -436,8 +436,8 @@ class App(ctk.CTk, AsyncCTk):
         sequence_buttons_settings = {"height":25, "border_width":1, "text_color":"black", "border_color":"black",
                                         "fg_color":"transparent", "hover_color":"light blue"}
 
-        self.load_proband_button = ctk.CTkButton(self.seq_crtl_frame, text="Load subject phase", command=self.load_proband)
-        self.load_proband_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
+        self.load_participant_button = ctk.CTkButton(self.seq_crtl_frame, text="Load participant phase", command=self.load_participant)
+        self.load_participant_button.grid(row=0, column=0, padx=10, pady=10, sticky="n")
 
         self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=self.load_learning_block, state="disabled")
         self.learning_block_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
@@ -467,8 +467,8 @@ class App(ctk.CTk, AsyncCTk):
     def setup_table(self):
         self.table_frame = ctk.CTkFrame(self,fg_color="transparent")
         self.table_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nw")
-        self.proband_label = ctk.CTkLabel(self.table_frame, text="Proband", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
-        self.proband_label.grid(row=0, column=0, padx=10, pady=(10,0),sticky='w')
+        self.participant_label = ctk.CTkLabel(self.table_frame, text="Participant", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
+        self.participant_label.grid(row=0, column=0, padx=10, pady=(10,0),sticky='w')
         self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Durchgang", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.sequence_scene_label.grid(row=1, column=0, padx=10, pady=0, sticky='w')
 
@@ -571,8 +571,8 @@ class App(ctk.CTk, AsyncCTk):
                     print("Task is not stopped")
                     return
         else: # task does not exist
-            if self.active_sequence is None: # if subject not loaded
-                print("Proband not loaded")
+            if self.active_sequence is None: # if participant not loaded
+                print("Participant not loaded")
                 return
         if self.active_phase.phase_type == "E_Block":
             self.current_scene_idx = self.table_scene_offset + row_idx
@@ -580,7 +580,7 @@ class App(ctk.CTk, AsyncCTk):
             self.current_scene_idx = row_idx
         self.sequence_table.select_row(row_idx)
 
-    def load_proband(self):
+    def load_participant(self):
         phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
         if phase.phase_type == "E_Block":
             self.phase_e_block = phase
@@ -589,7 +589,7 @@ class App(ctk.CTk, AsyncCTk):
             self.e_block_button.disable()
             self.active_phase = None
             self.active_sequence = None
-            self.proband_label.configure(text="Proband {id}: E_Block loaded".format(id=self.phase_e_block["ID"]))
+            self.participant_label.configure(text="Participant {id}: E_Block loaded".format(id=self.phase_e_block["ID"]))
             self.sequence_scene_label.configure(text="Select Learning Block")
             self.sequence_table.update_table([])
             self.sequence_start_reset_button.configure(state="disabled")
@@ -627,7 +627,7 @@ class App(ctk.CTk, AsyncCTk):
         return staircases
 
     def load_learning_block(self):
-        learn_file = self.settings["learn_proband_file"]
+        learn_file = self.settings["learn_participant_file"]
         if not exists(learn_file):
             print(f"Learning block file not found: {learn_file}")
             return
@@ -718,7 +718,7 @@ class App(ctk.CTk, AsyncCTk):
         self.active_phase = phase
         self.table_scene_offset = 0
         self.set_sequence()
-        self.proband_label.configure(text="Proband {id}: {phase}".format(id=self.active_phase["ID"], phase=self.active_phase["Phase"]))
+        self.participant_label.configure(text="Participant {id}: {phase}".format(id=self.active_phase["ID"], phase=self.active_phase["Phase"]))
     
     def set_sequence_scene_label(self):
         if self.active_sequence is None:
@@ -987,7 +987,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_start_reset_button.configure(text="Start Durchgang", command=self.run_sequence)
         self.sequence_stop_continue_button.configure(text="Pause Durchgang", command=self.stop_sequence,
                                                     state="disabled", fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
-        self.load_proband_button.configure(state="normal")
+        self.load_participant_button.configure(state="normal")
         self.roomlight_button.configure(state="normal")
 
         self.countdown_timer_var.set(0)
@@ -1028,7 +1028,7 @@ class App(ctk.CTk, AsyncCTk):
         # switch button to stop sequence
         self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
         self.sequence_start_reset_button.configure(text="Reset Durchgang", command=self.reset_sequence)
-        self.load_proband_button.configure(state="disabled")
+        self.load_participant_button.configure(state="disabled")
         # disable sequence change buttons
         self.learning_block_button.disable_children()
         self.e_block_button.disable_children()
