@@ -653,6 +653,7 @@ class App(ctk.CTk, AsyncCTk):
             self.staircase_sleeping_cf_0,
         )
         self.e_block_results_saved = True
+        self.e_block_results_button.configure(state="normal")
 
     def complete_active_e_block_round(self):
         self.active_sequence["Adaptive_Completed"] = True
