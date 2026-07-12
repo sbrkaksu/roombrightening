@@ -326,7 +326,7 @@ class Phase(dict):
         with open(fname, 'w') as f:
             f.write(printer.pformat(self))
 
-        if self.phase_type == "Learning Block":
+        if self.phase_type in ("Learning Block", "E_Block"):
             return
         
         if self.check_completion() == True:
@@ -651,6 +651,11 @@ class App(ctk.CTk, AsyncCTk):
         )
         self.e_block_results_saved = True
 
+    def complete_active_e_block_round(self):
+        self.active_sequence["Adaptive_Completed"] = True
+        self.active_phase.save()
+        self.save_e_block_results_if_complete()
+
     def load_learning_block(self):
         learn_file = self.settings["learn_participant_file"]
         if not exists(learn_file):
@@ -869,8 +874,7 @@ class App(ctk.CTk, AsyncCTk):
             staircase = self.select_random_staircase(staircases)
 
             if staircase is None:
-                self.active_sequence["Adaptive_Completed"] = True
-                self.active_phase.save()
+                self.complete_active_e_block_round()
                 break
 
             scene = self.create_e_block_scene(staircase)
@@ -888,9 +892,7 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_table.deselect_row()
 
         if self.select_random_staircase(self.get_active_e_block_staircases()) is None:
-            self.active_sequence["Adaptive_Completed"] = True
-            self.active_phase.save()
-            self.save_e_block_results_if_complete()
+            self.complete_active_e_block_round()
 
     async def await_e_block_interstimulus_interval(self):
         isi_duration = self.settings["inter-stimulus-interval"]
