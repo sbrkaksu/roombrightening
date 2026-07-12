@@ -26,7 +26,7 @@ import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
 # Generates fine-grid block
-from Stage_ProbandGenerator import FormatPrinter, scene as create_scene
+from Stage_ProbandGenerator import FormatPrinter, scene as create_scene, generate_participant_E_block_results
 from Staircase import AdaptiveStaircase
 
 #loops through all children of a widget and its children in GUI
@@ -414,6 +414,7 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sitting_cf_0 = None
         self.staircase_sleeping_cf_1 = None
         self.staircase_sleeping_cf_0 = None
+        self.e_block_results_saved = False
 
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
@@ -605,6 +606,7 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sitting_cf_0 = AdaptiveStaircase(state="sitting", combination_factor=0)
         self.staircase_sleeping_cf_1 = AdaptiveStaircase(state="sleeping", combination_factor=1)
         self.staircase_sleeping_cf_0 = AdaptiveStaircase(state="sleeping", combination_factor=0)
+        self.e_block_results_saved = False
 
     def get_active_e_block_staircases(self):
         staircases = []
@@ -625,6 +627,29 @@ class App(ctk.CTk, AsyncCTk):
             print(f"Unsupported E Block state: {self.active_sequence['State']}")
 
         return staircases
+
+    def all_e_block_staircases_finished(self):
+        staircases = [
+            self.staircase_sitting_cf_1,
+            self.staircase_sitting_cf_0,
+            self.staircase_sleeping_cf_1,
+            self.staircase_sleeping_cf_0,
+        ]
+        return all(staircase is not None and staircase.is_finished() for staircase in staircases)
+
+    def save_e_block_results_if_complete(self):
+        if self.e_block_results_saved:
+            return
+        if not self.all_e_block_staircases_finished():
+            return
+
+        generate_participant_E_block_results(
+            self.staircase_sitting_cf_1,
+            self.staircase_sitting_cf_0,
+            self.staircase_sleeping_cf_1,
+            self.staircase_sleeping_cf_0,
+        )
+        self.e_block_results_saved = True
 
     def load_learning_block(self):
         learn_file = self.settings["learn_participant_file"]
@@ -865,6 +890,7 @@ class App(ctk.CTk, AsyncCTk):
         if self.select_random_staircase(self.get_active_e_block_staircases()) is None:
             self.active_sequence["Adaptive_Completed"] = True
             self.active_phase.save()
+            self.save_e_block_results_if_complete()
 
     async def await_e_block_interstimulus_interval(self):
         isi_duration = self.settings["inter-stimulus-interval"]
