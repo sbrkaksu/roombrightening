@@ -471,7 +471,7 @@ class App(ctk.CTk, AsyncCTk):
         self.e_block_next_seq_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
         self.e_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
         self.e_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
-        self.e_block_results_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=70, text="Results", state="disabled")
+        self.e_block_results_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=70, text="Results", command=self.open_e_block_results, state="disabled")
         self.e_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
 
         self.combination_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Combination Block", **e_block_button_settings, command=lambda:self.set_phase(self.phase_combination_block), state="disabled")
@@ -626,6 +626,12 @@ class App(ctk.CTk, AsyncCTk):
             results_data = literal_eval(file.read())
 
         ResultsWindow(self, "E Block Results", self.format_e_block_results_text(results_data))
+
+    def open_e_block_results(self):
+        if not self.e_block_results_saved:
+            print("E Block is not completed.")
+            return
+        self.show_e_block_results_popup()
     
     def row_click(self,row_idx):
         if self.sequence_task is not None: # if task exists
