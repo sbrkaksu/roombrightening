@@ -147,6 +147,27 @@ class CheckWindow(ctk.CTkToplevel):
         self.confirm_button = ctk.CTkButton(self, text=label, command=self.destroy)
         self.confirm_button.grid(row=0, column=0, padx=20, pady=30, sticky="nsew")
 
+class ResultsWindow(ctk.CTkToplevel):
+    def __init__(self, parent, title, text, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        super().transient(parent)
+
+        parent.update_idletasks()
+        popup_x = parent.winfo_rootx() + 20
+        popup_y = parent.winfo_rooty() + 20
+        self.geometry(f"420x520+{popup_x}+{popup_y}")
+        self.title(title)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        self.textbox = ctk.CTkTextbox(self, wrap="word")
+        self.textbox.grid(row=0, column=0, padx=12, pady=12, sticky="nsew")
+        self.textbox.insert("1.0", text)
+        self.textbox.configure(state="disabled")
+
+        self.close_button = ctk.CTkButton(self, text="Close", command=self.destroy)
+        self.close_button.grid(row=1, column=0, padx=12, pady=(0, 12), sticky="ew")
+
 # Creates a pop-up window with multiple dropdowns    
 class CheckWindowDropDown(ctk.CTkToplevel):
     def __init__(self, parent, title, options_dictlist, callback, *args, **kwargs):
@@ -503,6 +524,8 @@ class App(ctk.CTk, AsyncCTk):
     def setup_roomlight_controls(self):
         self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Roomlight", command=lambda:self.set_roomlight_level(self.ROOMLIGHT_BRIGHT))
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
+        self.test_results_button = ctk.CTkButton(self.seq_crtl_frame, text="Test", command=self.show_e_block_results_popup)
+        self.test_results_button.grid(row=8, column=0, padx=10, pady=(0, 10), sticky="s")
 
     def setup_monitor_controls(self):
         self.read_monitor_button = ctk.CTkButton(self, command=self.read_monitor_continuously)
@@ -567,6 +590,42 @@ class App(ctk.CTk, AsyncCTk):
             window.focus()
         self.wait_window(window)
         return window
+
+    def format_result_value_list(self, values):
+        if not values:
+            return "None"
+        return ", ".join(str(value) for value in values)
+
+    def format_e_block_results_text(self, results_data):
+        lines = []
+        for round_data in results_data["Rounds"]:
+            lines.append("Round {id} | {state}".format(id=round_data["ID"], state=round_data["State"]))
+            lines.append("")
+            for result in round_data["Results"]:
+                reversals = result.get("Reversals", [])
+                threshold = result.get("E_threshold")
+                response_sequence = result.get("Response_Sequence", [])
+                lines.append("{type} | CF={cf}".format(type=result.get("Type"), cf=result.get("Combination_Factor")))
+                lines.append("Trials: {trials}".format(trials=len(response_sequence)))
+                lines.append("Reversal: {reversals} - {count} reversals".format(
+                    reversals=self.format_result_value_list(reversals),
+                    count=len(reversals),
+                ))
+                lines.append("Threshold: {threshold} Lx".format(threshold=threshold))
+                lines.append("")
+            lines.append("")
+        return "\n".join(lines).strip()
+
+    def show_e_block_results_popup(self):
+        results_file = "Participant_E_Block_Results.txt"
+        if not exists(results_file):
+            ResultsWindow(self, "E Block Results", "Result file not found.")
+            return
+
+        with open(results_file, "r") as file:
+            results_data = literal_eval(file.read())
+
+        ResultsWindow(self, "E Block Results", self.format_e_block_results_text(results_data))
     
     def row_click(self,row_idx):
         if self.sequence_task is not None: # if task exists
