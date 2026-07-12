@@ -413,7 +413,7 @@ class App(ctk.CTk, AsyncCTk):
             "DMX_brightness_reading": 255,
             "DMX_brightness_roomlight": 255,
             "learn_participant_file": "Participant_Learning_Block.txt",
-            "adaptive_batch_scene_limit": 16,
+            "max_scene_before_sequence_pause": 16,
         }
 
     def setup_state(self):
@@ -773,7 +773,7 @@ class App(ctk.CTk, AsyncCTk):
 
     def get_e_block_pages(self):
         pages = []
-        scene_limit = self.settings["adaptive_batch_scene_limit"]
+        scene_limit = self.settings["max_scene_before_sequence_pause"]
 
         for sequence_idx, sequence in enumerate(self.active_phase["Rounds"]):
             scenes = sequence["Scenes"]
@@ -848,7 +848,7 @@ class App(ctk.CTk, AsyncCTk):
         self.active_sequence = self.active_phase.get_current_sequence()
         scenes = self.active_sequence["Scenes"]
         if self.active_phase.phase_type == "E_Block":
-            scene_limit = self.settings["adaptive_batch_scene_limit"]
+            scene_limit = self.settings["max_scene_before_sequence_pause"]
             visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
             seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Combination_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
         else:
@@ -936,7 +936,7 @@ class App(ctk.CTk, AsyncCTk):
 
         scenes = self.active_sequence["Scenes"]
         self.table_scene_offset = len(scenes)
-        scene_limit = self.settings["adaptive_batch_scene_limit"]
+        scene_limit = self.settings["max_scene_before_sequence_pause"]
 
         for _ in range(scene_limit):
             staircases = self.get_active_e_block_staircases()
