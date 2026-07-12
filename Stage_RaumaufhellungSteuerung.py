@@ -434,6 +434,7 @@ class App(ctk.CTk, AsyncCTk):
 
         phase_buttons_settings = {"height":90, "anchor":"n", "border_width":2, "text_color":"black", "border_color":"black",
                                      "fg_color":"transparent", "hover_color":"light blue"}
+        e_block_button_settings = {**phase_buttons_settings, "height": 120}
         sequence_buttons_settings = {"height":25, "border_width":1, "text_color":"black", "border_color":"black",
                                         "fg_color":"transparent", "hover_color":"light blue"}
 
@@ -443,27 +444,29 @@ class App(ctk.CTk, AsyncCTk):
         self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=self.load_learning_block, state="disabled")
         self.learning_block_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
 
-        self.e_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="E Block", **phase_buttons_settings, command=self.select_e_block, state="disabled")
+        self.e_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="E Block", **e_block_button_settings, command=self.select_e_block, state="disabled")
         self.e_block_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
-        self.add_sequence_nav_buttons(self.e_block_button, "e_block", sequence_buttons_settings)
+        self.e_block_prev_seq_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
+        self.e_block_next_seq_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
+        self.e_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
+        self.e_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
+        self.e_block_results_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=70, text="Results", state="disabled")
+        self.e_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
 
-        self.combination_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Combination Block", **phase_buttons_settings, command=lambda:self.set_phase(self.phase_combination_block), state="disabled")
+        self.combination_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Combination Block", **e_block_button_settings, command=lambda:self.set_phase(self.phase_combination_block), state="disabled")
         self.combination_block_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
-        self.add_sequence_nav_buttons(self.combination_block_button, "combination_block", sequence_buttons_settings)
+        self.combination_block_prev_seq_button = ctk.CTkButton(self.combination_block_button, **sequence_buttons_settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
+        self.combination_block_next_seq_button = ctk.CTkButton(self.combination_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
+        self.combination_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
+        self.combination_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
+        self.combination_block_results_button = ctk.CTkButton(self.combination_block_button, **sequence_buttons_settings, width=70, text="Results", state="disabled")
+        self.combination_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
 
         self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Round", command=self.run_sequence, state="disabled")
         self.sequence_start_reset_button.grid(row=4, column=0, padx=10, pady=10, sticky="n")
 
         self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Pause Round", command=self.stop_sequence, state="disabled")
         self.sequence_stop_continue_button.grid(row=5, column=0, padx=10, pady=10, sticky="n")
-
-    def add_sequence_nav_buttons(self, parent, prefix, settings):
-        next_button = ctk.CTkButton(parent, **settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
-        prev_button = ctk.CTkButton(parent, **settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
-        next_button.place(relx=0.7, rely=0.6, anchor="center")
-        prev_button.place(relx=0.3, rely=0.6, anchor="center")
-        setattr(self, f"{prefix}_next_seq_button", next_button)
-        setattr(self, f"{prefix}_prev_seq_button", prev_button)
 
     def setup_table(self):
         self.table_frame = ctk.CTkFrame(self,fg_color="transparent")
