@@ -1308,7 +1308,8 @@ class App(ctk.CTk, AsyncCTk):
         self.qlc_node = pan.ArtNetNode('127.0.0.1', 6454)
         self.qlc_input = self.qlc_node.add_universe(10)
 
-        self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) #  0:0
+        self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) # Direct spot 1
+        self.diffuse_intensity  = self.qlc_input.add_channel(start=3, width=2) # Diffuse spot
         self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
         self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
@@ -1342,35 +1343,35 @@ class App(ctk.CTk, AsyncCTk):
         combination_factor = scene["Combination_Factor"]
         E_direct, E_diffuse = self.calculate_light_components(E, combination_factor)
 
-        center_pixel_dmx = 0
+        spot1_dmx = 0
+        diffuse_dmx = 0
         pixel2_7_dmx = 0
 
         if E_direct > 0:
             direct_center_pixel_dmx, direct_pixel2_7_dmx = self.calculate_spot_dmx(E_direct)
-            center_pixel_dmx += direct_center_pixel_dmx
+            spot1_dmx = direct_center_pixel_dmx
             pixel2_7_dmx = max(pixel2_7_dmx, direct_pixel2_7_dmx)
 
         if E_diffuse > 0:
-            diffuse_center_pixel_dmx, diffuse_pixel2_7_dmx = self.calculate_diffus_dmx(E_diffuse)
-            center_pixel_dmx += diffuse_center_pixel_dmx
-            pixel2_7_dmx = max(pixel2_7_dmx, diffuse_pixel2_7_dmx)
+            diffuse_dmx = self.calculate_diffus_dmx(E_diffuse)
 
-        center_pixel_dmx = min(center_pixel_dmx, 2**16 - 1)
+        spot1_dmx = min(spot1_dmx, 2**16 - 1)
+        diffuse_dmx = min(diffuse_dmx, 2**16 - 1)
         pixel2_7_dmx = min(pixel2_7_dmx, 2**8 - 1)
-        self.spot1_intensity.set_values(center_pixel_dmx.to_bytes(2,'big'))
+        self.spot1_intensity.set_values(spot1_dmx.to_bytes(2,'big'))
+        self.diffuse_intensity.set_values(diffuse_dmx.to_bytes(2,'big'))
         self.pixel2_7_intensity.set_values([pixel2_7_dmx])
 
     def set_diffus_scene(self, E):
-        intensity, pixel2_7_dmx = self.calculate_diffus_dmx(E)
-        self.spot1_intensity.set_values(intensity.to_bytes(2,'big'))
-        self.pixel2_7_intensity.set_values([pixel2_7_dmx])
+        intensity = self.calculate_diffus_dmx(E)
+        self.diffuse_intensity.set_values(intensity.to_bytes(2,'big'))
 
     def calculate_diffus_dmx(self, E):
         dmx16_max = 2**16 - 1
         maxE = self.settings["maxE_diffus"]
         E = min(E, maxE)
         intensity = round((E / maxE) * dmx16_max)
-        return intensity, 255
+        return intensity
 
     def calculate_spot_dmx(self, E):
         dmx8_max = 2**8 - 1
@@ -1395,6 +1396,7 @@ class App(ctk.CTk, AsyncCTk):
         
     def set_all_intensities(self,i):
         self.spot1_intensity.set_values(i.to_bytes(2,'big'))
+        self.diffuse_intensity.set_values(i.to_bytes(2,'big'))
 
     def set_isi(self):
         brightness = 2500
