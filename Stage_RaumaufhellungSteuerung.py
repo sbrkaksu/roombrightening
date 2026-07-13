@@ -1336,25 +1336,39 @@ class App(ctk.CTk, AsyncCTk):
     def set_scene(self, scene):
         self.set_all_intensities(0)
         self.pixel2_7_intensity.set_values([0])
-        scene_type = scene["Type"]
         E = scene["E"]
+        combination_factor = scene["Combination_Factor"]
+        E_direct, E_diffuse = self.calculate_light_components(E, combination_factor)
 
-        diffus = scene_type == "Diffuse"
-        if diffus:
-            self.set_diffus_scene(E)
-            return
+        center_pixel_dmx = 0
+        pixel2_7_dmx = 0
 
-        center_pixel_dmx, other_pixel_dmx = self.calculate_spot_dmx(E)
+        if E_direct > 0:
+            direct_center_pixel_dmx, direct_pixel2_7_dmx = self.calculate_spot_dmx(E_direct)
+            center_pixel_dmx += direct_center_pixel_dmx
+            pixel2_7_dmx = max(pixel2_7_dmx, direct_pixel2_7_dmx)
+
+        if E_diffuse > 0:
+            diffuse_center_pixel_dmx, diffuse_pixel2_7_dmx = self.calculate_diffus_dmx(E_diffuse)
+            center_pixel_dmx += diffuse_center_pixel_dmx
+            pixel2_7_dmx = max(pixel2_7_dmx, diffuse_pixel2_7_dmx)
+
+        center_pixel_dmx = min(center_pixel_dmx, 2**16 - 1)
+        pixel2_7_dmx = min(pixel2_7_dmx, 2**8 - 1)
         self.spot1_intensity.set_values(center_pixel_dmx.to_bytes(2,'big'))
-        self.pixel2_7_intensity.set_values([other_pixel_dmx])
+        self.pixel2_7_intensity.set_values([pixel2_7_dmx])
 
     def set_diffus_scene(self, E):
+        intensity, pixel2_7_dmx = self.calculate_diffus_dmx(E)
+        self.spot1_intensity.set_values(intensity.to_bytes(2,'big'))
+        self.pixel2_7_intensity.set_values([pixel2_7_dmx])
+
+    def calculate_diffus_dmx(self, E):
         dmx16_max = 2**16 - 1
         maxE = self.settings["maxE_diffus"]
         E = min(E, maxE)
         intensity = round((E / maxE) * dmx16_max)
-        self.spot1_intensity.set_values(intensity.to_bytes(2,'big'))
-        self.pixel2_7_intensity.set_values([255])
+        return intensity, 255
 
     def calculate_spot_dmx(self, E):
         dmx8_max = 2**8 - 1
