@@ -567,8 +567,10 @@ class App(ctk.CTk, AsyncCTk):
     def set_scene_monitor(self):
         if self.monitor_I and self.active_scene is not None:
             print(self.monitor_I)
-            scene_type = self.active_scene.get("Type")
-            factor = self.settings["monitor_E_factor_diffus"] if scene_type == "Diffuse" else self.settings["monitor_E_factor_spot_1"]
+            combination_factor = self.active_scene["Combination_Factor"]
+            factor_direct = self.settings["monitor_E_factor_spot_1"]
+            factor_diffuse = self.settings["monitor_E_factor_diffus"]
+            factor = (factor_direct * combination_factor) + (factor_diffuse * (1 - combination_factor))
             EM = self.monitor_I * factor
             EM = f"{EM:.2e}" # format E monitor in exponential notation for the table
             print(EM)
