@@ -362,10 +362,6 @@ class Phase(dict):
 
 # Main application class
 class App(ctk.CTk, AsyncCTk):
-    ROOMLIGHT_OFF = 0
-    ROOMLIGHT_DIM = 1
-    ROOMLIGHT_BRIGHT = 2
-
     SEQUENCE_CONTROL_VALUES = {
         "isi": 0,
         "fade_isi": 255,
@@ -522,7 +518,7 @@ class App(ctk.CTk, AsyncCTk):
         self.after(100,self.artnet_interface_helperbutton.invoke) # workaround, because async does not work in __init__
 
     def setup_roomlight_controls(self):
-        self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Roomlight", command=lambda:self.set_roomlight_level(self.ROOMLIGHT_BRIGHT))
+        self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Roomlight", command=lambda:self.set_roomlight_level(2))
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
         self.test_results_button = ctk.CTkButton(self.seq_crtl_frame, text="Test", command=self.show_e_block_results_popup)
         self.test_results_button.grid(row=8, column=0, padx=10, pady=(0, 10), sticky="s")
@@ -880,11 +876,11 @@ class App(ctk.CTk, AsyncCTk):
                                                       command=self.continue_sequence,
                                                       fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
             self.roomlight_button.configure(state="normal")
-            self.set_roomlight_level(self.ROOMLIGHT_DIM)
+            self.set_roomlight_level(1)
         else:
             self.sequence_stop_continue_button.configure(text="Pause Round", command=self.stop_sequence, fg_color="red")
             self.roomlight_button.configure(state="disabled")
-            self.set_roomlight_level(self.ROOMLIGHT_OFF)
+            self.set_roomlight_level(0)
         
     def reset_sequence(self):
         self.pause_stop_event.set()
@@ -933,7 +929,7 @@ class App(ctk.CTk, AsyncCTk):
     async def run_e_block_sequence_loop(self):
         self.check_sequence_setup()
         self.set_reading_light(self.state_position_status == "Sitting")
-        self.set_roomlight_level(self.ROOMLIGHT_OFF)
+        self.set_roomlight_level(0)
         await self.run_initial_isi()
 
         scenes = self.active_sequence["Scenes"]
@@ -991,7 +987,7 @@ class App(ctk.CTk, AsyncCTk):
         cur_next_scenes = [cur_next for cur_next in pairwise([*scenes,None])]
 
         self.set_reading_light(self.state_position_status == "Sitting")
-        self.set_roomlight_level(self.ROOMLIGHT_OFF)
+        self.set_roomlight_level(0)
         await self.run_initial_isi()
         return scenes, cur_next_scenes
 
@@ -1086,7 +1082,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_stop_event.clear()
 
     async def cleanup_after_sequence(self, pause_duration):
-        self.set_roomlight_level(self.ROOMLIGHT_DIM)
+        self.set_roomlight_level(1)
         self.reading_light_intensity.set_values([0]) #turn off reading light during pause
         self.sequence_table.deselect_row()
         self.sequence_stop_event.clear()
@@ -1278,22 +1274,22 @@ class App(ctk.CTk, AsyncCTk):
             self.room_light_level.set_values([255])
 
     def set_roomlight_level(self,lvl):
-        if lvl == self.ROOMLIGHT_BRIGHT:
+        if lvl == 2:
             # Turn on the bright ceiling light
             self.room_light_level.set_values([255])
 
             # Set button color to green
-            self.roomlight_button.configure(fg_color="green",hover_color="green",command=lambda:self.set_roomlight_level(self.ROOMLIGHT_DIM))
+            self.roomlight_button.configure(fg_color="green",hover_color="green",command=lambda:self.set_roomlight_level(1))
             self.roomlight_button.hover = False
         else:
             self.roomlight_button.configure(fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"],
                                             hover_color=ctk.ThemeManager.theme["CTkButton"]["hover_color"],
-                                            command=lambda:self.set_roomlight_level(self.ROOMLIGHT_BRIGHT))
+                                            command=lambda:self.set_roomlight_level(2))
             self.roomlight_button.hover = True
-            if lvl == self.ROOMLIGHT_DIM:
+            if lvl == 1:
                 # Turn on the dim ceiling light
                 self.room_light_level.set_values([127])
-            if lvl == self.ROOMLIGHT_OFF:
+            if lvl == 0:
                 # Turn off the ceiling light
                 self.room_light_level.set_values([0])
 
