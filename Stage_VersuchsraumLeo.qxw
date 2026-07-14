@@ -124,45 +124,56 @@
   </Fixture>
   <Function ID="0" Type="Scene" Name="Ablauf" Hidden="True">
    <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="4">0,0,1,0</FixtureVal>
   </Function>
   <Function ID="1" Type="Sequence" Name="Playback Sequence --- ISI - Scene Transitions" BoundScene="0">
    <Speed FadeIn="0" FadeOut="0" Duration="185"/>
    <Direction>Forward</Direction>
    <RunOrder>SingleShot</RunOrder>
    <SpeedModes FadeIn="PerStep" FadeOut="PerStep" Duration="PerStep"/>
-   <Step Number="0" FadeIn="300" Hold="4294967294" FadeOut="0" Note="Fade to black from ISI" Values="1">4:0,255</Step>
-   <Step Number="1" FadeIn="0" Hold="4294967294" FadeOut="0" Note="Scene Activated" Values="0"/>
-   <Step Number="2" FadeIn="100" Hold="4294967294" FadeOut="0" Note="Fade to black from Szene" Values="1">4:0,255</Step>
+   <Step Number="0" FadeIn="300" Hold="4294967294" FadeOut="0" Note="Fade to black from ISI" Values="2">4:0,255</Step>
+   <Step Number="1" FadeIn="0" Hold="4294967294" FadeOut="0" Note="Scene Activated" Values="2"/>
+   <Step Number="2" FadeIn="100" Hold="4294967294" FadeOut="0" Note="Fade to black from Scene" Values="2">4:0,255</Step>
    <Step Number="3" FadeIn="0" Hold="4294967294" FadeOut="0" Note="ISI activated" Values="2">4:0,255,1,255</Step>
   </Function>
   <Function ID="2" Type="Scene" Name="New Scene" Hidden="True">
    <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="6">0,0</FixtureVal>
+   <FixtureVal ID="7">0,0</FixtureVal>
   </Function>
   <Function ID="3" Type="Sequence" Name="Room Light Levels" BoundScene="2">
    <Speed FadeIn="0" FadeOut="0" Duration="4294967294"/>
    <Direction>Forward</Direction>
    <RunOrder>Loop</RunOrder>
    <SpeedModes FadeIn="Default" FadeOut="Default" Duration="Common"/>
-   <Step Number="0" FadeIn="0" Hold="0" FadeOut="0" Note="Bright RoomLight" Values="1">6:0,255</Step>
-   <Step Number="1" FadeIn="0" Hold="0" FadeOut="0" Note="Dim/Weak Roomlight" Values="1">7:0,255</Step>
-   <Step Number="2" FadeIn="0" Hold="0" FadeOut="0" Note="No Roomlight" Values="0"/>
+   <Step Number="0" FadeIn="0" Hold="0" FadeOut="0" Note="Bright RoomLight" Values="2">6:0,255</Step>
+   <Step Number="1" FadeIn="0" Hold="0" FadeOut="0" Note="Dim/Weak Roomlight" Values="2">7:0,255</Step>
+   <Step Number="2" FadeIn="0" Hold="0" FadeOut="0" Note="No Roomlight" Values="2"/>
   </Function>
   <Function ID="4" Type="Scene" Name="Initial Scene">
    <Speed FadeIn="0" FadeOut="0" Duration="0"/>
-   <FixtureVal ID="0">0,125,1,255,2,227,3,100,4,0,5,0,6,255,7,255,8,0,9,245,10,0</FixtureVal>
+   <FixtureVal ID="0">0,6,1,233,2,30,3,185,4,0,5,0,6,255,7,255,8,0,9,245,10,0</FixtureVal>
+   <FixtureVal ID="1">0,134,4,255,5,255,7,245</FixtureVal>
+   <FixtureVal ID="2">0,87,1,0,2,142,3,185,4,0,5,0,6,255,7,255,8,0,9,245,10,0</FixtureVal>
+   <FixtureVal ID="3">0,139,4,255,5,255,7,245</FixtureVal>
+   <FixtureVal ID="4">12,255</FixtureVal>
   </Function>
   <Function ID="5" Type="Scene" Name="Init" Hidden="True">
    <Speed FadeIn="0" FadeOut="0" Duration="0"/>
    <FixtureVal ID="0">0,0,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,0,10,0</FixtureVal>
+   <FixtureVal ID="1">0,0,1,0,2,0,6,0,7,0,9,0</FixtureVal>
+   <FixtureVal ID="2">0,0,1,0,2,0,3,0,6,0,7,0,9,0</FixtureVal>
+   <FixtureVal ID="3">0,0,1,0,2,0,3,0,6,0,7,0,9,0</FixtureVal>
+   <FixtureVal ID="4">1,0,6,0,8,0,9,0,10,0,11,0</FixtureVal>
   </Function>
   <Function ID="6" Type="Sequence" Name="Init Sequence" BoundScene="5">
    <Speed FadeIn="0" FadeOut="0" Duration="200"/>
    <Direction>Forward</Direction>
    <RunOrder>Loop</RunOrder>
    <SpeedModes FadeIn="Default" FadeOut="Default" Duration="PerStep"/>
-   <Step Number="0" FadeIn="0" Hold="50" FadeOut="0" Note="Reset Sequence for Room Light and Playback" Values="33">0:0,125,1,255,2,227,3,100,6,255,7,255,9,245:1:0,55,1,127,2,80,6,255,7,255,9,245:2:2,128,3,72,6,255,7,255,9,245:3:0,85,1,61,2,80,3,112,6,255,7,255,9,245:4:1,1,6,1,9,255,11,255</Step>
-   <Step Number="1" FadeIn="0" Hold="50" FadeOut="0" Note="Play Sequence for Room Light and Playback" Values="31">0:0,125,1,255,2,227,3,100,6,255,7,255,9,245:1:0,55,1,127,2,80,6,255,7,255,9,245:2:2,128,3,72,6,255,7,255,9,245:3:0,85,1,61,2,80,3,112,6,255,7,255,9,245:4:8,255,10,255</Step>
-   <Step Number="2" FadeIn="0" Hold="4294967294" FadeOut="0" Note="Set Default Values for Spots" Values="29">0:0,125,1,255,2,227,3,100,6,255,7,255,9,245:1:0,55,1,127,2,80,6,255,7,255,9,245:2:2,128,3,72,6,255,7,255,9,245:3:0,85,1,61,2,80,3,112,6,255,7,255,9,245</Step>
+   <Step Number="0" FadeIn="0" Hold="50" FadeOut="0" Note="Reset Sequence for Room Light and Playback" Values="35">0:0,125,1,255,2,227,3,100,6,255,7,255,9,245:1:0,55,1,127,2,80,6,255,7,255,9,245:2:2,128,3,72,6,255,7,255,9,245:3:0,85,1,61,2,80,3,112,6,255,7,255,9,245:4:1,1,6,1,9,255,11,255</Step>
+   <Step Number="1" FadeIn="0" Hold="50" FadeOut="0" Note="Play Sequence for Room Light and Playback" Values="35">0:0,125,1,255,2,227,3,100,6,255,7,255,9,245:1:0,55,1,127,2,80,6,255,7,255,9,245:2:2,128,3,72,6,255,7,255,9,245:3:0,85,1,61,2,80,3,112,6,255,7,255,9,245:4:8,255,10,255</Step>
+   <Step Number="2" FadeIn="0" Hold="4294967294" FadeOut="0" Note="Set Default Values for Spots" Values="35">0:0,125,1,255,2,227,3,100,6,255,7,255,9,245:1:0,55,1,127,2,80,6,255,7,255,9,245:2:2,128,3,72,6,255,7,255,9,245:3:0,85,1,61,2,80,3,112,6,255,7,255,9,245</Step>
   </Function>
   <Monitor DisplayMode="0" ShowLabels="0">
    <Font>Arial,12,-1,5,50,0,0,0,0,0</Font>
@@ -180,7 +191,7 @@
     <BackgroundImage>None</BackgroundImage>
     <Font>Default</Font>
    </Appearance>
-   <Button Caption="Inizialisieren" ID="0" Icon="">
+   <Button Caption="Initialize" ID="0" Icon="">
     <WindowState Visible="True" X="15" Y="15" Width="135" Height="55"/>
     <Appearance>
      <FrameStyle>None</FrameStyle>
@@ -194,7 +205,7 @@
     <Intensity Adjust="False">100</Intensity>
    </Button>
    <Label Caption="A frame with two pages! One page for ISI and one for the scenes. Switching between scenes with a single DMX channel." ID="7">
-    <WindowState Visible="True" X="1410" Y="890" Width="245" Height="110"/>
+    <WindowState Visible="True" X="555" Y="630" Width="220" Height="75"/>
     <Appearance>
      <FrameStyle>None</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -211,7 +222,7 @@
      <BackgroundImage>None</BackgroundImage>
      <Font>Default</Font>
     </Appearance>
-    <WindowState Visible="True" X="85" Y="100" Width="1430" Height="305"/>
+    <WindowState Visible="True" X="180" Y="15" Width="740" Height="295"/>
     <AllowChildren>True</AllowChildren>
     <AllowResize>True</AllowResize>
     <ShowHeader>True</ShowHeader>
@@ -242,7 +253,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="0"/>
+      <Input Universe="2" Channel="0"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="0">
        <Channel Fixture="0">4</Channel>
@@ -260,7 +271,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="1"/>
+      <Input Universe="2" Channel="1"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="0">
        <Channel Fixture="0">5</Channel>
@@ -270,7 +281,7 @@
       </Playback>
      </Slider>
     </Frame>
-    <Frame Caption="Spot 0:47" ID="26">
+    <Frame Caption="Spot Diffuse" ID="26">
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -294,7 +305,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="2"/>
+      <Input Universe="2" Channel="2"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="0"/>
       <Playback>
@@ -310,7 +321,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="3"/>
+      <Input Universe="2" Channel="3"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="0"/>
       <Playback>
@@ -318,7 +329,7 @@
       </Playback>
      </Slider>
     </Frame>
-    <Frame Caption="Spot 47:0" ID="29">
+    <Frame Caption="Color" ID="33">
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -326,103 +337,7 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <WindowState Visible="True" X="395" Y="45" Width="135" Height="245"/>
-     <AllowChildren>False</AllowChildren>
-     <AllowResize>False</AllowResize>
-     <ShowHeader>True</ShowHeader>
-     <ShowEnableButton>False</ShowEnableButton>
-     <Collapsed>False</Collapsed>
-     <Disabled>False</Disabled>
-     <Slider Caption="Grob" ID="27" WidgetStyle="Slider" InvertedAppearance="false">
-      <WindowState Visible="True" X="5" Y="40" Width="60" Height="200"/>
-      <Appearance>
-       <FrameStyle>Sunken</FrameStyle>
-       <ForegroundColor>Default</ForegroundColor>
-       <BackgroundColor>Default</BackgroundColor>
-       <BackgroundImage>None</BackgroundImage>
-       <Font>Default</Font>
-      </Appearance>
-      <Input Universe="4" Channel="4"/>
-      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
-      <Level LowLimit="0" HighLimit="255" Value="0"/>
-      <Playback>
-       <Function>4294967295</Function>
-      </Playback>
-     </Slider>
-     <Slider Caption="Fein" ID="28" WidgetStyle="Slider" InvertedAppearance="false">
-      <WindowState Visible="True" X="70" Y="40" Width="60" Height="200"/>
-      <Appearance>
-       <FrameStyle>Sunken</FrameStyle>
-       <ForegroundColor>Default</ForegroundColor>
-       <BackgroundColor>Default</BackgroundColor>
-       <BackgroundImage>None</BackgroundImage>
-       <Font>Default</Font>
-      </Appearance>
-      <Input Universe="4" Channel="5"/>
-      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
-      <Level LowLimit="0" HighLimit="255" Value="0"/>
-      <Playback>
-       <Function>4294967295</Function>
-      </Playback>
-     </Slider>
-    </Frame>
-    <Frame Caption="Spot 47:47" ID="32">
-     <Appearance>
-      <FrameStyle>Sunken</FrameStyle>
-      <ForegroundColor>Default</ForegroundColor>
-      <BackgroundColor>Default</BackgroundColor>
-      <BackgroundImage>None</BackgroundImage>
-      <Font>Default</Font>
-     </Appearance>
-     <WindowState Visible="True" X="540" Y="45" Width="135" Height="245"/>
-     <AllowChildren>False</AllowChildren>
-     <AllowResize>False</AllowResize>
-     <ShowHeader>True</ShowHeader>
-     <ShowEnableButton>False</ShowEnableButton>
-     <Collapsed>False</Collapsed>
-     <Disabled>False</Disabled>
-     <Slider Caption="Grob" ID="30" WidgetStyle="Slider" InvertedAppearance="false">
-      <WindowState Visible="True" X="5" Y="40" Width="60" Height="200"/>
-      <Appearance>
-       <FrameStyle>Sunken</FrameStyle>
-       <ForegroundColor>Default</ForegroundColor>
-       <BackgroundColor>Default</BackgroundColor>
-       <BackgroundImage>None</BackgroundImage>
-       <Font>Default</Font>
-      </Appearance>
-      <Input Universe="4" Channel="6"/>
-      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
-      <Level LowLimit="0" HighLimit="255" Value="0"/>
-      <Playback>
-       <Function>4294967295</Function>
-      </Playback>
-     </Slider>
-     <Slider Caption="Fein" ID="31" WidgetStyle="Slider" InvertedAppearance="false">
-      <WindowState Visible="True" X="70" Y="40" Width="60" Height="200"/>
-      <Appearance>
-       <FrameStyle>Sunken</FrameStyle>
-       <ForegroundColor>Default</ForegroundColor>
-       <BackgroundColor>Default</BackgroundColor>
-       <BackgroundImage>None</BackgroundImage>
-       <Font>Default</Font>
-      </Appearance>
-      <Input Universe="4" Channel="7"/>
-      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
-      <Level LowLimit="0" HighLimit="255" Value="0"/>
-      <Playback>
-       <Function>4294967295</Function>
-      </Playback>
-     </Slider>
-    </Frame>
-    <Frame Caption="Farben" ID="33">
-     <Appearance>
-      <FrameStyle>Sunken</FrameStyle>
-      <ForegroundColor>Default</ForegroundColor>
-      <BackgroundColor>Default</BackgroundColor>
-      <BackgroundImage>None</BackgroundImage>
-      <Font>Default</Font>
-     </Appearance>
-     <WindowState Visible="True" X="685" Y="45" Width="325" Height="245"/>
+     <WindowState Visible="True" X="395" Y="45" Width="325" Height="245"/>
      <AllowChildren>True</AllowChildren>
      <AllowResize>True</AllowResize>
      <ShowHeader>True</ShowHeader>
@@ -438,7 +353,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="13"/>
+      <Input Universe="2" Channel="9"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="255">
        <Channel Fixture="0">14</Channel>
@@ -456,7 +371,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="12"/>
+      <Input Universe="2" Channel="8"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="255">
        <Channel Fixture="0">13</Channel>
@@ -474,7 +389,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="11"/>
+      <Input Universe="2" Channel="7"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="255">
        <Channel Fixture="0">12</Channel>
@@ -492,7 +407,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="10"/>
+      <Input Universe="2" Channel="6"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="255">
        <Channel Fixture="0">11</Channel>
@@ -510,9 +425,9 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="22"/>
+      <Input Universe="2" Channel="18"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
-      <Level LowLimit="0" HighLimit="255" Value="0"/>
+      <Level LowLimit="0" HighLimit="255" Value="1"/>
       <Playback>
        <Function>4294967295</Function>
       </Playback>
@@ -527,7 +442,7 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="5" Channel="0"/>
+     <Input Universe="3" Channel="0"/>
      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None">Submaster</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="0"/>
      <Playback>
@@ -543,7 +458,7 @@
      <BackgroundImage>None</BackgroundImage>
      <Font>Default</Font>
     </Appearance>
-    <WindowState Visible="True" X="145" Y="670" Width="575" Height="300"/>
+    <WindowState Visible="True" X="240" Y="325" Width="575" Height="300"/>
     <AllowChildren>True</AllowChildren>
     <AllowResize>True</AllowResize>
     <ShowHeader>True</ShowHeader>
@@ -559,7 +474,7 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="4" Channel="8"/>
+     <Input Universe="2" Channel="4"/>
      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="9">
       <Channel Fixture="0">4</Channel>
@@ -577,14 +492,14 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="4" Channel="9"/>
-     <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None">Playback</SliderMode>
+     <Input Universe="2" Channel="5"/>
+     <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="0"/>
      <Playback>
       <Function>4294967295</Function>
      </Playback>
     </Slider>
-    <Frame Caption="Farben" ID="13">
+    <Frame Caption="Color" ID="13">
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -608,7 +523,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="17"/>
+      <Input Universe="2" Channel="13"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="0">
        <Channel Fixture="0">14</Channel>
@@ -626,7 +541,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="16"/>
+      <Input Universe="2" Channel="12"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="0">
        <Channel Fixture="0">13</Channel>
@@ -644,7 +559,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="15"/>
+      <Input Universe="2" Channel="11"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="0">
        <Channel Fixture="0">12</Channel>
@@ -662,7 +577,7 @@
        <BackgroundImage>None</BackgroundImage>
        <Font>Default</Font>
       </Appearance>
-      <Input Universe="4" Channel="14"/>
+      <Input Universe="2" Channel="10"/>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
       <Level LowLimit="0" HighLimit="255" Value="210">
        <Channel Fixture="0">11</Channel>
@@ -681,7 +596,9 @@
        <Font>Default</Font>
       </Appearance>
       <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
-      <Level LowLimit="0" HighLimit="255" Value="0"/>
+      <Level LowLimit="0" HighLimit="255" Value="0">
+       <Channel Fixture="4">6</Channel>
+      </Level>
       <Playback>
        <Function>4294967295</Function>
       </Playback>
@@ -696,16 +613,16 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="5" Channel="1"/>
+     <Input Universe="3" Channel="1"/>
      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None">Submaster</SliderMode>
-     <Level LowLimit="0" HighLimit="255" Value="255"/>
+     <Level LowLimit="0" HighLimit="255" Value="0"/>
      <Playback>
       <Function>4294967295</Function>
      </Playback>
     </Slider>
    </Frame>
-   <Slider Caption="CTC" ID="12" WidgetStyle="Slider" InvertedAppearance="false">
-    <WindowState Visible="True" X="60" Y="440" Width="55" Height="200"/>
+   <Slider Caption="Moving Head CTC" ID="12" WidgetStyle="Slider" InvertedAppearance="false">
+    <WindowState Visible="True" X="55" Y="340" Width="55" Height="200"/>
     <Appearance>
      <FrameStyle>Sunken</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -713,7 +630,7 @@
      <BackgroundImage>None</BackgroundImage>
      <Font>Default</Font>
     </Appearance>
-    <Input Universe="4" Channel="19"/>
+    <Input Universe="2" Channel="15"/>
     <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
     <Level LowLimit="0" HighLimit="255" Value="245">
      <Channel Fixture="0">9</Channel>
@@ -723,7 +640,7 @@
     </Playback>
    </Slider>
    <CueList Caption="Ablaufsteuerung Spots" ID="41">
-    <WindowState Visible="True" X="765" Y="475" Width="490" Height="170"/>
+    <WindowState Visible="True" X="860" Y="330" Width="490" Height="170"/>
     <Appearance>
      <FrameStyle>Sunken</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -747,7 +664,7 @@
     </CrossLeft>
    </CueList>
    <Label Caption="Bug in QLC: The submaster only activates after it has been moved. That's why the Scene Submaster is inverted: this way, both are immediately moved." ID="1">
-    <WindowState Visible="True" X="145" Y="425" Width="285" Height="90"/>
+    <WindowState Visible="True" X="240" Y="630" Width="260" Height="75"/>
     <Appearance>
      <FrameStyle>None</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -756,7 +673,7 @@
      <Font>Default</Font>
     </Appearance>
    </Label>
-   <Frame Caption="Aktivieren Pixel 2-7" ID="37">
+   <Frame Caption="Activate Pixel 2-7" ID="37">
     <Appearance>
      <FrameStyle>Sunken</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -764,7 +681,7 @@
      <BackgroundImage>None</BackgroundImage>
      <Font>Default</Font>
     </Appearance>
-    <WindowState Visible="True" X="1335" Y="485" Width="405" Height="245"/>
+    <WindowState Visible="True" X="940" Y="15" Width="390" Height="245"/>
     <AllowChildren>True</AllowChildren>
     <AllowResize>True</AllowResize>
     <ShowHeader>True</ShowHeader>
@@ -772,7 +689,7 @@
     <Collapsed>False</Collapsed>
     <Disabled>False</Disabled>
     <Slider Caption="Master Rot" ID="2" WidgetStyle="Slider" InvertedAppearance="false">
-     <WindowState Visible="True" X="145" Y="40" Width="60" Height="200"/>
+     <WindowState Visible="True" X="110" Y="40" Width="60" Height="200"/>
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -780,7 +697,7 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="5" Channel="2"/>
+     <Input Universe="3" Channel="2"/>
      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="210">
       <Channel Fixture="0">15</Channel>
@@ -795,7 +712,7 @@
      </Playback>
     </Slider>
     <Slider Caption="Master Grün" ID="14" WidgetStyle="Slider" InvertedAppearance="false">
-     <WindowState Visible="True" X="210" Y="40" Width="60" Height="200"/>
+     <WindowState Visible="True" X="180" Y="40" Width="60" Height="200"/>
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -803,7 +720,7 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="5" Channel="3"/>
+     <Input Universe="3" Channel="3"/>
      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="0">
       <Channel Fixture="0">16</Channel>
@@ -818,7 +735,7 @@
      </Playback>
     </Slider>
     <Slider Caption="Master Blau" ID="15" WidgetStyle="Slider" InvertedAppearance="false">
-     <WindowState Visible="True" X="275" Y="40" Width="60" Height="200"/>
+     <WindowState Visible="True" X="250" Y="40" Width="60" Height="200"/>
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -826,7 +743,7 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="5" Channel="4"/>
+     <Input Universe="3" Channel="4"/>
      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="0">
       <Channel Fixture="0">17</Channel>
@@ -841,7 +758,7 @@
      </Playback>
     </Slider>
     <Slider Caption="Master Lime" ID="16" WidgetStyle="Slider" InvertedAppearance="false">
-     <WindowState Visible="True" X="340" Y="40" Width="60" Height="200"/>
+     <WindowState Visible="True" X="320" Y="40" Width="60" Height="200"/>
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -849,7 +766,7 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="5" Channel="5"/>
+     <Input Universe="3" Channel="5"/>
      <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="0">
       <Channel Fixture="0">18</Channel>
@@ -864,7 +781,7 @@
      </Playback>
     </Slider>
     <Slider Caption="Submaster" ID="34" WidgetStyle="Slider" InvertedAppearance="false">
-     <WindowState Visible="True" X="65" Y="40" Width="75" Height="200"/>
+     <WindowState Visible="True" X="10" Y="40" Width="75" Height="200"/>
      <Appearance>
       <FrameStyle>Sunken</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
@@ -872,16 +789,16 @@
       <BackgroundImage>None</BackgroundImage>
       <Font>Default</Font>
      </Appearance>
-     <Input Universe="5" Channel="6"/>
-     <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None">Submaster</SliderMode>
+     <Input Universe="3" Channel="6"/>
+     <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
      <Level LowLimit="0" HighLimit="255" Value="0"/>
      <Playback>
       <Function>4294967295</Function>
      </Playback>
     </Slider>
    </Frame>
-   <Slider Caption="Leselicht" ID="40" WidgetStyle="Slider" InvertedAppearance="false">
-    <WindowState Visible="True" X="60" Y="730" Width="60" Height="200"/>
+   <Slider Caption="Reading Light" ID="40" WidgetStyle="Slider" InvertedAppearance="false">
+    <WindowState Visible="True" X="130" Y="340" Width="60" Height="200"/>
     <Appearance>
      <FrameStyle>Sunken</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -889,15 +806,17 @@
      <BackgroundImage>None</BackgroundImage>
      <Font>Default</Font>
     </Appearance>
-    <Input Universe="4" Channel="23"/>
+    <Input Universe="2" Channel="19"/>
     <SliderMode ValueDisplayStyle="Exact" ClickAndGoType="None" Monitor="false">Level</SliderMode>
-    <Level LowLimit="0" HighLimit="255" Value="0"/>
+    <Level LowLimit="0" HighLimit="255" Value="0">
+     <Channel Fixture="5">0</Channel>
+    </Level>
     <Playback>
      <Function>4294967295</Function>
     </Playback>
    </Slider>
    <CueList Caption="Cue list" ID="45">
-    <WindowState Visible="True" X="765" Y="655" Width="490" Height="155"/>
+    <WindowState Visible="True" X="860" Y="515" Width="490" Height="155"/>
     <Appearance>
      <FrameStyle>Sunken</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -921,7 +840,7 @@
     </CrossLeft>
    </CueList>
    <CueList Caption="Cue list" ID="43">
-    <WindowState Visible="True" X="765" Y="820" Width="490" Height="160"/>
+    <WindowState Visible="True" X="860" Y="690" Width="490" Height="160"/>
     <Appearance>
      <FrameStyle>Sunken</FrameStyle>
      <ForegroundColor>Default</ForegroundColor>
@@ -938,6 +857,16 @@
     <Playback/>
     <Stop/>
    </CueList>
+   <Label Caption="Chaser:Scene'leri sırayla oynatir. Sequence: sirali fader indir kaldir. Cue List: Otomatik donmeyen chaser." ID="44">
+    <WindowState Visible="True" X="265" Y="720" Width="230" Height="55"/>
+    <Appearance>
+     <FrameStyle>None</FrameStyle>
+     <ForegroundColor>Default</ForegroundColor>
+     <BackgroundColor>Default</BackgroundColor>
+     <BackgroundImage>None</BackgroundImage>
+     <Font>Default</Font>
+    </Appearance>
+   </Label>
   </Frame>
   <Properties>
    <Size Width="1920" Height="1080"/>
@@ -946,572 +875,572 @@
  </VirtualConsole>
  <SimpleDesk>
   <Engine>
-   <CueStack ID="0">
+   <CueStack ID="4">
     <Speed FadeIn="0" FadeOut="0" Duration="4294967295"/>
     <Cue Name="Cue 1">
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">0</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
      <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">0</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">0</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">255</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">255</Value>
      <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
     <Cue Name="Cue 2">
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">0</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
      <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">0</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">0</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">0</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
-     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
-    </Cue>
-    <Cue Name="Cue 3">
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
      <Value Channel="1541">109</Value>
-     <Value Channel="1542">0</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
-     <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">255</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">0</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">0</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
-     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
-    </Cue>
-    <Cue Name="Cue 4">
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
      <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">0</Value>
      <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
-     <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">0</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">0</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">0</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
      <Value Channel="1537">61</Value>
-     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
-    </Cue>
-    <Cue Name="Cue 5">
-     <Value Channel="1538">80</Value>
+     <Value Channel="1536">85</Value>
      <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">0</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
-     <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">0</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">255</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">0</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
-     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
-    </Cue>
-    <Cue Name="Cue 6">
      <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">0</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
-     <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
      <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">0</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">0</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">0</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
-     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
-    </Cue>
-    <Cue Name="Cue 7">
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">255</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
-     <Value Channel="1547">255</Value>
      <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
      <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">0</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">0</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">0</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
-     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
-    </Cue>
-    <Cue Name="Cue 8">
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">0</Value>
-     <Value Channel="1543">255</Value>
      <Value Channel="1545">255</Value>
-     <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
-     <Value Channel="517">243</Value>
-     <Value Channel="518">0</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="1028">1</Value>
-     <Value Channel="1029">96</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="1030">0</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="1031">255</Value>
-     <Value Channel="525">255</Value>
-     <Value Channel="526">255</Value>
-     <Value Channel="1033">255</Value>
-     <Value Channel="1035">255</Value>
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="6">0</Value>
-     <Value Channel="7">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
-     <Value Channel="13">255</Value>
-     <Value Channel="14">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
    </CueStack>
    <CueStack ID="1">
     <Speed FadeIn="0" FadeOut="0" Duration="4294967295"/>
     <Cue Name="Cue 1">
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="524">255</Value>
-     <Value Channel="6">255</Value>
      <Value Channel="525">255</Value>
-     <Value Channel="7">255</Value>
+     <Value Channel="524">255</Value>
      <Value Channel="526">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="523">255</Value>
      <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="516">255</Value>
      <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">255</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
     <Cue Name="Cue 2">
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">255</Value>
-     <Value Channel="0">125</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="1">255</Value>
-     <Value Channel="2">227</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="3">100</Value>
-     <Value Channel="4">1</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="5">153</Value>
-     <Value Channel="524">255</Value>
      <Value Channel="525">255</Value>
-     <Value Channel="7">255</Value>
+     <Value Channel="524">255</Value>
      <Value Channel="526">255</Value>
-     <Value Channel="9">255</Value>
-     <Value Channel="11">255</Value>
-     <Value Channel="12">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="523">255</Value>
      <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="516">255</Value>
      <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
    </CueStack>
-   <CueStack ID="2">
+   <CueStack ID="0">
     <Speed FadeIn="0" FadeOut="0" Duration="4294967295"/>
     <Cue Name="Cue 1">
-     <Value Channel="518">255</Value>
-     <Value Channel="519">255</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="524">255</Value>
      <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
      <Value Channel="526">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
      <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">0</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">0</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">255</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">0</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
     <Cue Name="Cue 2">
-     <Value Channel="519">255</Value>
-     <Value Channel="521">255</Value>
-     <Value Channel="523">255</Value>
-     <Value Channel="524">255</Value>
      <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
      <Value Channel="526">255</Value>
-     <Value Channel="512">55</Value>
-     <Value Channel="513">127</Value>
-     <Value Channel="514">80</Value>
-     <Value Channel="516">1</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
      <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">0</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">0</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">0</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">0</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
+     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+    </Cue>
+    <Cue Name="Cue 3">
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">255</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">0</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">0</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">0</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
+     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+    </Cue>
+    <Cue Name="Cue 4">
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">0</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">0</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">0</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">0</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
+     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+    </Cue>
+    <Cue Name="Cue 5">
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">0</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">255</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">0</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">0</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
+     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+    </Cue>
+    <Cue Name="Cue 6">
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">0</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">0</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">0</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">0</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
+     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+    </Cue>
+    <Cue Name="Cue 7">
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">0</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">0</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">0</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">255</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
+     <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+    </Cue>
+    <Cue Name="Cue 8">
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="1038">255</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="1033">255</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">0</Value>
+     <Value Channel="1035">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="1031">255</Value>
+     <Value Channel="1030">0</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="13">255</Value>
+     <Value Channel="12">255</Value>
+     <Value Channel="14">255</Value>
+     <Value Channel="9">255</Value>
+     <Value Channel="11">255</Value>
+     <Value Channel="5">153</Value>
+     <Value Channel="4">1</Value>
+     <Value Channel="7">255</Value>
+     <Value Channel="6">0</Value>
+     <Value Channel="1">255</Value>
+     <Value Channel="0">125</Value>
+     <Value Channel="3">100</Value>
+     <Value Channel="2">227</Value>
+     <Value Channel="1549">255</Value>
+     <Value Channel="1548">255</Value>
+     <Value Channel="1550">255</Value>
+     <Value Channel="1545">255</Value>
+     <Value Channel="1547">255</Value>
+     <Value Channel="1541">109</Value>
+     <Value Channel="1540">2</Value>
+     <Value Channel="1543">255</Value>
+     <Value Channel="1542">0</Value>
+     <Value Channel="1537">61</Value>
+     <Value Channel="1536">85</Value>
+     <Value Channel="1539">112</Value>
+     <Value Channel="1538">80</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
    </CueStack>
    <CueStack ID="3">
     <Speed FadeIn="0" FadeOut="0" Duration="4294967295"/>
     <Cue Name="Cue 1">
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="1028">1</Value>
      <Value Channel="1029">96</Value>
-     <Value Channel="1030">255</Value>
+     <Value Channel="1028">1</Value>
      <Value Channel="1031">255</Value>
+     <Value Channel="1030">255</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="1038">255</Value>
      <Value Channel="1033">255</Value>
      <Value Channel="1035">255</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
     <Cue Name="Cue 2">
-     <Value Channel="1036">255</Value>
-     <Value Channel="1037">255</Value>
-     <Value Channel="1038">255</Value>
-     <Value Channel="1026">128</Value>
-     <Value Channel="1027">72</Value>
-     <Value Channel="1028">1</Value>
      <Value Channel="1029">96</Value>
+     <Value Channel="1028">1</Value>
      <Value Channel="1031">255</Value>
+     <Value Channel="1027">72</Value>
+     <Value Channel="1026">128</Value>
+     <Value Channel="1037">255</Value>
+     <Value Channel="1036">255</Value>
+     <Value Channel="1038">255</Value>
      <Value Channel="1033">255</Value>
      <Value Channel="1035">255</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
    </CueStack>
-   <CueStack ID="4">
+   <CueStack ID="2">
     <Speed FadeIn="0" FadeOut="0" Duration="4294967295"/>
     <Cue Name="Cue 1">
-     <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1542">255</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="518">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
     <Cue Name="Cue 2">
-     <Value Channel="1547">255</Value>
-     <Value Channel="1548">255</Value>
-     <Value Channel="1549">255</Value>
-     <Value Channel="1550">255</Value>
-     <Value Channel="1536">85</Value>
-     <Value Channel="1537">61</Value>
-     <Value Channel="1538">80</Value>
-     <Value Channel="1539">112</Value>
-     <Value Channel="1540">2</Value>
-     <Value Channel="1541">109</Value>
-     <Value Channel="1543">255</Value>
-     <Value Channel="1545">255</Value>
+     <Value Channel="526">255</Value>
+     <Value Channel="521">255</Value>
+     <Value Channel="523">255</Value>
+     <Value Channel="517">243</Value>
+     <Value Channel="516">1</Value>
+     <Value Channel="519">255</Value>
+     <Value Channel="513">127</Value>
+     <Value Channel="512">55</Value>
+     <Value Channel="514">80</Value>
+     <Value Channel="525">255</Value>
+     <Value Channel="524">255</Value>
      <Speed FadeIn="0" FadeOut="0" Duration="0"/>
     </Cue>
    </CueStack>
