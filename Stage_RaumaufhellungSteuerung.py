@@ -393,7 +393,7 @@ class App(ctk.CTk, AsyncCTk):
     def setup_settings(self):
         self.settings = {
             "qlc_address":              'localhost:9999',
-            "qlc_project":              'Stage_VersuchsraumLeo.qxw',
+            "qlc_project":              'stage-qlc.qxw',
             "monitor_serial_port":      'COM3',
             "monitor_baud_rate":        9600,
             "monitor_E_factor_spot_1":  2.41e7,
