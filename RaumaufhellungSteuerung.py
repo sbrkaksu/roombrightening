@@ -499,6 +499,9 @@ class App(ctk.CTk, AsyncCTk):
         ######## Room light ########
         self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Raumlicht", command=lambda:self.set_roomlight_level(2))
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
+        self.freeze_qlc_active = False
+        self.freeze_qlc_button = ctk.CTkButton(self.seq_crtl_frame, text="Freeze QLC", command=self.toggle_freeze_qlc)
+        self.freeze_qlc_button.grid(row=8, column=0, padx=10, pady=(0, 10), sticky="s")
 
         ######## E_Monitor ########
         self.read_monitor_button = ctk.CTkButton(self, command=self.read_monitor_continuously)
@@ -830,6 +833,13 @@ class App(ctk.CTk, AsyncCTk):
 
     def print_countdown_timer(self, *args):
         self.countdown_digits.configure(text="{:04.1f}".format(self.countdown_timer_var.get()))
+
+    def toggle_freeze_qlc(self):
+        self.freeze_qlc_active = not self.freeze_qlc_active
+        if self.freeze_qlc_active:
+            self.freeze_qlc_button.configure(text="Continue QLC", fg_color="red")
+        else:
+            self.freeze_qlc_button.configure(text="Freeze QLC", fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
     
     async def await_countdown_timer(self, start_time = None, end_time = None, stop_event = None, label=None):
         self.timer_running = True
@@ -858,6 +868,9 @@ class App(ctk.CTk, AsyncCTk):
         self.countdown_timer_var.set(self.scene_countdown_end) # leave it at end_time
 
     def countdown_timer_cb(self):
+        if self.freeze_qlc_active:
+            self.after(100, self.countdown_timer_cb)
+            return
         timer_value = self.countdown_timer_var.get()
         timer_value -= 0.1
         if timer_value > self.scene_countdown_end:

@@ -398,11 +398,11 @@ class App(ctk.CTk, AsyncCTk):
             "monitor_baud_rate":        9600,
             "monitor_E_factor_spot_1":  2.41e7,
             "monitor_E_factor_diffus":  1.26e7,
-            "scene_duration":           1.5, #4.5, # seconds
+            "scene_duration":           4.5, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
-            "inter-stimulus-interval":  0.5, #2.5, #seconds
+            "inter-stimulus-interval":  2.5, #2.5, #seconds
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
-            "sequence_pause_duration":  5.0, # 45 seconds
+            "sequence_pause_duration":  15.0, # 45 seconds
             "maxE_spot1": 168.9,
             "maxE_diffus": 610,
             "maxAussteuerung_faktor_pixel1": 0.7,
@@ -437,6 +437,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_continue_event = asyncio.Event()
         self.pause_stop_event = asyncio.Event()
         self.scene_disturbing = asyncio.Event()
+        self.freeze_qlc_active = False
 
     def setup_inquery_controls(self): #frame on the top right of the GUI
         self.inquery_frame = ctk.CTkFrame(self)
@@ -522,6 +523,8 @@ class App(ctk.CTk, AsyncCTk):
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
         self.test_results_button = ctk.CTkButton(self.seq_crtl_frame, text="Test", command=self.show_e_block_results_popup)
         self.test_results_button.grid(row=8, column=0, padx=10, pady=(0, 10), sticky="s")
+        self.freeze_qlc_button = ctk.CTkButton(self.seq_crtl_frame, text="Freeze QLC", command=self.toggle_freeze_qlc)
+        self.freeze_qlc_button.grid(row=9, column=0, padx=10, pady=(0, 10), sticky="s")
 
     def setup_monitor_controls(self):
         self.read_monitor_button = ctk.CTkButton(self, command=self.read_monitor_continuously)
@@ -1146,6 +1149,13 @@ class App(ctk.CTk, AsyncCTk):
 
     def print_countdown_timer(self, *args):
         self.countdown_digits.configure(text="{:04.1f}".format(self.countdown_timer_var.get()))
+
+    def toggle_freeze_qlc(self):
+        self.freeze_qlc_active = not self.freeze_qlc_active
+        if self.freeze_qlc_active:
+            self.freeze_qlc_button.configure(text="Continue QLC", fg_color="red")
+        else:
+            self.freeze_qlc_button.configure(text="Freeze QLC", fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
     
     async def await_countdown_timer(self, start_time = None, end_time = None, stop_event = None, label=None):
         self.timer_running = True
@@ -1184,6 +1194,9 @@ class App(ctk.CTk, AsyncCTk):
 
     def countdown_timer_cb(self):
         self.countdown_after_id = None
+        if self.freeze_qlc_active:
+            self.countdown_after_id = self.after(100, self.countdown_timer_cb)
+            return
         timer_value = self.countdown_timer_var.get()
         timer_value -= 0.1
         if timer_value > self.scene_countdown_end:
