@@ -933,13 +933,38 @@ class App(ctk.CTk, AsyncCTk):
         self.check_sequence_setup()
         self.set_reading_light(self.state_position_status == "Sitting")
         self.set_roomlight_level(0)
-        await self.run_initial_isi()
 
         scenes = self.active_sequence["Scenes"]
         self.table_scene_offset = len(scenes)
         scene_limit = self.settings["max_scene_before_sequence_pause"]
+        scenes_run = 0
 
-        for _ in range(scene_limit):
+        staircases = self.get_active_e_block_staircases()
+        staircase = self.select_random_staircase(staircases)
+
+        if staircase is None:
+            self.complete_active_e_block_round()
+            return
+
+        scene = self.create_e_block_scene(staircase)
+        scenes.append(scene)
+        self.active_staircase = staircase
+        self.current_scene_idx = len(scenes) - 1
+        self.update_e_block_scene_row(scene)
+        self.set_scene(scene)
+
+        await self.run_initial_isi()
+
+        while scenes_run < scene_limit:
+            await self.run_single_scene(scene)
+            self.set_scene_reaction(disturbing=False)
+            self.active_staircase = None
+            self.sequence_table.deselect_row()
+            scenes_run += 1
+
+            if scenes_run >= scene_limit:
+                break
+
             staircases = self.get_active_e_block_staircases()
             staircase = self.select_random_staircase(staircases)
 
@@ -952,19 +977,13 @@ class App(ctk.CTk, AsyncCTk):
             self.active_staircase = staircase
             self.current_scene_idx = len(scenes) - 1
             self.update_e_block_scene_row(scene)
-            self.set_scene(scene)
 
-            await self.run_single_scene(scene)
-            await self.await_e_block_interstimulus_interval()
-
-            self.set_scene_reaction(disturbing=False)
-            self.active_staircase = None
-            self.sequence_table.deselect_row()
+            await self.await_e_block_interstimulus_interval(scene)
 
         if self.select_random_staircase(self.get_active_e_block_staircases()) is None:
             self.complete_active_e_block_round()
 
-    async def await_e_block_interstimulus_interval(self):
+    async def await_e_block_interstimulus_interval(self, next_scene):
         isi_duration = self.settings["inter-stimulus-interval"]
         isi_fade_duration = self.settings["isi_fade_duration"]
         while True:
@@ -973,6 +992,13 @@ class App(ctk.CTk, AsyncCTk):
                                              end_time=isi_fade_duration,
                                              stop_event=self.sequence_stop_event,
                                              label="ISI")
+            if self.sequence_stop_event.is_set():
+                await self.wait_for_sequence_continue()
+                continue
+
+            self.set_scene(next_scene)
+            self.fade_isi()
+            await self.await_countdown_timer(stop_event=self.sequence_stop_event, label="ISI")
             if not self.sequence_stop_event.is_set():
                 return
             await self.wait_for_sequence_continue()
