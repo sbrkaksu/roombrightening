@@ -979,7 +979,7 @@
      <BackgroundImage>None</BackgroundImage>
      <Font>Default</Font>
     </Appearance>
-    <WindowState Visible="True" X="1335" Y="485" Width="405" Height="245"/>
+    <WindowState Visible="False" X="1335" Y="485" Width="405" Height="245"/>
     <AllowChildren>True</AllowChildren>
     <AllowResize>True</AllowResize>
     <ShowHeader>True</ShowHeader>
