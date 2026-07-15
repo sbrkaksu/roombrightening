@@ -402,7 +402,7 @@ class App(ctk.CTk, AsyncCTk):
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
             "inter-stimulus-interval":  2.5, #2.5, #seconds
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
-            "sequence_pause_duration":  15.0, # 45 seconds
+            "sequence_pause_duration":  45.0, # 45 seconds
             "maxE_spot1": 168.9,
             "maxE_diffus": 610,
             "maxAussteuerung_faktor_pixel1": 0.7,
