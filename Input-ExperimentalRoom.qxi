@@ -4,85 +4,85 @@
  <Creator>
   <Name>Q Light Controller Plus</Name>
   <Version>4.13.1</Version>
-  <Author>Admin</Author>
+  <Author>Aksu</Author>
  </Creator>
  <Manufacturer>Input</Manufacturer>
- <Model>Versuchsraum</Model>
+ <Model>Experimental Room</Model>
  <Type>DMX</Type>
  <Channel Number="0">
-  <Name>Spot 0:0 Intensität Grob</Name>
+  <Name>Spot 0:0 Intensity Grob</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="1">
-  <Name>Spot 0:0 Intensität Fein</Name>
+  <Name>Spot 0:0 Intensity Fein</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="2">
-  <Name>Spot 0:47 Intensität Grob</Name>
+  <Name>Spot Diffuse Intensity Grob</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="3">
-  <Name>Spot 0:47 Intensität Fein</Name>
+  <Name>Spot Diffuse Intensity Fein</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="4">
-  <Name>Spot 47:0 Intensität Grob</Name>
+  <Name>Not in use</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="5">
-  <Name>Spot 47:0 Intensität Fein</Name>
+  <Name>Not in use</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="6">
-  <Name>Spot 47:47 Intensität Grob</Name>
+  <Name>Not in use</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="7">
-  <Name>Spot 47:47 Intensität Fein</Name>
+  <Name>Not in use</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="8">
-  <Name>ISI Intensität Grob</Name>
+  <Name>ISI Intensity Grob</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="9">
-  <Name>ISI Intensität Fein</Name>
+  <Name>ISI Intensity Fein</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="10">
-  <Name>Szene Intensität Rot</Name>
+  <Name>Spot Intensity Rot</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="11">
-  <Name>Szene Intensität Grün</Name>
+  <Name>Spot Intensity Grün</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="12">
-  <Name>Szene Intensität Blau</Name>
+  <Name>Spot Intensity Blau</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="13">
-  <Name>Szene Intensität Lime</Name>
+  <Name>Spot Intensity Lime</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="14">
-  <Name>ISI Intensität Rot</Name>
+  <Name>ISI Intensity Rot</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="15">
-  <Name>ISI Intensität Grün</Name>
+  <Name>ISI Intensity Grün</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="16">
-  <Name>ISI Intensität Blau</Name>
+  <Name>ISI Intensity Blau</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="17">
-  <Name>ISI Intensität Lime</Name>
+  <Name>ISI Intensity Lime</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="18">
-  <Name>Szene CTC</Name>
+  <Name>Scene CTC</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="19">
@@ -90,27 +90,27 @@
   <Type>Slider</Type>
  </Channel>
  <Channel Number="20">
-  <Name>Initialisieren</Name>
+  <Name>QLC Init Channel</Name>
   <Type>Button</Type>
  </Channel>
  <Channel Number="21">
-  <Name>Ablauf Szene ISI</Name>
+  <Name>ISI Scene Sequence</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="22">
-  <Name>Intensität Pixel 2-7</Name>
+  <Name>Pixel 2-7 Intensity</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="23">
-  <Name>Intensität Leselicht</Name>
+  <Name>Reading Light Intensity</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="24">
-  <Name>Intensität Raumlicht</Name>
+  <Name>Room Light Intensity</Name>
   <Type>Slider</Type>
  </Channel>
  <Channel Number="25">
-  <Name>Zwischenlicht</Name>
+  <Name>Room Light Steps</Name>
   <Type>Slider</Type>
  </Channel>
 </InputProfile>
