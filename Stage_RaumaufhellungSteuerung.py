@@ -403,7 +403,7 @@ class App(ctk.CTk, AsyncCTk):
             "inter-stimulus-interval":  2.5, #2.5, #seconds
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
             "sequence_pause_duration":  45.0, # 45 seconds
-            "maxE_spot1": 117.5,
+            "maxE_spot1": 117,
             "maxE_diffus": 433,
             "direct_center_curve": (-3.1999e-09, 0.0020, -0.0718),
             "diffuse_curve": (-2.0133e-08, 0.0076, -0.0096),
@@ -1405,9 +1405,11 @@ class App(ctk.CTk, AsyncCTk):
         self.diffuse_intensity.set_values(intensity.to_bytes(2,'big'))
 
     def calculate_diffus_dmx(self, E):
+        dmx16_max = 2**16 - 1
         maxE = self.settings["maxE_diffus"]
-        E = max(0, min(E, maxE))
-        return self.calculate_quadratic_dmx(E, self.settings["diffuse_curve"], 0, 2**16 - 1)
+        E = min(E, maxE)
+        intensity = round((E / maxE) * dmx16_max)
+        return intensity
 
     def calculate_spot_dmx(self, E):
         dmx8_max = 2**8 - 1
@@ -1415,35 +1417,18 @@ class App(ctk.CTk, AsyncCTk):
         maxE = self.settings["maxE_spot1"]
 
         if E > maxE:
-            center_pixel_dmx = dmx16_max
-            required_multiplier = E / maxE
-            if required_multiplier <= 1:
-                other_pixel_dmx = 0
-            else:
-                other_pixel_dmx = self.calculate_quadratic_dmx(required_multiplier, self.settings["pixel2_7_multiplier_curve"], 0, dmx8_max)
+            center_pixel_factor = 1
+            other_pixel_factor = ((E / maxE) - 1) / 6
         else:
-            center_pixel_dmx = self.calculate_quadratic_dmx(E, self.settings["direct_center_curve"], 0, dmx16_max)
-            other_pixel_dmx = 0
+            center_pixel_factor = E / maxE
+            other_pixel_factor = 0
 
+        center_pixel_factor = max(0, min(center_pixel_factor, 1))
+        other_pixel_factor = max(0, min(other_pixel_factor, 1))
+
+        center_pixel_dmx = round(center_pixel_factor * dmx16_max)
+        other_pixel_dmx = round(other_pixel_factor * dmx8_max)
         return center_pixel_dmx, other_pixel_dmx
-
-    def calculate_quadratic_dmx(self, target, curve, dmx_min, dmx_max):
-        a, b, c = curve
-        discriminant = b**2 - 4 * a * (c - target)
-        if discriminant < 0:
-            return dmx_min
-
-        sqrt_discriminant = np.sqrt(discriminant)
-        roots = [
-            (-b + sqrt_discriminant) / (2 * a),
-            (-b - sqrt_discriminant) / (2 * a),
-        ]
-        valid_roots = [root for root in roots if dmx_min <= root <= dmx_max]
-        if valid_roots:
-            return round(valid_roots[0])
-
-        closest_root = min(roots, key=lambda root: abs(root - min(max(root, dmx_min), dmx_max)))
-        return round(min(max(closest_root, dmx_min), dmx_max))
         
     def set_all_intensities(self,i):
         self.spot1_intensity.set_values(i.to_bytes(2,'big'))
