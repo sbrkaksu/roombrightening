@@ -405,8 +405,8 @@ class App(ctk.CTk, AsyncCTk):
             "sequence_pause_duration":  45.0, # 45 seconds
             "maxE_spot1": 117,
             "maxE_diffus": 433,
-            "direct_center_curve": (-3.1999e-09, 0.0020, -0.0718),
-            "diffuse_curve": (-2.0133e-08, 0.0076, -0.0096),
+            "direct_center_curve": (-3.0235e-09, 0.0020, 0.1933),
+            "diffuse_curve": (-2.0148e-08, 0.0076, -0.0306),
             "pixel2_7_multiplier_curve": (9.4010e-05, -7.8784e-05, 0.9898),
             "maxAussteuerung_faktor_pixel1": 0.7,
             "DMX_brightness_reading": 255,
