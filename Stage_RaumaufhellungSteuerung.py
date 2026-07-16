@@ -1416,7 +1416,7 @@ class App(ctk.CTk, AsyncCTk):
         one_pixel_max_factor = self.settings["maxAussteuerung_faktor_pixel1"]
         if E_factor > one_pixel_max_factor:
             center_pixel_factor = one_pixel_max_factor
-            other_pixel_factor = (E_factor - center_pixel_factor) / one_pixel_max_factor / 6
+            other_pixel_factor = (E_factor - center_pixel_factor) / 6
         else:
             center_pixel_factor = E_factor
             other_pixel_factor = 0
