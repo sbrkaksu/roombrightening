@@ -1412,21 +1412,19 @@ class App(ctk.CTk, AsyncCTk):
         dmx8_max = 2**8 - 1
         dmx16_max = 2**16 - 1
         maxE = self.settings["maxE_spot1"]
-        E_factor = E / maxE
-        one_pixel_max_factor = self.settings["maxAussteuerung_faktor_pixel1"]
-        if E_factor > one_pixel_max_factor:
-            center_pixel_factor = one_pixel_max_factor
-            other_pixel_factor = (E_factor - center_pixel_factor) / 6
+
+        if E > maxE:
+            center_pixel_factor = 1
+            other_pixel_factor = ((E / maxE) - 1) / 6
         else:
-            center_pixel_factor = E_factor
+            center_pixel_factor = E / maxE
             other_pixel_factor = 0
 
-        print("center_pixel_factor",center_pixel_factor)
-        print("other_pixel_factor",other_pixel_factor)
+        center_pixel_factor = max(0, min(center_pixel_factor, 1))
+        other_pixel_factor = max(0, min(other_pixel_factor, 1))
+
         center_pixel_dmx = round(center_pixel_factor * dmx16_max)
         other_pixel_dmx = round(other_pixel_factor * dmx8_max)
-        print("center_pixel_dmx",center_pixel_dmx)
-        print("other_pixel_dmx",other_pixel_dmx)
         return center_pixel_dmx, other_pixel_dmx
         
     def set_all_intensities(self,i):
