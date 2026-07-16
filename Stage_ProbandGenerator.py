@@ -17,15 +17,12 @@ def generate_learning_participant():
             1, 1.47, 2.15, 3.16, 4.64, 6.81, 
             10, 14.7, 21.5, 31.6, 46.4, 68.1, 
             100, 147, 215, 316]
-    """
+    
     selected_E_values = rng.choice(stimuli_learning, size=12, replace=False)
     selected_types = rng.permutation([
         "Direct", "Direct", "Direct", "Direct", "Direct", "Direct",
         "Diffuse", "Diffuse", "Diffuse", "Diffuse", "Diffuse", "Diffuse",
     ])
-    """
-    selected_E_values = stimuli_learning[-12:]
-    selected_types = ["Direct"] * 12
     scenes = [
         scene(
             type=str(scene_type),
