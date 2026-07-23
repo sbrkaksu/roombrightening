@@ -26,7 +26,7 @@ import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
 # Generates fine-grid block
-from Stage_ProbandGenerator import FormatPrinter, scene as create_scene, generate_participant_E_block_results
+from Stage_ProbandGenerator import FormatPrinter, scene as create_scene, generate_participant_first_block_results
 from Staircase import AdaptiveStaircase
 
 #loops through all children of a widget and its children in GUI
@@ -333,7 +333,7 @@ class Phase(dict):
             self.seq_idx += self.seq_num
     
     def check_completion(self):
-        if self.phase_type == "E_Block":
+        if self.phase_type == "First_Block":
             completed = [round_data.get("Adaptive_Completed") for round_data in self["Rounds"]]
             return bool(completed) and None not in completed and False not in completed
 
@@ -347,7 +347,7 @@ class Phase(dict):
         with open(fname, 'w') as f:
             f.write(printer.pformat(self))
 
-        if self.phase_type in ("Learning Block", "E_Block"):
+        if self.phase_type in ("Learning Block", "First_Block"):
             return
         
         if self.check_completion() == True:
@@ -427,14 +427,14 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_task = None
 
         self.phase_learning_block = None
-        self.phase_e_block = None
-        self.phase_combination_block = None
+        self.phase_first_block = None
+        self.phase_second_block = None
 
         self.staircase_sitting_df_1 = None
         self.staircase_sitting_df_0 = None
         self.staircase_sleeping_df_1 = None
         self.staircase_sleeping_df_0 = None
-        self.e_block_results_saved = False
+        self.first_block_results_saved = False
 
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
@@ -455,7 +455,7 @@ class App(ctk.CTk, AsyncCTk):
 
         phase_buttons_settings = {"height":90, "anchor":"n", "border_width":2, "text_color":"black", "border_color":"black",
                                      "fg_color":"transparent", "hover_color":"light blue"}
-        e_block_button_settings = {**phase_buttons_settings, "height": 120}
+        first_block_button_settings = {**phase_buttons_settings, "height": 120}
         sequence_buttons_settings = {"height":25, "border_width":1, "text_color":"black", "border_color":"black",
                                         "fg_color":"transparent", "hover_color":"light blue"}
 
@@ -465,23 +465,23 @@ class App(ctk.CTk, AsyncCTk):
         self.learning_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Learning Block", **phase_buttons_settings, command=self.load_learning_block, state="disabled")
         self.learning_block_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
 
-        self.e_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="E Block", **e_block_button_settings, command=self.select_e_block, state="disabled")
-        self.e_block_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
-        self.e_block_prev_seq_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
-        self.e_block_next_seq_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
-        self.e_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
-        self.e_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
-        self.e_block_results_button = ctk.CTkButton(self.e_block_button, **sequence_buttons_settings, width=70, text="Results", command=self.open_e_block_results, state="disabled")
-        self.e_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
+        self.first_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="First Block", **first_block_button_settings, command=self.select_first_block, state="disabled")
+        self.first_block_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
+        self.first_block_prev_seq_button = ctk.CTkButton(self.first_block_button, **sequence_buttons_settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
+        self.first_block_next_seq_button = ctk.CTkButton(self.first_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
+        self.first_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
+        self.first_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
+        self.first_block_results_button = ctk.CTkButton(self.first_block_button, **sequence_buttons_settings, width=70, text="Results", command=self.open_first_block_results, state="disabled")
+        self.first_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
 
-        self.combination_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Combination Block", **e_block_button_settings, command=lambda:self.set_phase(self.phase_combination_block), state="disabled")
-        self.combination_block_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
-        self.combination_block_prev_seq_button = ctk.CTkButton(self.combination_block_button, **sequence_buttons_settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
-        self.combination_block_next_seq_button = ctk.CTkButton(self.combination_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
-        self.combination_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
-        self.combination_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
-        self.combination_block_results_button = ctk.CTkButton(self.combination_block_button, **sequence_buttons_settings, width=70, text="Results", state="disabled")
-        self.combination_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
+        self.second_block_button = SwitchButton(self.seq_crtl_frame, group="phase", on_color="green", text="Second Block", **first_block_button_settings, command=lambda:self.set_phase(self.phase_second_block), state="disabled")
+        self.second_block_button.grid(row=3, column=0, padx=10, pady=10, sticky="n")
+        self.second_block_prev_seq_button = ctk.CTkButton(self.second_block_button, **sequence_buttons_settings, width=30, text="<", command=self.set_prev_sequence, state="disabled")
+        self.second_block_next_seq_button = ctk.CTkButton(self.second_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
+        self.second_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
+        self.second_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
+        self.second_block_results_button = ctk.CTkButton(self.second_block_button, **sequence_buttons_settings, width=70, text="Results", state="disabled")
+        self.second_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
 
         self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Round", command=self.run_sequence, state="disabled")
         self.sequence_start_reset_button.grid(row=4, column=0, padx=10, pady=10, sticky="n")
@@ -524,7 +524,7 @@ class App(ctk.CTk, AsyncCTk):
     def setup_roomlight_controls(self):
         self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Roomlight", command=lambda:self.set_roomlight_level(2))
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
-        self.test_results_button = ctk.CTkButton(self.seq_crtl_frame, text="Test", command=self.show_e_block_results_popup)
+        self.test_results_button = ctk.CTkButton(self.seq_crtl_frame, text="Test", command=self.show_first_block_results_popup)
         self.test_results_button.grid(row=8, column=0, padx=10, pady=(0, 10), sticky="s")
         self.freeze_qlc_button = ctk.CTkButton(self.seq_crtl_frame, text="Freeze QLC", command=self.toggle_freeze_qlc)
         self.freeze_qlc_button.grid(row=9, column=0, padx=10, pady=(0, 10), sticky="s")
@@ -600,7 +600,7 @@ class App(ctk.CTk, AsyncCTk):
             return "None"
         return ", ".join(str(value) for value in values)
 
-    def format_e_block_results_text(self, results_data):
+    def format_first_block_results_text(self, results_data):
         lines = []
         for round_data in results_data["Rounds"]:
             lines.append("Round {id} | {state}".format(id=round_data["ID"], state=round_data["State"]))
@@ -620,22 +620,22 @@ class App(ctk.CTk, AsyncCTk):
             lines.append("")
         return "\n".join(lines).strip()
 
-    def show_e_block_results_popup(self):
-        results_file = "Participant_E_Block_Results.txt"
+    def show_first_block_results_popup(self):
+        results_file = "Participant_First_Block_Results.txt"
         if not exists(results_file):
-            ResultsWindow(self, "E Block Results", "Result file not found.")
+            ResultsWindow(self, "First Block Results", "Result file not found.")
             return
 
         with open(results_file, "r") as file:
             results_data = literal_eval(file.read())
 
-        ResultsWindow(self, "E Block Results", self.format_e_block_results_text(results_data))
+        ResultsWindow(self, "First Block Results", self.format_first_block_results_text(results_data))
 
-    def open_e_block_results(self):
-        if not self.e_block_results_saved:
-            print("E Block is not completed.")
+    def open_first_block_results(self):
+        if not self.first_block_results_saved:
+            print("First Block is not completed.")
             return
-        self.show_e_block_results_popup()
+        self.show_first_block_results_popup()
     
     def row_click(self,row_idx):
         if self.sequence_task is not None: # if task exists
@@ -647,7 +647,7 @@ class App(ctk.CTk, AsyncCTk):
             if self.active_sequence is None: # if participant not loaded
                 print("Participant not loaded")
                 return
-        if self.active_phase.phase_type == "E_Block":
+        if self.active_phase.phase_type == "First_Block":
             self.current_scene_idx = self.table_scene_offset + row_idx
         else:
             self.current_scene_idx = row_idx
@@ -655,32 +655,32 @@ class App(ctk.CTk, AsyncCTk):
 
     def load_participant(self):
         phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
-        if phase.phase_type == "E_Block":
-            self.phase_e_block = phase
-            self.create_e_block_staircases()
+        if phase.phase_type == "First_Block":
+            self.phase_first_block = phase
+            self.create_first_block_staircases()
             self.learning_block_button.enable()
-            self.e_block_button.disable()
+            self.first_block_button.disable()
             self.active_phase = None
             self.active_sequence = None
-            self.participant_label.configure(text="Participant {id}: E_Block loaded".format(id=self.phase_e_block["ID"]))
+            self.participant_label.configure(text="Participant {id}: First Block loaded".format(id=self.phase_first_block["ID"]))
             self.sequence_scene_label.configure(text="Select Learning Block")
             self.sequence_table.update_table([])
             self.sequence_start_reset_button.configure(state="disabled")
-        elif phase.phase_type == "Combination_Block":
-            self.phase_combination_block = phase
-            self.combination_block_button.enable()
-            self.set_phase(self.phase_combination_block)
+        elif phase.phase_type == "Second_Block":
+            self.phase_second_block = phase
+            self.second_block_button.enable()
+            self.set_phase(self.phase_second_block)
         else:
             print(f"Unsupported phase type: {phase.phase_type}")
 
-    def create_e_block_staircases(self):
+    def create_first_block_staircases(self):
         self.staircase_sitting_df_1 = AdaptiveStaircase(state="sitting", direct_factor=1)
         self.staircase_sitting_df_0 = AdaptiveStaircase(state="sitting", direct_factor=0)
         self.staircase_sleeping_df_1 = AdaptiveStaircase(state="sleeping", direct_factor=1)
         self.staircase_sleeping_df_0 = AdaptiveStaircase(state="sleeping", direct_factor=0)
-        self.e_block_results_saved = False
+        self.first_block_results_saved = False
 
-    def get_active_e_block_staircases(self):
+    def get_active_first_block_staircases(self):
         staircases = []
 
         if self.active_sequence["State"] == "Sitting":
@@ -696,11 +696,11 @@ class App(ctk.CTk, AsyncCTk):
             ]
 
         else:
-            print(f"Unsupported E Block state: {self.active_sequence['State']}")
+            print(f"Unsupported First Block state: {self.active_sequence['State']}")
 
         return staircases
 
-    def all_e_block_staircases_finished(self):
+    def all_first_block_staircases_finished(self):
         staircases = [
             self.staircase_sitting_df_1,
             self.staircase_sitting_df_0,
@@ -709,25 +709,25 @@ class App(ctk.CTk, AsyncCTk):
         ]
         return all(staircase is not None and staircase.is_finished() for staircase in staircases)
 
-    def save_e_block_results_if_complete(self):
-        if self.e_block_results_saved:
+    def save_first_block_results_if_complete(self):
+        if self.first_block_results_saved:
             return
-        if not self.all_e_block_staircases_finished():
+        if not self.all_first_block_staircases_finished():
             return
 
-        generate_participant_E_block_results(
+        generate_participant_first_block_results(
             self.staircase_sitting_df_1,
             self.staircase_sitting_df_0,
             self.staircase_sleeping_df_1,
             self.staircase_sleeping_df_0,
         )
-        self.e_block_results_saved = True
-        self.e_block_results_button.configure(state="normal")
+        self.first_block_results_saved = True
+        self.first_block_results_button.configure(state="normal")
 
-    def complete_active_e_block_round(self):
+    def complete_active_first_block_round(self):
         self.active_sequence["Adaptive_Completed"] = True
         self.active_phase.save()
-        self.save_e_block_results_if_complete()
+        self.save_first_block_results_if_complete()
 
     def load_learning_block(self):
         learn_file = self.settings["learn_participant_file"]
@@ -737,13 +737,13 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_learning_block = Phase(learn_file)
         self.set_phase(self.phase_learning_block)
 
-    def select_e_block(self):
-        if self.phase_e_block is None:
+    def select_first_block(self):
+        if self.phase_first_block is None:
             return
         if self.phase_learning_block is None or self.phase_learning_block.check_completion() is not True:
-            print("Complete the Learning Block before starting E Block.")
+            print("Complete the Learning Block before starting First Block.")
             return
-        self.set_phase(self.phase_e_block)
+        self.set_phase(self.phase_first_block)
 
     def select_random_staircase(self, staircases):
         seed = int.from_bytes(os.urandom(128), sys.byteorder)
@@ -764,18 +764,18 @@ class App(ctk.CTk, AsyncCTk):
         pass
         
     def set_next_sequence(self):
-        if self.active_phase is not None and self.active_phase.phase_type == "E_Block":
-            self.change_e_block_page_or_sequence(1)
+        if self.active_phase is not None and self.active_phase.phase_type == "First_Block":
+            self.change_first_block_page_or_sequence(1)
             return
         self.change_sequence(1)
     
     def set_prev_sequence(self):
-        if self.active_phase is not None and self.active_phase.phase_type == "E_Block":
-            self.change_e_block_page_or_sequence(-1)
+        if self.active_phase is not None and self.active_phase.phase_type == "First_Block":
+            self.change_first_block_page_or_sequence(-1)
             return
         self.change_sequence(-1)
 
-    def get_e_block_pages(self):
+    def get_first_block_pages(self):
         pages = []
         scene_limit = self.settings["max_scene_before_sequence_pause"]
 
@@ -794,8 +794,8 @@ class App(ctk.CTk, AsyncCTk):
 
         return pages
 
-    def change_e_block_page_or_sequence(self, step):
-        pages = self.get_e_block_pages()
+    def change_first_block_page_or_sequence(self, step):
+        pages = self.get_first_block_pages()
         current_page = (self.active_phase.seq_idx, self.table_scene_offset)
         current_page_idx = pages.index(current_page)
         next_page_idx = (current_page_idx + step) % len(pages)
@@ -827,9 +827,9 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_sequence is None:
             return
         scenes = self.active_sequence["Scenes"]
-        if self.active_phase.phase_type == "E_Block":
+        if self.active_phase.phase_type == "First_Block":
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
-            staircases = self.get_active_e_block_staircases()
+            staircases = self.get_active_first_block_staircases()
             staircase_labels = ", ".join(["DF={df}".format(df=staircase.direct_factor) for staircase in staircases])
             label = "Round {did} | Trial {pgr} | State: {state} | Active Staircases: {staircases}".format(
                 did=self.active_sequence["ID"],
@@ -851,7 +851,7 @@ class App(ctk.CTk, AsyncCTk):
     def set_sequence(self):
         self.active_sequence = self.active_phase.get_current_sequence()
         scenes = self.active_sequence["Scenes"]
-        if self.active_phase.phase_type == "E_Block":
+        if self.active_phase.phase_type == "First_Block":
             scene_limit = self.settings["max_scene_before_sequence_pause"]
             visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
             seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
@@ -860,12 +860,12 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
-        e_block_can_start = (
-            self.active_phase.phase_type == "E_Block"
+        first_block_can_start = (
+            self.active_phase.phase_type == "First_Block"
             and not self.active_sequence.get("Adaptive_Completed", False)
             and self.table_scene_offset == len(scenes)
         )
-        can_start = e_block_can_start if self.active_phase.phase_type == "E_Block" else bool(scenes)
+        can_start = first_block_can_start if self.active_phase.phase_type == "First_Block" else bool(scenes)
         self.sequence_start_reset_button.configure(state="normal" if can_start else "disabled")
     
     def stop_sequence(self):
@@ -895,8 +895,8 @@ class App(ctk.CTk, AsyncCTk):
     async def run_sequence_task(self):
         pause_duration = self.settings["sequence_pause_duration"]
         try:
-            if self.active_phase.phase_type == "E_Block":
-                await self.run_e_block_sequence_loop()
+            if self.active_phase.phase_type == "First_Block":
+                await self.run_first_block_sequence_loop()
             else:
                 scenes, cur_next_scenes = await self.prepare_sequence_run()
                 if scenes:
@@ -904,7 +904,7 @@ class App(ctk.CTk, AsyncCTk):
         finally:
             await self.cleanup_after_sequence(pause_duration)
 
-    def create_e_block_scene(self, staircase):
+    def create_first_block_scene(self, staircase):
         return create_scene(
             direct_factor=staircase.direct_factor,
             type=staircase.type_of_illumination,
@@ -918,7 +918,7 @@ class App(ctk.CTk, AsyncCTk):
         E_diffuse = E * (1 - direct_factor)
         return E_direct, E_diffuse
 
-    def update_e_block_scene_row(self, scene):
+    def update_first_block_scene_row(self, scene):
         table_row_idx = self.current_scene_idx - self.table_scene_offset
         row_values = [
             self.current_scene_idx + 1,
@@ -932,7 +932,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.update_row(row_values, table_row_idx)
         self.set_sequence_scene_label()
 
-    async def run_e_block_sequence_loop(self):
+    async def run_first_block_sequence_loop(self):
         self.check_sequence_setup()
         self.set_reading_light(self.state_position_status == "Sitting")
         self.set_roomlight_level(0)
@@ -942,18 +942,18 @@ class App(ctk.CTk, AsyncCTk):
         scene_limit = self.settings["max_scene_before_sequence_pause"]
         scenes_run = 0
 
-        staircases = self.get_active_e_block_staircases()
+        staircases = self.get_active_first_block_staircases()
         staircase = self.select_random_staircase(staircases)
 
         if staircase is None:
-            self.complete_active_e_block_round()
+            self.complete_active_first_block_round()
             return
 
-        scene = self.create_e_block_scene(staircase)
+        scene = self.create_first_block_scene(staircase)
         scenes.append(scene)
         self.active_staircase = staircase
         self.current_scene_idx = len(scenes) - 1
-        self.update_e_block_scene_row(scene)
+        self.update_first_block_scene_row(scene)
         self.set_scene(scene)
 
         await self.run_initial_isi()
@@ -968,25 +968,25 @@ class App(ctk.CTk, AsyncCTk):
             if scenes_run >= scene_limit:
                 break
 
-            staircases = self.get_active_e_block_staircases()
+            staircases = self.get_active_first_block_staircases()
             staircase = self.select_random_staircase(staircases)
 
             if staircase is None:
-                self.complete_active_e_block_round()
+                self.complete_active_first_block_round()
                 break
 
-            scene = self.create_e_block_scene(staircase)
+            scene = self.create_first_block_scene(staircase)
             scenes.append(scene)
             self.active_staircase = staircase
             self.current_scene_idx = len(scenes) - 1
-            self.update_e_block_scene_row(scene)
+            self.update_first_block_scene_row(scene)
 
-            await self.await_e_block_interstimulus_interval(scene)
+            await self.await_first_block_interstimulus_interval(scene)
 
-        if self.select_random_staircase(self.get_active_e_block_staircases()) is None:
-            self.complete_active_e_block_round()
+        if self.select_random_staircase(self.get_active_first_block_staircases()) is None:
+            self.complete_active_first_block_round()
 
-    async def await_e_block_interstimulus_interval(self, next_scene):
+    async def await_first_block_interstimulus_interval(self, next_scene):
         isi_duration = self.settings["inter-stimulus-interval"]
         isi_fade_duration = self.settings["isi_fade_duration"]
         while True:
@@ -1128,7 +1128,7 @@ class App(ctk.CTk, AsyncCTk):
         self.active_scene = None
         self.current_scene_idx = None
         self.set_sequence_scene_label()
-        if self.active_phase.phase_type == "E_Block":
+        if self.active_phase.phase_type == "First_Block":
             can_start = (
                 not self.active_sequence.get("Adaptive_Completed", False)
                 and self.table_scene_offset == len(self.active_sequence["Scenes"])
@@ -1144,13 +1144,13 @@ class App(ctk.CTk, AsyncCTk):
     def update_phase_buttons_after_sequence(self):
         if self.phase_learning_block is not None and self.phase_learning_block.check_completion() == True:
             self.learning_block_button.turn_on()
-            if self.phase_e_block is not None:
-                self.e_block_button.enable()
-        if self.phase_e_block is not None and self.phase_e_block.check_completion() == True:
-            self.e_block_button.turn_on()
-        if self.phase_combination_block is not None and self.phase_combination_block.check_completion() == True:
-            self.combination_block_button.turn_on()
-        for button in [self.learning_block_button, self.e_block_button, self.combination_block_button]:
+            if self.phase_first_block is not None:
+                self.first_block_button.enable()
+        if self.phase_first_block is not None and self.phase_first_block.check_completion() == True:
+            self.first_block_button.turn_on()
+        if self.phase_second_block is not None and self.phase_second_block.check_completion() == True:
+            self.second_block_button.turn_on()
+        for button in [self.learning_block_button, self.first_block_button, self.second_block_button]:
             if button.selected:
                 button.enable_children()
 
@@ -1165,9 +1165,9 @@ class App(ctk.CTk, AsyncCTk):
         self.load_participant_button.configure(state="disabled")
         # disable sequence change buttons
         self.learning_block_button.disable_children()
-        self.e_block_button.disable_children()
-        self.combination_block_button.disable_children()
-        for button in [self.learning_block_button, self.e_block_button, self.combination_block_button]:
+        self.first_block_button.disable_children()
+        self.second_block_button.disable_children()
+        for button in [self.learning_block_button, self.first_block_button, self.second_block_button]:
             if not button.selected:
                 button.disable()
         

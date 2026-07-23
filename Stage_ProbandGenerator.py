@@ -45,20 +45,20 @@ def scene(type, direct_factor, E, disturbed, reaction_time):
 # Generates participant files when this .py file is run
 
 
-def generate_participant_E_block():
+def generate_participant_first_block():
      
-        participant = {"ID": 1, "Phase": "E_Block", "LearnRound": False, "Rounds": [
+        participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
-        with open("Participant_E_Block.txt", "w") as file:
+        with open("Participant_First_Block.txt", "w") as file:
             file.write(printer.pformat(participant))
 
-def generate_participant_E_block_results(staircase_sitting_df_1, staircase_sitting_df_0,
+def generate_participant_first_block_results(staircase_sitting_df_1, staircase_sitting_df_0,
                                          staircase_sleeping_df_1, staircase_sleeping_df_0):
      
-        participant = {"ID": 1, "Phase": "E_Block", "LearnRound": False, "Rounds": [
+        participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Results" : [
                   { "Type": staircase_sitting_df_1.type_of_illumination,
                     "Direct_Factor": staircase_sitting_df_1.direct_factor,  
@@ -91,22 +91,22 @@ def generate_participant_E_block_results(staircase_sitting_df_1, staircase_sitti
             ]},
         ]}
 
-        with open("Participant_E_Block_Results.txt", "w") as file:
+        with open("Participant_First_Block_Results.txt", "w") as file:
             file.write(printer.pformat(participant))
 
-def generate_participant_Combination_block():
+def generate_participant_second_block():
      
-        participant = {"ID": 1, "Phase": "Combination_Block", "LearnRound": False, "Rounds": [
+        participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
-        with open("Participant_Combination_Block.txt", "w") as file:
+        with open("Participant_Second_Block.txt", "w") as file:
             file.write(printer.pformat(participant))
 
-def generate_participant_Combination_block_results():
+def generate_participant_second_block_results():
      
-        participant = {"ID": 1, "Phase": "Combination_Block", "LearnRound": False, "Rounds": [
+        participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Results" : [
                   {"E": None, "Reversals (lx)": [], "Reversal Points" : None},
             ]},
@@ -115,11 +115,11 @@ def generate_participant_Combination_block_results():
             ]},
         ]}
 
-        with open("Participant_Combination_Block_Results.txt", "w") as file:
+        with open("Participant_Second_Block_Results.txt", "w") as file:
             file.write(printer.pformat(participant))
 
 if __name__ == "__main__":
     generate_learning_participant()
-    generate_participant_E_block()
-    generate_participant_Combination_block()
+    generate_participant_first_block()
+    generate_participant_second_block()
 
