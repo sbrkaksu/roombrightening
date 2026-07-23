@@ -6,6 +6,8 @@ class AdaptiveStaircase:
 
         #Actual Durchgang of the Experiment
         self.state = state
+        self.adaptive_stimulus = kwargs.get("adaptive_stimulus", "Illuminance")
+        self.illuminance = kwargs.get("illuminance", None)
         self.direct_factor = kwargs.get("direct_factor", 1)
         self.type_of_illumination = AdaptiveStaircase.get_type_from_direct_factor(self.direct_factor)
 
@@ -18,11 +20,21 @@ class AdaptiveStaircase:
             1.0, 1.47, 2.15, 3.16, 4.64, 6.81, 
             10.0, 14.7, 21.5, 31.6, 46.4, 68.1, 
             100.0, 147.0, 215.0, 316.0]
+        self.stimuli_direct_factor = [
+            0.0, 0.05, 0.10, 0.15, 0.20,
+            0.25, 0.30, 0.35, 0.40, 0.45,
+            0.50, 0.55, 0.60, 0.65, 0.70,
+            0.75, 0.80, 0.85, 0.90, 0.95,
+            1.0,
+        ]
         
-        if self.state == "sleeping":
-            self.chosen_stimuli = self.stimuli_sleeping
-        elif self.state == "sitting":
-            self.chosen_stimuli = self.stimuli_sitting
+        if self.adaptive_stimulus == "Illuminance":
+            if self.state == "sleeping":
+                self.chosen_stimuli = self.stimuli_sleeping
+            elif self.state == "sitting":
+                self.chosen_stimuli = self.stimuli_sitting
+        elif self.adaptive_stimulus == "Direct_Factor":
+            self.chosen_stimuli = self.stimuli_direct_factor
 
         # Parameters
         self.current_value_index = len(self.chosen_stimuli) - 1
