@@ -907,7 +907,7 @@ class App(ctk.CTk, AsyncCTk):
     def create_first_block_scene(self, staircase):
         return create_scene(
             direct_factor=staircase.direct_factor,
-            type=staircase.type_of_illumination,
+            type=AdaptiveStaircase.get_type_from_direct_factor(staircase.direct_factor),
             E=staircase.current_value,
             disturbed=None,
             reaction_time=None,

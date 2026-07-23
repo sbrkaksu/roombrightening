@@ -7,7 +7,7 @@ class AdaptiveStaircase:
         #Actual Durchgang of the Experiment
         self.state = state
         self.direct_factor = kwargs.get("direct_factor", 1)
-        self.type_of_illumination = self.get_type_from_direct_factor()
+        self.type_of_illumination = AdaptiveStaircase.get_type_from_direct_factor(self.direct_factor)
 
         #Stimilus values for the E threshold determination phase 
         self.stimuli_sleeping  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
@@ -39,12 +39,13 @@ class AdaptiveStaircase:
         self.trial_count = 0
         self.threshold = None
 
-    def get_type_from_direct_factor(self):
-        if self.direct_factor == 0:
+    @staticmethod
+    def get_type_from_direct_factor(direct_factor):
+        if direct_factor == 0:
             return "Diffuse"
-        if self.direct_factor == 1:
+        if direct_factor == 1:
             return "Direct"
-        return "Combined"
+        return "Mixed"
 
     def is_finished(self):
         """Checks whether the target reversals or maximum trial count has been reached."""
