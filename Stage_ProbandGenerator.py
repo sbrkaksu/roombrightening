@@ -26,7 +26,7 @@ def generate_learning_participant():
     scenes = [
         scene(
             type=str(scene_type),
-            combination_factor=1 if scene_type == "Direct" else 0,
+            direct_factor=1 if scene_type == "Direct" else 0,
             E=float(E),
             disturbed=None,
             reaction_time=None,
@@ -40,8 +40,8 @@ def generate_learning_participant():
         file.write(printer.pformat(participant))
 
 
-def scene(type, combination_factor, E, disturbed, reaction_time):
-    return {"Type": type, "Combination_Factor": combination_factor, "E": E, "Disturbed": disturbed, "Reaction Time": reaction_time}
+def scene(type, direct_factor, E, disturbed, reaction_time):
+    return {"Type": type, "Direct_Factor": direct_factor, "E": E, "Disturbed": disturbed, "Reaction Time": reaction_time}
 # Generates participant files when this .py file is run
 
 
@@ -55,39 +55,39 @@ def generate_participant_E_block():
         with open("Participant_E_Block.txt", "w") as file:
             file.write(printer.pformat(participant))
 
-def generate_participant_E_block_results(staircase_sitting_cf_1, staircase_sitting_cf_0,
-                                         staircase_sleeping_cf_1, staircase_sleeping_cf_0):
+def generate_participant_E_block_results(staircase_sitting_df_1, staircase_sitting_df_0,
+                                         staircase_sleeping_df_1, staircase_sleeping_df_0):
      
         participant = {"ID": 1, "Phase": "E_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Results" : [
-                  { "Type": staircase_sitting_cf_1.type_of_illumination,
-                    "Combination_Factor": staircase_sitting_cf_1.combination_factor,  
-                   "Stimulus History": staircase_sitting_cf_1.history,
-                   "Response_Sequence": staircase_sitting_cf_1.response_sequence_history,
-                   "Reversals": staircase_sitting_cf_1.reversal_points,
-                   "E_threshold": staircase_sitting_cf_1.get_threshold()},
+                  { "Type": staircase_sitting_df_1.type_of_illumination,
+                    "Direct_Factor": staircase_sitting_df_1.direct_factor,  
+                   "Stimulus History": staircase_sitting_df_1.history,
+                   "Response_Sequence": staircase_sitting_df_1.response_sequence_history,
+                   "Reversals": staircase_sitting_df_1.reversal_points,
+                   "E_threshold": staircase_sitting_df_1.get_threshold()},
 
-                  { "Type": staircase_sitting_cf_0.type_of_illumination,
-                    "Combination_Factor": staircase_sitting_cf_0.combination_factor,  
-                   "Stimulus History": staircase_sitting_cf_0.history,
-                   "Response_Sequence": staircase_sitting_cf_0.response_sequence_history,
-                   "Reversals": staircase_sitting_cf_0.reversal_points,
-                   "E_threshold": staircase_sitting_cf_0.get_threshold()},
+                  { "Type": staircase_sitting_df_0.type_of_illumination,
+                    "Direct_Factor": staircase_sitting_df_0.direct_factor,  
+                   "Stimulus History": staircase_sitting_df_0.history,
+                   "Response_Sequence": staircase_sitting_df_0.response_sequence_history,
+                   "Reversals": staircase_sitting_df_0.reversal_points,
+                   "E_threshold": staircase_sitting_df_0.get_threshold()},
             ]},
             {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Results" : [
-                  {"Type": staircase_sleeping_cf_1.type_of_illumination, 
-                   "Combination_Factor": staircase_sleeping_cf_1.combination_factor,  
-                   "Stimulus History": staircase_sleeping_cf_1.history,
-                   "Response_Sequence": staircase_sleeping_cf_1.response_sequence_history,
-                   "Reversals": staircase_sleeping_cf_1.reversal_points,
-                   "E_threshold": staircase_sleeping_cf_1.get_threshold()},
+                  {"Type": staircase_sleeping_df_1.type_of_illumination, 
+                   "Direct_Factor": staircase_sleeping_df_1.direct_factor,  
+                   "Stimulus History": staircase_sleeping_df_1.history,
+                   "Response_Sequence": staircase_sleeping_df_1.response_sequence_history,
+                   "Reversals": staircase_sleeping_df_1.reversal_points,
+                   "E_threshold": staircase_sleeping_df_1.get_threshold()},
                    
-                  {"Type": staircase_sleeping_cf_0.type_of_illumination,
-                   "Combination_Factor": staircase_sleeping_cf_0.combination_factor,  
-                   "Stimulus History": staircase_sleeping_cf_0.history,
-                   "Response_Sequence": staircase_sleeping_cf_0.response_sequence_history,
-                   "Reversals": staircase_sleeping_cf_0.reversal_points,
-                   "E_threshold": staircase_sleeping_cf_0.get_threshold()},
+                  {"Type": staircase_sleeping_df_0.type_of_illumination,
+                   "Direct_Factor": staircase_sleeping_df_0.direct_factor,  
+                   "Stimulus History": staircase_sleeping_df_0.history,
+                   "Response_Sequence": staircase_sleeping_df_0.response_sequence_history,
+                   "Reversals": staircase_sleeping_df_0.reversal_points,
+                   "E_threshold": staircase_sleeping_df_0.get_threshold()},
             ]},
         ]}
 

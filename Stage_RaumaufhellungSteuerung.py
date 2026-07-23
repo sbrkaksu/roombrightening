@@ -430,10 +430,10 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_e_block = None
         self.phase_combination_block = None
 
-        self.staircase_sitting_cf_1 = None
-        self.staircase_sitting_cf_0 = None
-        self.staircase_sleeping_cf_1 = None
-        self.staircase_sleeping_cf_0 = None
+        self.staircase_sitting_df_1 = None
+        self.staircase_sitting_df_0 = None
+        self.staircase_sleeping_df_1 = None
+        self.staircase_sleeping_df_0 = None
         self.e_block_results_saved = False
 
         self.sequence_stop_event = asyncio.Event()
@@ -497,7 +497,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_scene_label = ctk.CTkLabel(self.table_frame, text="Round", anchor="w", font=(font.nametofont("TkDefaultFont"), 18))
         self.sequence_scene_label.grid(row=1, column=0, padx=10, pady=0, sticky='w')
 
-        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Type", "Combination Factor", "E", "E Monitor", "Disturbing", "Reaction Time"], row_num=25)
+        self.sequence_table = ClickableTable(self.table_frame, header_labels=["Scenes", "Type", "Direct Factor", "E", "E Monitor", "Disturbing", "Reaction Time"], row_num=25)
         self.sequence_table.grid(row=2, column=0, padx=0, pady=10, sticky="w")
         self.sequence_table.set_callback(self.row_click)
 
@@ -569,10 +569,10 @@ class App(ctk.CTk, AsyncCTk):
     def set_scene_monitor(self):
         if self.monitor_I and self.active_scene is not None:
             print(self.monitor_I)
-            combination_factor = self.active_scene["Combination_Factor"]
+            direct_factor = self.active_scene["Direct_Factor"]
             factor_direct = self.settings["monitor_E_factor_spot_1"]
             factor_diffuse = self.settings["monitor_E_factor_diffus"]
-            factor = (factor_direct * combination_factor) + (factor_diffuse * (1 - combination_factor))
+            factor = (factor_direct * direct_factor) + (factor_diffuse * (1 - direct_factor))
             EM = self.monitor_I * factor
             EM = f"{EM:.2e}" # format E monitor in exponential notation for the table
             print(EM)
@@ -609,7 +609,7 @@ class App(ctk.CTk, AsyncCTk):
                 reversals = result.get("Reversals", [])
                 threshold = result.get("E_threshold")
                 response_sequence = result.get("Response_Sequence", [])
-                lines.append("{type} | CF={cf}".format(type=result.get("Type"), cf=result.get("Combination_Factor")))
+                lines.append("{type} | DF={df}".format(type=result.get("Type"), df=result.get("Direct_Factor")))
                 lines.append("Trials: {trials}".format(trials=len(response_sequence)))
                 lines.append("Reversal: {reversals} - {count} reversals".format(
                     reversals=self.format_result_value_list(reversals),
@@ -674,10 +674,10 @@ class App(ctk.CTk, AsyncCTk):
             print(f"Unsupported phase type: {phase.phase_type}")
 
     def create_e_block_staircases(self):
-        self.staircase_sitting_cf_1 = AdaptiveStaircase(state="sitting", combination_factor=1)
-        self.staircase_sitting_cf_0 = AdaptiveStaircase(state="sitting", combination_factor=0)
-        self.staircase_sleeping_cf_1 = AdaptiveStaircase(state="sleeping", combination_factor=1)
-        self.staircase_sleeping_cf_0 = AdaptiveStaircase(state="sleeping", combination_factor=0)
+        self.staircase_sitting_df_1 = AdaptiveStaircase(state="sitting", direct_factor=1)
+        self.staircase_sitting_df_0 = AdaptiveStaircase(state="sitting", direct_factor=0)
+        self.staircase_sleeping_df_1 = AdaptiveStaircase(state="sleeping", direct_factor=1)
+        self.staircase_sleeping_df_0 = AdaptiveStaircase(state="sleeping", direct_factor=0)
         self.e_block_results_saved = False
 
     def get_active_e_block_staircases(self):
@@ -685,14 +685,14 @@ class App(ctk.CTk, AsyncCTk):
 
         if self.active_sequence["State"] == "Sitting":
             staircases = [
-                self.staircase_sitting_cf_1,
-                self.staircase_sitting_cf_0,
+                self.staircase_sitting_df_1,
+                self.staircase_sitting_df_0,
             ]
 
         elif self.active_sequence["State"] == "Sleeping":
             staircases = [
-                self.staircase_sleeping_cf_1,
-                self.staircase_sleeping_cf_0,
+                self.staircase_sleeping_df_1,
+                self.staircase_sleeping_df_0,
             ]
 
         else:
@@ -702,10 +702,10 @@ class App(ctk.CTk, AsyncCTk):
 
     def all_e_block_staircases_finished(self):
         staircases = [
-            self.staircase_sitting_cf_1,
-            self.staircase_sitting_cf_0,
-            self.staircase_sleeping_cf_1,
-            self.staircase_sleeping_cf_0,
+            self.staircase_sitting_df_1,
+            self.staircase_sitting_df_0,
+            self.staircase_sleeping_df_1,
+            self.staircase_sleeping_df_0,
         ]
         return all(staircase is not None and staircase.is_finished() for staircase in staircases)
 
@@ -716,10 +716,10 @@ class App(ctk.CTk, AsyncCTk):
             return
 
         generate_participant_E_block_results(
-            self.staircase_sitting_cf_1,
-            self.staircase_sitting_cf_0,
-            self.staircase_sleeping_cf_1,
-            self.staircase_sleeping_cf_0,
+            self.staircase_sitting_df_1,
+            self.staircase_sitting_df_0,
+            self.staircase_sleeping_df_1,
+            self.staircase_sleeping_df_0,
         )
         self.e_block_results_saved = True
         self.e_block_results_button.configure(state="normal")
@@ -830,7 +830,7 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_phase.phase_type == "E_Block":
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
             staircases = self.get_active_e_block_staircases()
-            staircase_labels = ", ".join(["CF={cf}".format(cf=staircase.combination_factor) for staircase in staircases])
+            staircase_labels = ", ".join(["DF={df}".format(df=staircase.direct_factor) for staircase in staircases])
             label = "Round {did} | Trial {pgr} | State: {state} | Active Staircases: {staircases}".format(
                 did=self.active_sequence["ID"],
                 pgr=progress,
@@ -854,9 +854,9 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_phase.phase_type == "E_Block":
             scene_limit = self.settings["max_scene_before_sequence_pause"]
             visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
-            seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Combination_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
+            seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
         else:
-            seq_values = [[idx + 1, s.get("Type"), s.get("Combination_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
+            seq_values = [[idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
@@ -906,16 +906,16 @@ class App(ctk.CTk, AsyncCTk):
 
     def create_e_block_scene(self, staircase):
         return create_scene(
-            combination_factor=staircase.combination_factor,
+            direct_factor=staircase.direct_factor,
             type=staircase.type_of_illumination,
             E=staircase.current_value,
             disturbed=None,
             reaction_time=None,
         )
 
-    def calculate_light_components(self, E, combination_factor):
-        E_direct = E * combination_factor
-        E_diffuse = E * (1 - combination_factor)
+    def calculate_light_components(self, E, direct_factor):
+        E_direct = E * direct_factor
+        E_diffuse = E * (1 - direct_factor)
         return E_direct, E_diffuse
 
     def update_e_block_scene_row(self, scene):
@@ -923,7 +923,7 @@ class App(ctk.CTk, AsyncCTk):
         row_values = [
             self.current_scene_idx + 1,
             scene.get("Type"),
-            scene.get("Combination_Factor"),
+            scene.get("Direct_Factor"),
             scene.get("E"),
             scene.get("E_monitor"),
             scene.get("Disturbed"),
@@ -1378,8 +1378,8 @@ class App(ctk.CTk, AsyncCTk):
         self.set_all_intensities(0)
         self.pixel2_7_intensity.set_values([0])
         E = scene["E"]
-        combination_factor = scene["Combination_Factor"]
-        E_direct, E_diffuse = self.calculate_light_components(E, combination_factor)
+        direct_factor = scene["Direct_Factor"]
+        E_direct, E_diffuse = self.calculate_light_components(E, direct_factor)
 
         spot1_dmx = 0
         diffuse_dmx = 0

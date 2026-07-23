@@ -6,8 +6,8 @@ class AdaptiveStaircase:
 
         #Actual Durchgang of the Experiment
         self.state = state
-        self.combination_factor = kwargs.get("combination_factor", 1)
-        self.type_of_illumination = self.get_type_from_combination_factor()
+        self.direct_factor = kwargs.get("direct_factor", 1)
+        self.type_of_illumination = self.get_type_from_direct_factor()
 
         #Stimilus values for the E threshold determination phase 
         self.stimuli_sleeping  = [ 0.01, 0.0147, 0.0215, 0.0316, 0.0464, 0.0681, 
@@ -39,10 +39,10 @@ class AdaptiveStaircase:
         self.trial_count = 0
         self.threshold = None
 
-    def get_type_from_combination_factor(self):
-        if self.combination_factor == 0:
+    def get_type_from_direct_factor(self):
+        if self.direct_factor == 0:
             return "Diffuse"
-        if self.combination_factor == 1:
+        if self.direct_factor == 1:
             return "Direct"
         return "Combined"
 
