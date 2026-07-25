@@ -59,30 +59,34 @@ def generate_participant_first_block_results(staircase_sitting_df_1, staircase_s
                                          staircase_sleeping_df_1, staircase_sleeping_df_0):
      
         participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
-            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Results" : [
-                  { "Type": staircase_sitting_df_1.type_of_illumination,
+            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
+                  { "Repetition": 1,
+                    "Type": staircase_sitting_df_1.type_of_illumination,
                     "Direct_Factor": staircase_sitting_df_1.direct_factor,  
                    "Stimulus History": staircase_sitting_df_1.history,
                    "Response_Sequence": staircase_sitting_df_1.response_sequence_history,
                    "Reversals": staircase_sitting_df_1.reversal_points,
                    "E_threshold": staircase_sitting_df_1.get_threshold()},
 
-                  { "Type": staircase_sitting_df_0.type_of_illumination,
+                  { "Repetition": 1,
+                    "Type": staircase_sitting_df_0.type_of_illumination,
                     "Direct_Factor": staircase_sitting_df_0.direct_factor,  
                    "Stimulus History": staircase_sitting_df_0.history,
                    "Response_Sequence": staircase_sitting_df_0.response_sequence_history,
                    "Reversals": staircase_sitting_df_0.reversal_points,
                    "E_threshold": staircase_sitting_df_0.get_threshold()},
             ]},
-            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Results" : [
-                  {"Type": staircase_sleeping_df_1.type_of_illumination, 
+            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
+                  {"Repetition": 1,
+                   "Type": staircase_sleeping_df_1.type_of_illumination, 
                    "Direct_Factor": staircase_sleeping_df_1.direct_factor,  
                    "Stimulus History": staircase_sleeping_df_1.history,
                    "Response_Sequence": staircase_sleeping_df_1.response_sequence_history,
                    "Reversals": staircase_sleeping_df_1.reversal_points,
                    "E_threshold": staircase_sleeping_df_1.get_threshold()},
-                   
-                  {"Type": staircase_sleeping_df_0.type_of_illumination,
+                    
+                  {"Repetition": 1,
+                   "Type": staircase_sleeping_df_0.type_of_illumination,
                    "Direct_Factor": staircase_sleeping_df_0.direct_factor,  
                    "Stimulus History": staircase_sleeping_df_0.history,
                    "Response_Sequence": staircase_sleeping_df_0.response_sequence_history,
@@ -107,11 +111,13 @@ def generate_participant_second_block():
 def generate_participant_second_block_results():
      
         participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
-            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Results" : [
-                  {"E": None, "Reversals (lx)": [], "Reversal Points" : None},
+            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
+                  {"Repetition": 1, "Illuminance": None, "Stimulus History": [], "Response_Sequence": [], "Reversals": [], "Direct_Factor_threshold": None},
+                  {"Repetition": 2, "Illuminance": None, "Stimulus History": [], "Response_Sequence": [], "Reversals": [], "Direct_Factor_threshold": None},
             ]},
-            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Results" : [
-                  {"E": None, "Reversals (lx)": [], "Reversal Points" : None},
+            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
+                  {"Repetition": 1, "Illuminance": None, "Stimulus History": [], "Response_Sequence": [], "Reversals": [], "Direct_Factor_threshold": None},
+                  {"Repetition": 2, "Illuminance": None, "Stimulus History": [], "Response_Sequence": [], "Reversals": [], "Direct_Factor_threshold": None},
             ]},
         ]}
 
