@@ -434,6 +434,10 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sitting_df_0 = None
         self.staircase_sleeping_df_1 = None
         self.staircase_sleeping_df_0 = None
+        self.staircase_sitting_second_rep_1 = None
+        self.staircase_sitting_second_rep_2 = None
+        self.staircase_sleeping_second_rep_1 = None
+        self.staircase_sleeping_second_rep_2 = None
         self.first_block_results_saved = False
 
         self.sequence_stop_event = asyncio.Event()
@@ -668,6 +672,7 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_start_reset_button.configure(state="disabled")
         elif phase.phase_type == "Second_Block":
             self.phase_second_block = phase
+            self.create_second_block_staircases()
             self.second_block_button.enable()
             self.set_phase(self.phase_second_block)
         else:
@@ -679,6 +684,12 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sleeping_df_1 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Illuminance", direct_factor=1)
         self.staircase_sleeping_df_0 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Illuminance", direct_factor=0)
         self.first_block_results_saved = False
+
+    def create_second_block_staircases(self):
+        self.staircase_sitting_second_rep_1 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Direct_Factor", illuminance=None)
+        self.staircase_sitting_second_rep_2 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Direct_Factor", illuminance=None)
+        self.staircase_sleeping_second_rep_1 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=None)
+        self.staircase_sleeping_second_rep_2 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=None)
 
     def get_active_first_block_staircases(self):
         staircases = []
