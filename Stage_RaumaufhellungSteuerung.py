@@ -640,6 +640,42 @@ class App(ctk.CTk, AsyncCTk):
             print("First Block is not completed.")
             return
         self.show_first_block_results_popup()
+
+    def load_first_block_diffuse_thresholds(self):
+        results_file = "Participant_First_Block_Results.txt"
+        if not exists(results_file):
+            print("First Block result file not found.")
+            return None, None
+
+        with open(results_file, "r") as file:
+            results_data = literal_eval(file.read())
+
+        thresholds = {}
+        for round_data in results_data["Rounds"]:
+            state = round_data["State"]
+            diffuse_results = [
+                result for result in round_data["Results"]
+                if result.get("Direct_Factor") == 0
+            ]
+            if not diffuse_results:
+                print(f"{state} diffuse threshold is missing.")
+                return None, None
+
+            threshold = diffuse_results[0].get("E_threshold")
+            if threshold is None:
+                print(f"{state} diffuse threshold is None.")
+                return None, None
+
+            thresholds[state] = threshold
+
+        if "Sitting" not in thresholds:
+            print("Sitting diffuse threshold is missing.")
+            return None, None
+        if "Sleeping" not in thresholds:
+            print("Sleeping diffuse threshold is missing.")
+            return None, None
+
+        return thresholds["Sitting"], thresholds["Sleeping"]
     
     def row_click(self,row_idx):
         if self.sequence_task is not None: # if task exists
@@ -672,7 +708,9 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_start_reset_button.configure(state="disabled")
         elif phase.phase_type == "Second_Block":
             self.phase_second_block = phase
-            self.create_second_block_staircases()
+            if not self.create_second_block_staircases():
+                self.phase_second_block = None
+                return
             self.second_block_button.enable()
             self.set_phase(self.phase_second_block)
         else:
@@ -686,10 +724,16 @@ class App(ctk.CTk, AsyncCTk):
         self.first_block_results_saved = False
 
     def create_second_block_staircases(self):
-        self.staircase_sitting_second_rep_1 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Direct_Factor", illuminance=None)
-        self.staircase_sitting_second_rep_2 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Direct_Factor", illuminance=None)
-        self.staircase_sleeping_second_rep_1 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=None)
-        self.staircase_sleeping_second_rep_2 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=None)
+        sitting_illuminance_threshold, sleeping_illuminance_threshold = self.load_first_block_diffuse_thresholds()
+        if sitting_illuminance_threshold is None or sleeping_illuminance_threshold is None:
+            print("Second Block staircases could not be created.")
+            return False
+
+        self.staircase_sitting_second_rep_1 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Direct_Factor", illuminance=sitting_illuminance_threshold)
+        self.staircase_sitting_second_rep_2 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Direct_Factor", illuminance=sitting_illuminance_threshold)
+        self.staircase_sleeping_second_rep_1 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=sleeping_illuminance_threshold)
+        self.staircase_sleeping_second_rep_2 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=sleeping_illuminance_threshold)
+        return True
 
     def get_active_first_block_staircases(self):
         staircases = []
