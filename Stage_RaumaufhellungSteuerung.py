@@ -26,7 +26,7 @@ import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
 # Generates fine-grid block
-from Stage_ProbandGenerator import FormatPrinter, scene as create_scene, generate_participant_first_block_results
+from Stage_ProbandGenerator import FormatPrinter, scene as create_scene, generate_participant_first_block_results, generate_participant_second_block_results
 from Staircase import AdaptiveStaircase
 
 #loops through all children of a widget and its children in GUI
@@ -439,6 +439,7 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sleeping_second_rep_1 = None
         self.staircase_sleeping_second_rep_2 = None
         self.first_block_results_saved = False
+        self.second_block_results_saved = False
 
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
@@ -733,6 +734,7 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sitting_second_rep_2 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Direct_Factor", illuminance=sitting_illuminance_threshold)
         self.staircase_sleeping_second_rep_1 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=sleeping_illuminance_threshold)
         self.staircase_sleeping_second_rep_2 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=sleeping_illuminance_threshold)
+        self.second_block_results_saved = False
         return True
 
     def get_active_first_block_staircases(self):
@@ -792,6 +794,15 @@ class App(ctk.CTk, AsyncCTk):
         ]
         return all(staircase is not None and staircase.is_finished() for staircase in staircases)
 
+    def all_second_block_staircases_finished(self):
+        staircases = [
+            self.staircase_sitting_second_rep_1,
+            self.staircase_sitting_second_rep_2,
+            self.staircase_sleeping_second_rep_1,
+            self.staircase_sleeping_second_rep_2,
+        ]
+        return all(staircase is not None and staircase.is_finished() for staircase in staircases)
+
     def save_first_block_results_if_complete(self):
         if self.first_block_results_saved:
             return
@@ -807,6 +818,21 @@ class App(ctk.CTk, AsyncCTk):
         self.first_block_results_saved = True
         self.first_block_results_button.configure(state="normal")
 
+    def save_second_block_results_if_complete(self):
+        if self.second_block_results_saved:
+            return
+        if not self.all_second_block_staircases_finished():
+            return
+
+        generate_participant_second_block_results(
+            self.staircase_sitting_second_rep_1,
+            self.staircase_sitting_second_rep_2,
+            self.staircase_sleeping_second_rep_1,
+            self.staircase_sleeping_second_rep_2,
+        )
+        self.second_block_results_saved = True
+        self.second_block_results_button.configure(state="normal")
+
     def complete_active_first_block_round(self):
         self.active_sequence["Adaptive_Completed"] = True
         self.active_phase.save()
@@ -815,6 +841,7 @@ class App(ctk.CTk, AsyncCTk):
     def complete_active_second_block_round(self):
         self.active_sequence["Adaptive_Completed"] = True
         self.active_phase.save()
+        self.save_second_block_results_if_complete()
 
     def load_learning_block(self):
         learn_file = self.settings["learn_participant_file"]
