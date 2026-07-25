@@ -993,6 +993,16 @@ class App(ctk.CTk, AsyncCTk):
             reaction_time=None,
         )
 
+    def create_second_block_scene(self, staircase):
+        direct_factor = staircase.current_value
+        return create_scene(
+            direct_factor=direct_factor,
+            type=AdaptiveStaircase.get_type_from_direct_factor(direct_factor),
+            E=staircase.illuminance,
+            disturbed=None,
+            reaction_time=None,
+        )
+
     def calculate_light_components(self, E, direct_factor):
         E_direct = E * direct_factor
         E_diffuse = E * (1 - direct_factor)
