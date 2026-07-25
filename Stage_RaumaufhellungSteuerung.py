@@ -728,10 +728,15 @@ class App(ctk.CTk, AsyncCTk):
             if self.active_sequence is None: # if participant not loaded
                 print("Participant not loaded")
                 return
-        if self.active_phase.phase_type == "First_Block":
-            self.current_scene_idx = self.table_scene_offset + row_idx
+        if self.active_phase.phase_type in ("First_Block", "Second_Block"):
+            scene_idx = self.table_scene_offset + row_idx
         else:
-            self.current_scene_idx = row_idx
+            scene_idx = row_idx
+
+        if scene_idx >= len(self.active_sequence["Scenes"]):
+            return
+
+        self.current_scene_idx = scene_idx
         self.sequence_table.select_row(row_idx)
 
     def load_participant(self):
@@ -1013,6 +1018,12 @@ class App(ctk.CTk, AsyncCTk):
             scene_limit = self.settings["max_scene_before_sequence_pause"]
             visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
             seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
+            if (
+                not self.active_sequence.get("Adaptive_Completed", False)
+                and self.table_scene_offset == len(scenes)
+            ):
+                for idx in range(len(seq_values), scene_limit):
+                    seq_values.append([self.table_scene_offset + idx + 1, None, None, None, None, None, None])
         else:
             seq_values = [[idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
         self.sequence_table.update_table(seq_values)
@@ -1131,6 +1142,7 @@ class App(ctk.CTk, AsyncCTk):
         while scenes_run < scene_limit:
             await self.run_single_scene(scene)
             self.set_scene_reaction(disturbing=False)
+            self.active_scene = None
             self.active_staircase = None
             self.sequence_table.deselect_row()
             scenes_run += 1
@@ -1184,6 +1196,7 @@ class App(ctk.CTk, AsyncCTk):
         while scenes_run < scene_limit:
             await self.run_single_scene(scene)
             self.set_scene_reaction(disturbing=False)
+            self.active_scene = None
             self.active_staircase = None
             self.sequence_table.deselect_row()
             scenes_run += 1
