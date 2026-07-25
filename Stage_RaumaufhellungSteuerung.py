@@ -398,11 +398,11 @@ class App(ctk.CTk, AsyncCTk):
             "monitor_baud_rate":        9600,
             "monitor_E_factor_spot_1":  2.33e7,
             "monitor_E_factor_diffus":  2.71e7,
-            "scene_duration":           4.5, #4.5, # seconds
+            "scene_duration":           1.5, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
-            "inter-stimulus-interval":  2.5, #2.5, #seconds
+            "inter-stimulus-interval":  1, #2.5, #seconds
             "isi_fade_duration" :       0.5, # seconds. QLC fades in 300 ms
-            "sequence_pause_duration":  45.0, # 45 seconds
+            "sequence_pause_duration":  5.0, # 45 seconds
             "maxE_spot1": 117,
             "maxE_diffus": 433,
             "direct_center_curve": (-3.0235e-09, 0.0020, 0.1933),
