@@ -3,10 +3,7 @@ from pprint import PrettyPrinter #used for pretty-printing the participant data 
 import numpy as np
 from Formatter import FormatPrinter
 
-"""
 printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)
-"""
-printer = FormatPrinter({float: "{}"}, sort_dicts=False)
 
 
 #generates Participant_Learning_Block.txt for Learning Phase
