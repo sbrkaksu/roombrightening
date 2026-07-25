@@ -755,6 +755,31 @@ class App(ctk.CTk, AsyncCTk):
 
         return staircases
 
+    def get_active_second_block_staircase(self):
+        staircases = []
+
+        if self.active_sequence["State"] == "Sitting":
+            staircases = [
+                self.staircase_sitting_second_rep_1,
+                self.staircase_sitting_second_rep_2,
+            ]
+
+        elif self.active_sequence["State"] == "Sleeping":
+            staircases = [
+                self.staircase_sleeping_second_rep_1,
+                self.staircase_sleeping_second_rep_2,
+            ]
+
+        else:
+            print(f"Unsupported Second Block state: {self.active_sequence['State']}")
+            return None
+
+        for staircase in staircases:
+            if staircase is not None and not staircase.is_finished():
+                return staircase
+
+        return None
+
     def all_first_block_staircases_finished(self):
         staircases = [
             self.staircase_sitting_df_1,
