@@ -333,7 +333,7 @@ class Phase(dict):
             self.seq_idx += self.seq_num
     
     def check_completion(self):
-        if self.phase_type == "First_Block":
+        if self.phase_type in ("First_Block", "Second_Block"):
             completed = [round_data.get("Adaptive_Completed") for round_data in self["Rounds"]]
             return bool(completed) and None not in completed and False not in completed
 
@@ -347,7 +347,7 @@ class Phase(dict):
         with open(fname, 'w') as f:
             f.write(printer.pformat(self))
 
-        if self.phase_type in ("Learning Block", "First_Block"):
+        if self.phase_type in ("Learning Block", "First_Block", "Second_Block"):
             return
         
         if self.check_completion() == True:
@@ -851,18 +851,18 @@ class App(ctk.CTk, AsyncCTk):
         pass
         
     def set_next_sequence(self):
-        if self.active_phase is not None and self.active_phase.phase_type == "First_Block":
-            self.change_first_block_page_or_sequence(1)
+        if self.active_phase is not None and self.active_phase.phase_type in ("First_Block", "Second_Block"):
+            self.change_active_block_page_or_sequence(1)
             return
         self.change_sequence(1)
     
     def set_prev_sequence(self):
-        if self.active_phase is not None and self.active_phase.phase_type == "First_Block":
-            self.change_first_block_page_or_sequence(-1)
+        if self.active_phase is not None and self.active_phase.phase_type in ("First_Block", "Second_Block"):
+            self.change_active_block_page_or_sequence(-1)
             return
         self.change_sequence(-1)
 
-    def get_first_block_pages(self):
+    def get_active_block_pages(self):
         pages = []
         scene_limit = self.settings["max_scene_before_sequence_pause"]
 
@@ -881,8 +881,8 @@ class App(ctk.CTk, AsyncCTk):
 
         return pages
 
-    def change_first_block_page_or_sequence(self, step):
-        pages = self.get_first_block_pages()
+    def change_active_block_page_or_sequence(self, step):
+        pages = self.get_active_block_pages()
         current_page = (self.active_phase.seq_idx, self.table_scene_offset)
         current_page_idx = pages.index(current_page)
         next_page_idx = (current_page_idx + step) % len(pages)
@@ -914,10 +914,14 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_sequence is None:
             return
         scenes = self.active_sequence["Scenes"]
-        if self.active_phase.phase_type == "First_Block":
+        if self.active_phase.phase_type in ("First_Block", "Second_Block"):
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
-            staircases = self.get_active_first_block_staircases()
-            staircase_labels = ", ".join(["DF={df}".format(df=staircase.direct_factor) for staircase in staircases])
+            if self.active_phase.phase_type == "First_Block":
+                staircases = self.get_active_first_block_staircases()
+                staircase_labels = ", ".join(["DF={df}".format(df=staircase.direct_factor) for staircase in staircases])
+            else:
+                staircases = self.get_active_second_block_staircases()
+                staircase_labels = ", ".join(["Rep {rep}".format(rep=idx + 1) for idx, staircase in enumerate(staircases) if staircase is not None])
             label = "Round {did} | Trial {pgr} | State: {state} | Active Staircases: {staircases}".format(
                 did=self.active_sequence["ID"],
                 pgr=progress,
@@ -938,7 +942,7 @@ class App(ctk.CTk, AsyncCTk):
     def set_sequence(self):
         self.active_sequence = self.active_phase.get_current_sequence()
         scenes = self.active_sequence["Scenes"]
-        if self.active_phase.phase_type == "First_Block":
+        if self.active_phase.phase_type in ("First_Block", "Second_Block"):
             scene_limit = self.settings["max_scene_before_sequence_pause"]
             visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
             seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
@@ -947,12 +951,12 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
-        first_block_can_start = (
-            self.active_phase.phase_type == "First_Block"
+        active_block_can_start = (
+            self.active_phase.phase_type in ("First_Block", "Second_Block")
             and not self.active_sequence.get("Adaptive_Completed", False)
             and self.table_scene_offset == len(scenes)
         )
-        can_start = first_block_can_start if self.active_phase.phase_type == "First_Block" else bool(scenes)
+        can_start = active_block_can_start if self.active_phase.phase_type in ("First_Block", "Second_Block") else bool(scenes)
         self.sequence_start_reset_button.configure(state="normal" if can_start else "disabled")
     
     def stop_sequence(self):
@@ -984,6 +988,8 @@ class App(ctk.CTk, AsyncCTk):
         try:
             if self.active_phase.phase_type == "First_Block":
                 await self.run_first_block_sequence_loop()
+            elif self.active_phase.phase_type == "Second_Block":
+                await self.run_second_block_sequence_loop()
             else:
                 scenes, cur_next_scenes = await self.prepare_sequence_run()
                 if scenes:
@@ -1082,6 +1088,58 @@ class App(ctk.CTk, AsyncCTk):
 
         if self.select_random_staircase(self.get_active_first_block_staircases()) is None:
             self.complete_active_first_block_round()
+
+    async def run_second_block_sequence_loop(self):
+        self.check_sequence_setup()
+        self.set_reading_light(self.state_position_status == "Sitting")
+        self.set_roomlight_level(0)
+
+        scenes = self.active_sequence["Scenes"]
+        self.table_scene_offset = len(scenes)
+        scene_limit = self.settings["max_scene_before_sequence_pause"]
+        scenes_run = 0
+
+        staircase = self.get_active_second_block_staircase()
+
+        if staircase is None:
+            self.complete_active_second_block_round()
+            return
+
+        scene = self.create_second_block_scene(staircase)
+        scenes.append(scene)
+        self.active_staircase = staircase
+        self.current_scene_idx = len(scenes) - 1
+        self.update_active_block_scene_row(scene)
+        self.set_scene(scene)
+
+        await self.run_initial_isi()
+
+        while scenes_run < scene_limit:
+            await self.run_single_scene(scene)
+            self.set_scene_reaction(disturbing=False)
+            self.active_staircase = None
+            self.sequence_table.deselect_row()
+            scenes_run += 1
+
+            if scenes_run >= scene_limit:
+                break
+
+            staircase = self.get_active_second_block_staircase()
+
+            if staircase is None:
+                self.complete_active_second_block_round()
+                break
+
+            scene = self.create_second_block_scene(staircase)
+            scenes.append(scene)
+            self.active_staircase = staircase
+            self.current_scene_idx = len(scenes) - 1
+            self.update_active_block_scene_row(scene)
+
+            await self.await_first_block_interstimulus_interval(scene)
+
+        if self.active_second_block_round_completed():
+            self.complete_active_second_block_round()
 
     async def await_first_block_interstimulus_interval(self, next_scene):
         isi_duration = self.settings["inter-stimulus-interval"]
@@ -1225,7 +1283,7 @@ class App(ctk.CTk, AsyncCTk):
         self.active_scene = None
         self.current_scene_idx = None
         self.set_sequence_scene_label()
-        if self.active_phase.phase_type == "First_Block":
+        if self.active_phase.phase_type in ("First_Block", "Second_Block"):
             can_start = (
                 not self.active_sequence.get("Adaptive_Completed", False)
                 and self.table_scene_offset == len(self.active_sequence["Scenes"])
