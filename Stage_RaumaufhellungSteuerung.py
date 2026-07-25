@@ -53,10 +53,7 @@ def pprint_scientific(f):
     return "{} ⋅10{}".format(b, e.translate(superscript_trans)) 
 
 #formatting E values in the table with above formatter
-"""
 table_printer = FormatPrinter({float: pprint_scientific, str: "{}"} ) 
-"""
-table_printer = FormatPrinter({float: "{}", str: "{}"})
 
 #Creates a clickable table with header and specified number of rows
 class ClickableTable(ctk.CTkFrame):
@@ -1014,7 +1011,7 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_phase.phase_type in ("First_Block", "Second_Block"):
             scene_limit = self.settings["max_scene_before_sequence_pause"]
             visible_scenes = scenes[self.table_scene_offset:self.table_scene_offset + scene_limit]
-            seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
+            seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), str(s.get("Direct_Factor")), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
             if (
                 not self.active_sequence.get("Adaptive_Completed", False)
                 and self.table_scene_offset == len(scenes)
@@ -1022,7 +1019,7 @@ class App(ctk.CTk, AsyncCTk):
                 for idx in range(len(seq_values), scene_limit):
                     seq_values.append([self.table_scene_offset + idx + 1, None, None, None, None, None, None])
         else:
-            seq_values = [[idx + 1, s.get("Type"), s.get("Direct_Factor"), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
+            seq_values = [[idx + 1, s.get("Type"), str(s.get("Direct_Factor")), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(scenes)]
         self.sequence_table.update_table(seq_values)
 
         self.set_sequence_scene_label()
@@ -1101,7 +1098,7 @@ class App(ctk.CTk, AsyncCTk):
         row_values = [
             self.current_scene_idx + 1,
             scene.get("Type"),
-            scene.get("Direct_Factor"),
+            str(scene.get("Direct_Factor")),
             scene.get("E"),
             scene.get("E_monitor"),
             scene.get("Disturbed"),
