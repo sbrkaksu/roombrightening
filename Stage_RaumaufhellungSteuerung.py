@@ -485,7 +485,7 @@ class App(ctk.CTk, AsyncCTk):
         self.second_block_next_seq_button = ctk.CTkButton(self.second_block_button, **sequence_buttons_settings, width=30, text=">", command=self.set_next_sequence, state="disabled")
         self.second_block_prev_seq_button.place(relx=0.3, rely=0.48, anchor="center")
         self.second_block_next_seq_button.place(relx=0.7, rely=0.48, anchor="center")
-        self.second_block_results_button = ctk.CTkButton(self.second_block_button, **sequence_buttons_settings, width=70, text="Results", state="disabled")
+        self.second_block_results_button = ctk.CTkButton(self.second_block_button, **sequence_buttons_settings, width=70, text="Results", command=self.open_second_block_results, state="disabled")
         self.second_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
 
         self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Round", command=self.run_sequence, state="disabled")
@@ -641,6 +641,46 @@ class App(ctk.CTk, AsyncCTk):
             print("First Block is not completed.")
             return
         self.show_first_block_results_popup()
+
+    def format_second_block_results_text(self, results_data):
+        lines = []
+        for round_data in results_data["Rounds"]:
+            lines.append("Round {id} | {state}".format(id=round_data["ID"], state=round_data["State"]))
+            lines.append("")
+            for result in round_data["Results"]:
+                reversals = result.get("Reversals", [])
+                threshold = result.get("Direct_Factor_threshold")
+                response_sequence = result.get("Response_Sequence", [])
+                lines.append("Repetition {rep} | Illuminance={illuminance} Lx".format(
+                    rep=result.get("Repetition"),
+                    illuminance=result.get("Illuminance"),
+                ))
+                lines.append("Trials: {trials}".format(trials=len(response_sequence)))
+                lines.append("Reversal: {reversals} - {count} reversals".format(
+                    reversals=self.format_result_value_list(reversals),
+                    count=len(reversals),
+                ))
+                lines.append("Threshold: {threshold}".format(threshold=threshold))
+                lines.append("")
+            lines.append("")
+        return "\n".join(lines).strip()
+
+    def show_second_block_results_popup(self):
+        results_file = "Participant_Second_Block_Results.txt"
+        if not exists(results_file):
+            ResultsWindow(self, "Second Block Results", "Result file not found.")
+            return
+
+        with open(results_file, "r") as file:
+            results_data = literal_eval(file.read())
+
+        ResultsWindow(self, "Second Block Results", self.format_second_block_results_text(results_data))
+
+    def open_second_block_results(self):
+        if not self.second_block_results_saved:
+            print("Second Block is not completed.")
+            return
+        self.show_second_block_results_popup()
 
     def load_first_block_diffuse_thresholds(self):
         results_file = "Participant_First_Block_Results.txt"
