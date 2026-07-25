@@ -755,30 +755,33 @@ class App(ctk.CTk, AsyncCTk):
 
         return staircases
 
-    def get_active_second_block_staircase(self):
-        staircases = []
-
+    def get_active_second_block_staircases(self):
         if self.active_sequence["State"] == "Sitting":
-            staircases = [
+            return [
                 self.staircase_sitting_second_rep_1,
                 self.staircase_sitting_second_rep_2,
             ]
 
-        elif self.active_sequence["State"] == "Sleeping":
-            staircases = [
+        if self.active_sequence["State"] == "Sleeping":
+            return [
                 self.staircase_sleeping_second_rep_1,
                 self.staircase_sleeping_second_rep_2,
             ]
 
-        else:
-            print(f"Unsupported Second Block state: {self.active_sequence['State']}")
-            return None
+        print(f"Unsupported Second Block state: {self.active_sequence['State']}")
+        return []
 
+    def get_active_second_block_staircase(self):
+        staircases = self.get_active_second_block_staircases()
         for staircase in staircases:
             if staircase is not None and not staircase.is_finished():
                 return staircase
 
         return None
+
+    def active_second_block_round_completed(self):
+        staircases = self.get_active_second_block_staircases()
+        return all(staircase is not None and staircase.is_finished() for staircase in staircases)
 
     def all_first_block_staircases_finished(self):
         staircases = [
@@ -808,6 +811,10 @@ class App(ctk.CTk, AsyncCTk):
         self.active_sequence["Adaptive_Completed"] = True
         self.active_phase.save()
         self.save_first_block_results_if_complete()
+
+    def complete_active_second_block_round(self):
+        self.active_sequence["Adaptive_Completed"] = True
+        self.active_phase.save()
 
     def load_learning_block(self):
         learn_file = self.settings["learn_participant_file"]
@@ -1008,7 +1015,7 @@ class App(ctk.CTk, AsyncCTk):
         E_diffuse = E * (1 - direct_factor)
         return E_direct, E_diffuse
 
-    def update_first_block_scene_row(self, scene):
+    def update_active_block_scene_row(self, scene):
         table_row_idx = self.current_scene_idx - self.table_scene_offset
         row_values = [
             self.current_scene_idx + 1,
@@ -1043,7 +1050,7 @@ class App(ctk.CTk, AsyncCTk):
         scenes.append(scene)
         self.active_staircase = staircase
         self.current_scene_idx = len(scenes) - 1
-        self.update_first_block_scene_row(scene)
+        self.update_active_block_scene_row(scene)
         self.set_scene(scene)
 
         await self.run_initial_isi()
@@ -1069,7 +1076,7 @@ class App(ctk.CTk, AsyncCTk):
             scenes.append(scene)
             self.active_staircase = staircase
             self.current_scene_idx = len(scenes) - 1
-            self.update_first_block_scene_row(scene)
+            self.update_active_block_scene_row(scene)
 
             await self.await_first_block_interstimulus_interval(scene)
 
