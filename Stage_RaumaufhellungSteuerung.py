@@ -26,7 +26,7 @@ import pyartnet as pan #used for controlling the lighting via Art-Net protocol
 import serial #used for communication with the measurement monitor via serial port
 
 # Generates fine-grid block
-from Stage_ProbandGenerator import FormatPrinter, scene as create_scene, generate_participant_first_block_results, generate_participant_second_block_results
+from Stage_ProbandGenerator import FormatPrinter, scene as create_scene, generate_participant_first_block_results, generate_participant_second_block, generate_participant_second_block_results
 from Staircase import AdaptiveStaircase
 
 #loops through all children of a widget and its children in GUI
@@ -424,6 +424,7 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_learning_block = None
         self.phase_first_block = None
         self.phase_second_block = None
+        self.first_block_results_file = "Participant_First_Block_Results.txt"
 
         self.staircase_sitting_df_1 = None
         self.staircase_sitting_df_0 = None
@@ -624,7 +625,7 @@ class App(ctk.CTk, AsyncCTk):
         return "\n".join(lines).strip()
 
     def show_first_block_results_popup(self):
-        results_file = "Participant_First_Block_Results.txt"
+        results_file = self.first_block_results_file
         if not exists(results_file):
             ResultsWindow(self, "First Block Results", "Result file not found.")
             return
@@ -681,7 +682,7 @@ class App(ctk.CTk, AsyncCTk):
         self.show_second_block_results_popup()
 
     def load_first_block_diffuse_thresholds(self):
-        results_file = "Participant_First_Block_Results.txt"
+        results_file = self.first_block_results_file
         if not exists(results_file):
             print("First Block result file not found.")
             return None, None
@@ -738,7 +739,22 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_table.select_row(row_idx)
 
     def load_participant(self):
-        phase = Phase(filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")]))
+        participant_file = filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")])
+        if not participant_file:
+            return
+
+        with open(participant_file, "r") as file:
+            participant_data = literal_eval(file.read())
+
+        if (
+            participant_data.get("Phase") == "First_Block"
+            and participant_data.get("Rounds")
+            and "Results" in participant_data["Rounds"][0]
+        ):
+            self.load_from_first_block_results(participant_file)
+            return
+
+        phase = Phase(participant_file)
         if phase.phase_type == "First_Block":
             self.phase_first_block = phase
             self.create_first_block_staircases()
@@ -759,6 +775,38 @@ class App(ctk.CTk, AsyncCTk):
             self.set_phase(self.phase_second_block)
         else:
             print(f"Unsupported phase type: {phase.phase_type}")
+
+    def load_from_first_block_results(self, results_file):
+        self.first_block_results_file = results_file
+        self.first_block_results_saved = True
+        self.first_block_results_button.configure(state="normal")
+
+        if exists(self.settings["learn_participant_file"]):
+            self.phase_learning_block = Phase(self.settings["learn_participant_file"])
+
+        if exists("Participant_First_Block.txt"):
+            self.phase_first_block = Phase("Participant_First_Block.txt")
+            self.create_first_block_staircases()
+            for round_data in self.phase_first_block["Rounds"]:
+                round_data["Adaptive_Completed"] = True
+            self.first_block_results_saved = True
+
+        self.learning_block_button.enable()
+        self.learning_block_button.turn_on()
+        self.first_block_button.enable()
+        self.first_block_button.turn_on()
+
+        if not exists("Participant_Second_Block.txt"):
+            generate_participant_second_block()
+
+        self.phase_second_block = Phase("Participant_Second_Block.txt")
+        if not self.create_second_block_staircases():
+            self.phase_second_block = None
+            return
+
+        self.second_block_button.enable()
+        self.set_phase(self.phase_second_block)
+        self.participant_label.configure(text="Participant {id}: First Block completed".format(id=self.phase_second_block["ID"]))
 
     def create_first_block_staircases(self):
         self.staircase_sitting_df_1 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Illuminance", direct_factor=1)
