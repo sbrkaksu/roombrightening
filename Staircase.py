@@ -53,6 +53,7 @@ class AdaptiveStaircase:
         self.last_direction = None
         self.trial_count = 0
         self.threshold = None
+        self.first_reversal_ignored = False
 
     @staticmethod
     def get_type_from_direct_factor(direct_factor):
@@ -102,7 +103,10 @@ class AdaptiveStaircase:
             
         # Direction change (reversal) and final-step lock
         if self.last_direction and self.last_direction != current_direction:
-            self.reversal_points.append(self.history[-1])
+            if self.adaptive_stimulus == "Direct_Factor" and not self.first_reversal_ignored:
+                self.first_reversal_ignored = True
+            else:
+                self.reversal_points.append(self.history[-1])
                 
         self.last_direction = current_direction
         
