@@ -540,6 +540,7 @@ class App(ctk.CTk, AsyncCTk):
     def setup_check_window_state(self):
         self.position_window = None
         self.state_position_status = None
+        self.position_checked_round = None
 
     @async_handler
     async def read_monitor_continuously(self):
@@ -1305,10 +1306,12 @@ class App(ctk.CTk, AsyncCTk):
         return scenes, cur_next_scenes
 
     def check_sequence_setup(self):
-        if self.state_position_status != self.active_sequence["State"]:
+        current_round = (self.active_phase.phase_type, self.active_sequence["ID"])
+        if self.position_checked_round != current_round:
             print("State Position Status: ", self.state_position_status)
             print("Active Sequence State: ", self.active_sequence["State"])
             self.state_position_status = self.active_sequence["State"]
+            self.position_checked_round = current_round
             self.open_check_window(state=self.state_position_status)
 
     async def run_initial_isi(self):
