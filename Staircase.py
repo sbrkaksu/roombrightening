@@ -53,7 +53,7 @@ class AdaptiveStaircase:
         self.last_direction = None
         self.trial_count = 0
         self.threshold = None
-        self.first_reversal_ignored = False
+        self.direct_factor_phase = "awaiting_increase"
 
     @staticmethod
     def get_type_from_direct_factor(direct_factor):
@@ -77,11 +77,20 @@ class AdaptiveStaircase:
 
         previous_value_index = self.current_value_index
         
-        if self.adaptive_stimulus == "Direct_Factor" and self.trial_count == 1:
-            self.current_value_index = self.chosen_stimuli.index(1.0)
+        if self.adaptive_stimulus == "Direct_Factor" and self.direct_factor_phase == "awaiting_increase":
+            if response == "-":
+                self.current_value_index = self.chosen_stimuli.index(1.0)
+                self.direct_factor_phase = "awaiting_decrease"
+            self.current_value = self.chosen_stimuli[self.current_value_index]
+            return
 
-        elif self.adaptive_stimulus == "Direct_Factor" and self.trial_count == 2:
-            self.current_value_index = self.chosen_stimuli.index(0.50)
+        elif self.adaptive_stimulus == "Direct_Factor" and self.direct_factor_phase == "awaiting_decrease":
+            if response == "+":
+                self.current_value_index = self.chosen_stimuli.index(0.50)
+                self.direct_factor_phase = "normal"
+                self.last_direction = None
+            self.current_value = self.chosen_stimuli[self.current_value_index]
+            return
 
         elif response == "+":
             self.current_value_index -= 1
@@ -103,10 +112,7 @@ class AdaptiveStaircase:
             
         # Direction change (reversal) and final-step lock
         if self.last_direction and self.last_direction != current_direction:
-            if self.adaptive_stimulus == "Direct_Factor" and not self.first_reversal_ignored:
-                self.first_reversal_ignored = True
-            else:
-                self.reversal_points.append(self.history[-1])
+            self.reversal_points.append(self.history[-1])
                 
         self.last_direction = current_direction
         
