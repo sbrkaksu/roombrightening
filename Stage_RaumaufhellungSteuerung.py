@@ -425,6 +425,7 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_first_block = None
         self.phase_second_block = None
         self.first_block_results_file = "Participant_First_Block_Results.txt"
+        self.second_block_results_file = "Participant_Second_Block_Results.txt"
 
         self.staircase_sitting_df_1 = None
         self.staircase_sitting_df_0 = None
@@ -666,7 +667,7 @@ class App(ctk.CTk, AsyncCTk):
         return "\n".join(lines).strip()
 
     def show_second_block_results_popup(self):
-        results_file = "Participant_Second_Block_Results.txt"
+        results_file = self.second_block_results_file
         if not exists(results_file):
             ResultsWindow(self, "Second Block Results", "Result file not found.")
             return
@@ -754,6 +755,13 @@ class App(ctk.CTk, AsyncCTk):
         ):
             self.load_from_first_block_results(participant_file)
             return
+        if (
+            participant_data.get("Phase") == "Second_Block"
+            and participant_data.get("Rounds")
+            and "Results" in participant_data["Rounds"][0]
+        ):
+            self.load_from_second_block_results(participant_file)
+            return
 
         phase = Phase(participant_file)
         if phase.phase_type == "First_Block":
@@ -808,6 +816,31 @@ class App(ctk.CTk, AsyncCTk):
         self.second_block_button.enable()
         self.set_phase(self.phase_second_block)
         self.participant_label.configure(text="Participant {id}: First Block completed".format(id=self.phase_second_block["ID"]))
+
+    def load_from_second_block_results(self, results_file):
+        self.second_block_results_file = results_file
+        self.second_block_results_saved = True
+        self.second_block_results_button.configure(state="normal")
+
+        self.learning_block_button.enable()
+        self.learning_block_button.turn_on()
+        self.first_block_button.enable()
+        self.first_block_button.turn_on()
+        self.second_block_button.enable()
+        self.second_block_button.turn_on()
+
+        if exists("Participant_Second_Block.txt"):
+            self.phase_second_block = Phase("Participant_Second_Block.txt")
+            for round_data in self.phase_second_block["Rounds"]:
+                round_data["Adaptive_Completed"] = True
+            self.set_phase(self.phase_second_block)
+        else:
+            self.active_phase = None
+            self.active_sequence = None
+            self.sequence_table.update_table([])
+            self.sequence_start_reset_button.configure(state="disabled")
+
+        self.participant_label.configure(text="Participant 1: Second Block completed")
 
     def create_first_block_staircases(self):
         self.staircase_sitting_df_1 = AdaptiveStaircase(state="sitting", adaptive_stimulus="Illuminance", direct_factor=1)
