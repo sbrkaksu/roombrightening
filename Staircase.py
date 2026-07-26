@@ -37,7 +37,10 @@ class AdaptiveStaircase:
             self.chosen_stimuli = self.stimuli_direct_factor
 
         # Parameters
-        self.current_value_index = len(self.chosen_stimuli) - 1
+        if self.adaptive_stimulus == "Direct_Factor":
+            self.current_value_index = self.chosen_stimuli.index(0.0)
+        else:
+            self.current_value_index = len(self.chosen_stimuli) - 1
         self.current_value = self.chosen_stimuli[self.current_value_index]
         self.max_trials = 32
         self.target_reversals = 6
@@ -73,8 +76,13 @@ class AdaptiveStaircase:
 
         previous_value_index = self.current_value_index
         
-        # 1-Up / 1-Down rule
-        if response == "+":
+        if self.adaptive_stimulus == "Direct_Factor" and self.trial_count == 1:
+            self.current_value_index = self.chosen_stimuli.index(1.0)
+
+        elif self.adaptive_stimulus == "Direct_Factor" and self.trial_count == 2:
+            self.current_value_index = self.chosen_stimuli.index(0.50)
+
+        elif response == "+":
             self.current_value_index -= 1
 
         elif response == "-":
