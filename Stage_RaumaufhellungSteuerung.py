@@ -392,6 +392,7 @@ class App(ctk.CTk, AsyncCTk):
             "monitor_baud_rate":        9600,
             "monitor_E_factor_spot_1":  2.33e7,
             "monitor_E_factor_diffus":  2.71e7,
+            "monitor_reading_light_I_offset": 9e-10,
             "scene_duration":           1.5, #4.5, # seconds
             "scene_fade_duration":      0.2, # seconds QLC fades in 100 ms
             "inter-stimulus-interval":  1, #2.5, #seconds
@@ -568,11 +569,14 @@ class App(ctk.CTk, AsyncCTk):
     def set_scene_monitor(self):
         if self.monitor_I and self.active_scene is not None:
             print(self.monitor_I)
+            monitor_I = self.monitor_I
+            if self.active_sequence is not None and self.active_sequence["State"] == "Sitting":
+                monitor_I = max(0, monitor_I - self.settings["monitor_reading_light_I_offset"])
             direct_factor = self.active_scene["Direct_Factor"]
             factor_direct = self.settings["monitor_E_factor_spot_1"]
             factor_diffuse = self.settings["monitor_E_factor_diffus"]
             factor = (factor_direct * direct_factor) + (factor_diffuse * (1 - direct_factor))
-            EM = self.monitor_I * factor
+            EM = monitor_I * factor
             EM = f"{EM:.2e}" # format E monitor in exponential notation for the table
             print(EM)
             self.sequence_table.update_cell(EM, "E Monitor")
