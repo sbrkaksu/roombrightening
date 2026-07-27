@@ -527,8 +527,6 @@ class App(ctk.CTk, AsyncCTk):
     def setup_roomlight_controls(self):
         self.roomlight_button = ctk.CTkButton(self.seq_crtl_frame, text="Roomlight", command=lambda:self.set_roomlight_level(2))
         self.roomlight_button.grid(row=7, column=0, padx=10, pady=10, sticky="s")
-        self.test_results_button = ctk.CTkButton(self.seq_crtl_frame, text="Test", command=self.show_first_block_results_popup)
-        self.test_results_button.grid(row=8, column=0, padx=10, pady=(0, 10), sticky="s")
         self.freeze_qlc_button = ctk.CTkButton(self.seq_crtl_frame, text="Freeze QLC", command=self.toggle_freeze_qlc)
         self.freeze_qlc_button.grid(row=9, column=0, padx=10, pady=(0, 10), sticky="s")
 
