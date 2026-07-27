@@ -420,6 +420,7 @@ class App(ctk.CTk, AsyncCTk):
         self.active_staircase = None
         self.table_scene_offset = 0
         self.sequence_task = None
+        self.active_block_reset_requested = False
 
         self.phase_learning_block = None
         self.phase_first_block = None
@@ -1139,7 +1140,72 @@ class App(ctk.CTk, AsyncCTk):
         
     def reset_sequence(self):
         self.pause_stop_event.set()
+        if self.active_phase is not None and self.active_phase.phase_type in ("First_Block", "Second_Block"):
+            self.active_block_reset_requested = True
         self.sequence_task.cancel()
+
+    @staticmethod
+    def response_from_scene(scene):
+        disturbed = scene.get("Disturbed")
+        if disturbed == "Yes":
+            return "+"
+        if disturbed == "No":
+            return "-"
+        return None
+
+    def rebuild_first_block_staircases_from_scenes(self):
+        self.create_first_block_staircases()
+        staircases_by_state_and_df = {
+            ("Sitting", 1): self.staircase_sitting_df_1,
+            ("Sitting", 0): self.staircase_sitting_df_0,
+            ("Sleeping", 1): self.staircase_sleeping_df_1,
+            ("Sleeping", 0): self.staircase_sleeping_df_0,
+        }
+
+        for round_data in self.active_phase["Rounds"]:
+            state = round_data["State"]
+            for scene in round_data["Scenes"]:
+                response = self.response_from_scene(scene)
+                if response is None:
+                    continue
+                staircase = staircases_by_state_and_df[(state, scene["Direct_Factor"])]
+                staircase.update(response)
+
+    def rebuild_second_block_staircases_from_scenes(self):
+        if not self.create_second_block_staircases():
+            raise RuntimeError("Second Block staircases could not be rebuilt.")
+
+        staircases_by_state = {
+            "Sitting": [self.staircase_sitting_second_rep_1, self.staircase_sitting_second_rep_2],
+            "Sleeping": [self.staircase_sleeping_second_rep_1, self.staircase_sleeping_second_rep_2],
+        }
+
+        for round_data in self.active_phase["Rounds"]:
+            staircases = staircases_by_state[round_data["State"]]
+            staircase_index = 0
+            for scene in round_data["Scenes"]:
+                response = self.response_from_scene(scene)
+                if response is None:
+                    continue
+                while staircase_index < len(staircases) and staircases[staircase_index].is_finished():
+                    staircase_index += 1
+                if staircase_index >= len(staircases):
+                    raise RuntimeError("Second Block contains more completed scenes than its staircases.")
+                staircases[staircase_index].update(response)
+
+    def rollback_active_block_page(self):
+        del self.active_sequence["Scenes"][self.table_scene_offset:]
+        self.active_sequence["Adaptive_Completed"] = False
+        self.active_phase.save()
+
+        if self.active_phase.phase_type == "First_Block":
+            self.rebuild_first_block_staircases_from_scenes()
+        else:
+            self.rebuild_second_block_staircases_from_scenes()
+
+        self.active_staircase = None
+        self.current_scene_idx = None
+        self.set_sequence()
 
     async def run_sequence_task(self):
         pause_duration = self.settings["sequence_pause_duration"]
@@ -1444,6 +1510,9 @@ class App(ctk.CTk, AsyncCTk):
         self.countdown_timer_var.set(0)
         self.active_scene = None
         self.current_scene_idx = None
+        if self.active_block_reset_requested:
+            self.rollback_active_block_page()
+            self.active_block_reset_requested = False
         self.set_sequence_scene_label()
         if self.active_phase.phase_type in ("First_Block", "Second_Block"):
             can_start = (
