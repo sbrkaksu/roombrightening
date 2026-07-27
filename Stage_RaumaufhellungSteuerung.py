@@ -141,6 +141,24 @@ class CheckWindow(ctk.CTkToplevel):
         self.confirm_button = ctk.CTkButton(self, text=label, command=self.destroy)
         self.confirm_button.grid(row=0, column=0, padx=20, pady=30, sticky="nsew")
 
+class ReminderWindow(ctk.CTkToplevel):
+    def __init__(self, parent, title, message, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        super().transient(parent)
+
+        parent.update_idletasks()
+        popup_x = parent.winfo_rootx() + 20
+        popup_y = parent.winfo_rooty() + 20
+        self.geometry(f"320x160+{popup_x}+{popup_y}")
+        self.title(title)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        self.message_label = ctk.CTkLabel(self, text=message)
+        self.message_label.grid(row=0, column=0, padx=20, pady=(25, 10), sticky="nsew")
+        self.close_button = ctk.CTkButton(self, text="Close", command=self.destroy)
+        self.close_button.grid(row=1, column=0, padx=20, pady=(0, 20), sticky="ew")
+
 class ResultsWindow(ctk.CTkToplevel):
     def __init__(self, parent, title, text, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
@@ -438,6 +456,7 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sleeping_second_rep_2 = None
         self.first_block_results_saved = False
         self.second_block_results_saved = False
+        self.mid_break_reminder_shown = False
 
         self.sequence_stop_event = asyncio.Event()
         self.sequence_continue_event = asyncio.Event()
@@ -766,6 +785,7 @@ class App(ctk.CTk, AsyncCTk):
         if phase.phase_type == "First_Block":
             self.phase_first_block = phase
             self.create_first_block_staircases()
+            self.mid_break_reminder_shown = False
             self.learning_block_button.enable()
             self.first_block_button.disable()
             self.active_phase = None
@@ -1520,10 +1540,19 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_start_reset_button.configure(state="normal" if can_start else "disabled")
         self.update_phase_buttons_after_sequence()
 
+        show_mid_break_reminder = (
+            self.active_phase.phase_type == "First_Block"
+            and self.active_phase.check_completion()
+            and not self.mid_break_reminder_shown
+        )
+
         await self.await_countdown_timer(start_time=pause_duration,
                                          stop_event=self.pause_stop_event,
                                          label="Pause")
         self.pause_stop_event.clear()
+        if show_mid_break_reminder:
+            self.mid_break_reminder_shown = True
+            ReminderWindow(self, "Break", "Give 3 minutes break!")
 
     def update_phase_buttons_after_sequence(self):
         if self.phase_learning_block is not None and self.phase_learning_block.check_completion() == True:
