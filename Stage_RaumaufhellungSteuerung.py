@@ -486,10 +486,10 @@ class App(ctk.CTk, AsyncCTk):
         self.second_block_results_button = ctk.CTkButton(self.second_block_button, **sequence_buttons_settings, width=70, text="Results", command=self.open_second_block_results, state="disabled")
         self.second_block_results_button.place(relx=0.5, rely=0.78, anchor="center")
 
-        self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Round", command=self.run_sequence, state="disabled")
+        self.sequence_start_reset_button = ctk.CTkButton(self.seq_crtl_frame, text="Start Sequence", command=self.run_sequence, state="disabled")
         self.sequence_start_reset_button.grid(row=4, column=0, padx=10, pady=10, sticky="n")
 
-        self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Pause Round", command=self.stop_sequence, state="disabled")
+        self.sequence_stop_continue_button = ctk.CTkButton(self.seq_crtl_frame, text="Pause Sequence", command=self.stop_sequence, state="disabled")
         self.sequence_stop_continue_button.grid(row=5, column=0, padx=10, pady=10, sticky="n")
 
     def setup_table(self):
@@ -1126,13 +1126,13 @@ class App(ctk.CTk, AsyncCTk):
 
     def set_sequence_paused(self, paused):
         if paused:
-            self.sequence_stop_continue_button.configure(text="Continue Round",
+            self.sequence_stop_continue_button.configure(text="Continue Sequence",
                                                       command=self.continue_sequence,
                                                       fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
             self.roomlight_button.configure(state="normal")
             self.set_roomlight_level(1)
         else:
-            self.sequence_stop_continue_button.configure(text="Pause Round", command=self.stop_sequence, fg_color="red")
+            self.sequence_stop_continue_button.configure(text="Pause Sequence", command=self.stop_sequence, fg_color="red")
             self.roomlight_button.configure(state="disabled")
             self.set_roomlight_level(0)
         
@@ -1499,8 +1499,8 @@ class App(ctk.CTk, AsyncCTk):
         self.reading_light_intensity.set_values([0]) #turn off reading light during pause
         self.sequence_table.deselect_row()
         self.sequence_stop_event.clear()
-        self.sequence_start_reset_button.configure(text="Start Round", command=self.run_sequence)
-        self.sequence_stop_continue_button.configure(text="Pause Round", command=self.stop_sequence,
+        self.sequence_start_reset_button.configure(text="Start Sequence", command=self.run_sequence)
+        self.sequence_stop_continue_button.configure(text="Pause Sequence", command=self.stop_sequence,
                                                     state="disabled", fg_color=ctk.ThemeManager.theme["CTkButton"]["fg_color"])
         self.load_participant_button.configure(state="normal")
         self.roomlight_button.configure(state="normal")
@@ -1545,7 +1545,7 @@ class App(ctk.CTk, AsyncCTk):
         self.sequence_task = asyncio.create_task(self.run_sequence_task(), name="run_sequence")
         # switch button to stop sequence
         self.sequence_stop_continue_button.configure(state='normal',fg_color="red")
-        self.sequence_start_reset_button.configure(text="Reset Round", command=self.reset_sequence)
+        self.sequence_start_reset_button.configure(text="Reset Sequence", command=self.reset_sequence)
         self.load_participant_button.configure(state="disabled")
         # disable sequence change buttons
         self.learning_block_button.disable_children()
