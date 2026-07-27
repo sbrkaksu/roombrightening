@@ -531,9 +531,9 @@ class App(ctk.CTk, AsyncCTk):
         self.scene_countdown_finished = asyncio.Event()
         self.countdown_after_id = None
         self.countdown_label  = ctk.CTkLabel(self.table_frame, text="Test", font=(font.nametofont("TkDefaultFont"), 18))
-        self.countdown_label.place(relx=0.89, y=18, anchor="nw")
+        self.countdown_label.place(relx=0.89, y=14, anchor="nw")
         self.countdown_digits = ctk.CTkLabel(self.table_frame, text="00.0", font=(font.nametofont("TkDefaultFont"), 18))
-        self.countdown_digits.place(relx=0.88, y=18, anchor="ne")
+        self.countdown_digits.place(relx=0.88, y=14, anchor="ne")
 
     def setup_qlc_controls(self):
         self.qlc_init_button = ctk.CTkButton(self, text="QLC+ initialisieren", command=self.init_qlc)
@@ -1090,16 +1090,17 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_phase.phase_type in ("First_Block", "Second_Block"):
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else len(scenes)
             if self.active_phase.phase_type == "First_Block":
-                staircases = self.get_active_first_block_staircases()
-                staircase_labels = ", ".join(["DF={df}".format(df=staircase.direct_factor) for staircase in staircases])
+                adaptive_stimulus = "Illuminance"
+                fixed_stimulus = "Direct Factor"
             else:
-                staircases = self.get_active_second_block_staircases()
-                staircase_labels = ", ".join(["Rep {rep}".format(rep=idx + 1) for idx, staircase in enumerate(staircases) if staircase is not None])
-            label = "Round {did} | Trial {pgr} | State: {state} | Active Staircases: {staircases}".format(
+                adaptive_stimulus = "Direct Factor"
+                fixed_stimulus = "Illuminance"
+            label = "Round {did} | Trial {pgr} | State: {state} | Adaptive Stimulus: {adaptive_stimulus} | Fixed Stimulus: {fixed_stimulus}".format(
                 did=self.active_sequence["ID"],
                 pgr=progress,
                 state=self.active_sequence["State"],
-                staircases=staircase_labels,
+                adaptive_stimulus=adaptive_stimulus,
+                fixed_stimulus=fixed_stimulus,
             )
         else:
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
