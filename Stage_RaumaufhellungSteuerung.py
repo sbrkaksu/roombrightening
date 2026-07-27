@@ -632,6 +632,7 @@ class App(ctk.CTk, AsyncCTk):
             for result in round_data["Results"]:
                 reversals = result.get("Reversals", [])
                 threshold = result.get("E_threshold")
+                threshold_text = f"{threshold:.4f}".rstrip("0").rstrip(".") if threshold is not None else "None"
                 response_sequence = result.get("Response_Sequence", [])
                 lines.append("{type} | DF={df}".format(type=result.get("Type"), df=result.get("Direct_Factor")))
                 lines.append("Trials: {trials}".format(trials=len(response_sequence)))
@@ -639,7 +640,7 @@ class App(ctk.CTk, AsyncCTk):
                     reversals=self.format_result_value_list(reversals),
                     count=len(reversals),
                 ))
-                lines.append("Threshold: {threshold} Lx".format(threshold=threshold))
+                lines.append("Threshold: {threshold} Lx".format(threshold=threshold_text))
                 lines.append("")
             lines.append("")
         return "\n".join(lines).strip()
@@ -669,6 +670,7 @@ class App(ctk.CTk, AsyncCTk):
             for result in round_data["Results"]:
                 reversals = result.get("Reversals", [])
                 threshold = result.get("Direct_Factor_threshold")
+                threshold_text = f"{threshold:.4f}".rstrip("0").rstrip(".") if threshold is not None else "None"
                 response_sequence = result.get("Response_Sequence", [])
                 lines.append("Repetition {rep} | Illuminance={illuminance} Lx".format(
                     rep=result.get("Repetition"),
@@ -679,7 +681,7 @@ class App(ctk.CTk, AsyncCTk):
                     reversals=self.format_result_value_list(reversals),
                     count=len(reversals),
                 ))
-                lines.append("Threshold: {threshold}".format(threshold=threshold))
+                lines.append("Threshold: {threshold}".format(threshold=threshold_text))
                 lines.append("")
             lines.append("")
         return "\n".join(lines).strip()
