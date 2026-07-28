@@ -1580,7 +1580,7 @@ class App(ctk.CTk, AsyncCTk):
         self.diffuse_intensity.set_values(i.to_bytes(2,'big'))
 
     def set_isi(self):
-        brightness = 7000
+        brightness = 5700
         self.isi_intensity.set_values(brightness.to_bytes(2,'big'))
         self.isi_color.set_values([255,0,0,0])
         self.pixel2_7_intensity.set_values([0])
