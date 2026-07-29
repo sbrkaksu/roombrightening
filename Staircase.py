@@ -38,7 +38,7 @@ class AdaptiveStaircase:
 
         # Parameters
         if self.adaptive_stimulus == "Direct_Factor":
-            self.current_value_index = self.chosen_stimuli.index(0.0)
+            self.current_value_index = self.chosen_stimuli.index(1.0)
         else:
             self.current_value_index = len(self.chosen_stimuli) - 1
         self.current_value = self.chosen_stimuli[self.current_value_index]
@@ -53,7 +53,7 @@ class AdaptiveStaircase:
         self.last_direction = None
         self.trial_count = 0
         self.threshold = None
-        self.direct_factor_phase = "awaiting_increase"
+        self.direct_factor_phase = "awaiting_decrease"
 
     @staticmethod
     def get_type_from_direct_factor(direct_factor):
@@ -77,14 +77,7 @@ class AdaptiveStaircase:
 
         previous_value_index = self.current_value_index
         
-        if self.adaptive_stimulus == "Direct_Factor" and self.direct_factor_phase == "awaiting_increase":
-            if response == "-":
-                self.current_value_index = self.chosen_stimuli.index(1.0)
-                self.direct_factor_phase = "awaiting_decrease"
-            self.current_value = self.chosen_stimuli[self.current_value_index]
-            return
-
-        elif self.adaptive_stimulus == "Direct_Factor" and self.direct_factor_phase == "awaiting_decrease":
+        if self.adaptive_stimulus == "Direct_Factor" and self.direct_factor_phase == "awaiting_decrease":
             if response == "+":
                 self.current_value_index = self.chosen_stimuli.index(0.50)
                 self.direct_factor_phase = "normal"
