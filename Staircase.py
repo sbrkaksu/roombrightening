@@ -42,7 +42,7 @@ class AdaptiveStaircase:
         else:
             self.current_value_index = len(self.chosen_stimuli) - 1
         self.current_value = self.chosen_stimuli[self.current_value_index]
-        self.max_trials = 32
+        self.max_trials = 40
         self.target_reversals = 6
         
         
