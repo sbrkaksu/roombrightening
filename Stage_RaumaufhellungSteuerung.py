@@ -1442,7 +1442,8 @@ class App(ctk.CTk, AsyncCTk):
             self.set_all_intensities(0)
             self.set_isi()
             self.fade_isi()
-            self.szene_ctc.set_values([245])
+            self.moving_head_ctc.set_values([237])
+            self.led_bar_ctc.set_values([240])
             self.spot_color.set_values([255,255,255,255])
             self.room_light_level.set_values([255])
 
@@ -1479,10 +1480,11 @@ class App(ctk.CTk, AsyncCTk):
 
         self.spot1_intensity    = self.qlc_input.add_channel(start=1, width=2) # Direct spot 1
         self.diffuse_intensity  = self.qlc_input.add_channel(start=3, width=2) # Diffuse spot
+        self.led_bar_ctc        = self.qlc_input.add_channel(start=5, width=1) # LED bar CTC
         self.isi_intensity      = self.qlc_input.add_channel(start=9, width=2) # Master ISI intensity
         self.spot_color         = self.qlc_input.add_channel(start=11, width=4) # R,G,B,L
         self.isi_color          = self.qlc_input.add_channel(start=15, width=4) # R,G,B,L
-        self.szene_ctc          = self.qlc_input.add_channel(start=19, width=1) # CTC
+        self.moving_head_ctc    = self.qlc_input.add_channel(start=19, width=1) # CTC
         self.isi_ctc            = self.qlc_input.add_channel(start=20, width=1) # CTC
         self.qlc_init_channel   = self.qlc_input.add_channel(start=21, width=1) # Init-Button
         self.sequence_control   = self.qlc_input.add_channel(start=22, width=1) # Control the Sequence of Szene and ISI
