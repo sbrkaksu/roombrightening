@@ -133,7 +133,6 @@ class App(ctk.CTk, AsyncCTk):
             "sequence_pause_duration":  45.0, # 45 seconds
             "maxE_spot1": 165,
             "maxE_diffus": 433,
-            "direct_center_linear_limit": 101,
             "direct_center_curve": (-3.0235e-09, 0.0020, 0.1933),
             "diffuse_curve": (-2.0148e-08, 0.0076, -0.0306),
             "pixel2_7_multiplier_curve": (9.4010e-05, -7.8784e-05, 0.9898),
@@ -1544,8 +1543,8 @@ class App(ctk.CTk, AsyncCTk):
     def calculate_spot_dmx(self, E):
         dmx8_max = 2**8 - 1
         dmx16_max = 2**16 - 1
-        maxE = self.settings["maxE_spot1"]
-        linear_limit = self.settings["direct_center_linear_limit"]
+        maxE = self.settings["maxE_spot1"] * self.settings["maxAussteuerung_faktor_pixel1"]
+        linear_limit = 101
 
         E = max(0, E)
 
