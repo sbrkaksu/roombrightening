@@ -42,18 +42,19 @@ def scene(type, direct_factor, E, disturbed, reaction_time):
 # Generates participant files when this .py file is run
 
 
-def generate_participant_first_block():
+def generate_participant_first_block(output_file="Participant_First_Block.txt"):
      
         participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
-        with open("Participant_First_Block.txt", "w") as file:
+        with open(output_file, "w") as file:
             file.write(printer.pformat(participant))
 
 def generate_participant_first_block_results(staircase_sitting_df_1, staircase_sitting_df_0,
-                                         staircase_sleeping_df_1, staircase_sleeping_df_0):
+                                         staircase_sleeping_df_1, staircase_sleeping_df_0,
+                                         output_file="Participant_First_Block_Results.txt"):
      
         participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
             {'ID': 1, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
@@ -92,21 +93,22 @@ def generate_participant_first_block_results(staircase_sitting_df_1, staircase_s
             ]},
         ]}
 
-        with open("Participant_First_Block_Results.txt", "w") as file:
+        with open(output_file, "w") as file:
             file.write(printer.pformat(participant))
 
-def generate_participant_second_block():
+def generate_participant_second_block(output_file="Participant_Second_Block.txt"):
      
         participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
             {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
-        with open("Participant_Second_Block.txt", "w") as file:
+        with open(output_file, "w") as file:
             file.write(printer.pformat(participant))
 
 def generate_participant_second_block_results(staircase_sitting_rep_1, staircase_sitting_rep_2,
-                                              staircase_sleeping_rep_1, staircase_sleeping_rep_2):
+                                              staircase_sleeping_rep_1, staircase_sleeping_rep_2,
+                                              output_file="Participant_Second_Block_Results.txt"):
      
         participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
             {'ID': 3, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
@@ -141,7 +143,7 @@ def generate_participant_second_block_results(staircase_sitting_rep_1, staircase
             ]},
         ]}
 
-        with open("Participant_Second_Block_Results.txt", "w") as file:
+        with open(output_file, "w") as file:
             file.write(printer.pformat(participant))
 
 if __name__ == "__main__":

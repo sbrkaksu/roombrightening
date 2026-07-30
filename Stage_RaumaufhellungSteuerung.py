@@ -1,7 +1,7 @@
 # Data parsing, formatting and file handling
 from ast import literal_eval #dict type security for participant file reading
 import os
-from os.path import splitext, exists #used for saving result files with correct naming and preventing overwriting 
+from os.path import abspath, basename, dirname, exists, join, splitext #used for saving result files with correct naming and preventing overwriting
 from re import compile #used for parsing the monitor input with regular expressions
 import sys
 
@@ -158,6 +158,8 @@ class App(ctk.CTk, AsyncCTk):
         self.phase_learning_block = None
         self.phase_first_block = None
         self.phase_second_block = None
+        self.first_block_file = "Participant_First_Block.txt"
+        self.second_block_file = "Participant_Second_Block.txt"
         self.first_block_results_file = "Participant_First_Block_Results.txt"
         self.second_block_results_file = "Participant_Second_Block_Results.txt"
 
@@ -475,6 +477,21 @@ class App(ctk.CTk, AsyncCTk):
         self.current_scene_idx = scene_idx
         self.sequence_table.select_row(row_idx)
 
+    def set_participant_file_family(self, selected_file):
+        filename_pattern = compile(
+            r"^(Participant(?:_\d+)?)_(First_Block(?:_Results)?|Second_Block(?:_Results)?)\.txt$"
+        )
+        match = filename_pattern.fullmatch(basename(selected_file))
+        if match is None:
+            return
+
+        folder = dirname(abspath(selected_file))
+        participant_prefix = match.group(1)
+        self.first_block_file = join(folder, f"{participant_prefix}_First_Block.txt")
+        self.first_block_results_file = join(folder, f"{participant_prefix}_First_Block_Results.txt")
+        self.second_block_file = join(folder, f"{participant_prefix}_Second_Block.txt")
+        self.second_block_results_file = join(folder, f"{participant_prefix}_Second_Block_Results.txt")
+
     def load_participant(self):
         participant_file = filedialog.askopenfilename(filetypes=[("Text file", "*.txt"),("All files", "*.*")])
         if not participant_file:
@@ -482,6 +499,8 @@ class App(ctk.CTk, AsyncCTk):
 
         with open(participant_file, "r") as file:
             participant_data = literal_eval(file.read())
+
+        self.set_participant_file_family(participant_file)
 
         if (
             participant_data.get("Phase") == "First_Block"
@@ -501,7 +520,7 @@ class App(ctk.CTk, AsyncCTk):
         phase = Phase(participant_file)
         if phase.phase_type == "First_Block":
             self.phase_first_block = phase
-            self.create_first_block_staircases()
+            self.rebuild_first_block_staircases_from_scenes()
             self.mid_break_reminder_shown = False
             self.learning_block_button.enable()
             self.first_block_button.disable()
@@ -513,11 +532,16 @@ class App(ctk.CTk, AsyncCTk):
             self.sequence_start_reset_button.configure(state="disabled")
         elif phase.phase_type == "Second_Block":
             self.phase_second_block = phase
-            if not self.create_second_block_staircases():
+            if not self.rebuild_second_block_staircases_from_scenes():
                 self.phase_second_block = None
                 return
             self.second_block_button.enable()
-            self.set_phase(self.phase_second_block)
+            if self.all_second_block_staircases_finished():
+                for round_data in self.phase_second_block["Rounds"]:
+                    round_data["Adaptive_Completed"] = True
+                self.phase_second_block.save()
+                self.save_second_block_results_if_complete()
+            self.restore_block_ui(self.phase_second_block)
         else:
             print(f"Unsupported phase type: {phase.phase_type}")
 
@@ -529,9 +553,9 @@ class App(ctk.CTk, AsyncCTk):
         if exists(self.settings["learn_participant_file"]):
             self.phase_learning_block = Phase(self.settings["learn_participant_file"])
 
-        if exists("Participant_First_Block.txt"):
-            self.phase_first_block = Phase("Participant_First_Block.txt")
-            self.create_first_block_staircases()
+        if exists(self.first_block_file):
+            self.phase_first_block = Phase(self.first_block_file)
+            self.rebuild_first_block_staircases_from_scenes()
             for round_data in self.phase_first_block["Rounds"]:
                 round_data["Adaptive_Completed"] = True
             self.first_block_results_saved = True
@@ -541,22 +565,12 @@ class App(ctk.CTk, AsyncCTk):
         self.first_block_button.enable()
         self.first_block_button.turn_on()
 
-        if not exists("Participant_Second_Block.txt"):
-            generate_participant_second_block()
-
-        self.phase_second_block = Phase("Participant_Second_Block.txt")
-        if not self.create_second_block_staircases():
-            self.phase_second_block = None
+        if not self.prepare_second_block(activate=True):
             return
-
-        self.second_block_button.enable()
-        self.set_phase(self.phase_second_block)
         self.participant_label.configure(text="Participant {id}: First Block completed".format(id=self.phase_second_block["ID"]))
 
     def load_from_second_block_results(self, results_file):
         self.second_block_results_file = results_file
-        self.second_block_results_saved = True
-        self.second_block_results_button.configure(state="normal")
 
         self.learning_block_button.enable()
         self.learning_block_button.turn_on()
@@ -565,12 +579,20 @@ class App(ctk.CTk, AsyncCTk):
         self.second_block_button.enable()
         self.second_block_button.turn_on()
 
-        if exists("Participant_Second_Block.txt"):
-            self.phase_second_block = Phase("Participant_Second_Block.txt")
-            for round_data in self.phase_second_block["Rounds"]:
-                round_data["Adaptive_Completed"] = True
-            self.set_phase(self.phase_second_block)
+        if exists(self.second_block_file):
+            self.phase_second_block = Phase(self.second_block_file)
+            if not self.rebuild_second_block_staircases_from_scenes():
+                self.phase_second_block = None
+                return
+            if self.all_second_block_staircases_finished():
+                for round_data in self.phase_second_block["Rounds"]:
+                    round_data["Adaptive_Completed"] = True
+            self.second_block_results_saved = True
+            self.second_block_results_button.configure(state="normal")
+            self.restore_block_ui(self.phase_second_block)
         else:
+            self.second_block_results_saved = True
+            self.second_block_results_button.configure(state="normal")
             self.active_phase = None
             self.active_sequence = None
             self.sequence_table.update_table([])
@@ -597,6 +619,43 @@ class App(ctk.CTk, AsyncCTk):
         self.staircase_sleeping_second_rep_2 = AdaptiveStaircase(state="sleeping", adaptive_stimulus="Direct_Factor", illuminance=sleeping_illuminance_threshold)
         self.second_block_results_saved = False
         return True
+
+    def prepare_second_block(self, activate=False):
+        if not exists(self.second_block_file):
+            generate_participant_second_block(self.second_block_file)
+
+        self.phase_second_block = Phase(self.second_block_file)
+        if not self.rebuild_second_block_staircases_from_scenes():
+            self.phase_second_block = None
+            return False
+
+        self.second_block_button.enable()
+        if self.all_second_block_staircases_finished():
+            for round_data in self.phase_second_block["Rounds"]:
+                round_data["Adaptive_Completed"] = True
+            self.phase_second_block.save()
+            self.save_second_block_results_if_complete()
+
+        if activate:
+            self.restore_block_ui(self.phase_second_block)
+        return True
+
+    def restore_block_ui(self, phase):
+        incomplete_indices = [
+            index
+            for index, round_data in enumerate(phase["Rounds"])
+            if not round_data.get("Adaptive_Completed", False)
+        ]
+        phase.seq_idx = incomplete_indices[0] if incomplete_indices else len(phase["Rounds"]) - 1
+        self.set_phase(phase)
+
+        scenes = self.active_sequence["Scenes"]
+        scene_limit = self.settings["max_scene_before_sequence_pause"]
+        if self.active_sequence.get("Adaptive_Completed", False):
+            self.table_scene_offset = max(0, ((max(1, len(scenes)) - 1) // scene_limit) * scene_limit)
+        else:
+            self.table_scene_offset = (len(scenes) // scene_limit) * scene_limit
+        self.set_sequence()
 
     def get_active_first_block_staircases(self):
         staircases = []
@@ -675,9 +734,11 @@ class App(ctk.CTk, AsyncCTk):
             self.staircase_sitting_df_0,
             self.staircase_sleeping_df_1,
             self.staircase_sleeping_df_0,
+            self.first_block_results_file,
         )
         self.first_block_results_saved = True
         self.first_block_results_button.configure(state="normal")
+        self.prepare_second_block()
 
     def save_second_block_results_if_complete(self):
         if self.second_block_results_saved:
@@ -690,6 +751,7 @@ class App(ctk.CTk, AsyncCTk):
             self.staircase_sitting_second_rep_2,
             self.staircase_sleeping_second_rep_1,
             self.staircase_sleeping_second_rep_2,
+            self.second_block_results_file,
         )
         self.second_block_results_saved = True
         self.second_block_results_button.configure(state="normal")
@@ -718,7 +780,7 @@ class App(ctk.CTk, AsyncCTk):
         if self.phase_learning_block is None or self.phase_learning_block.check_completion() is not True:
             print("Complete the Learning Block before starting First Block.")
             return
-        self.set_phase(self.phase_first_block)
+        self.restore_block_ui(self.phase_first_block)
 
     def select_random_staircase(self, staircases):
         seed = int.from_bytes(os.urandom(128), sys.byteorder)
@@ -837,7 +899,7 @@ class App(ctk.CTk, AsyncCTk):
             seq_values = [[self.table_scene_offset + idx + 1, s.get("Type"), str(s.get("Direct_Factor")), s.get("E"), s.get("E_monitor"), s.get("Disturbed"), s.get("Reaction Time")] for idx, s in enumerate(visible_scenes)]
             if (
                 not self.active_sequence.get("Adaptive_Completed", False)
-                and self.table_scene_offset == len(scenes)
+                and self.table_scene_offset <= len(scenes) < self.table_scene_offset + scene_limit
             ):
                 for idx in range(len(seq_values), scene_limit):
                     seq_values.append([self.table_scene_offset + idx + 1, None, None, None, None, None, None])
@@ -849,7 +911,7 @@ class App(ctk.CTk, AsyncCTk):
         active_block_can_start = (
             self.active_phase.phase_type in ("First_Block", "Second_Block")
             and not self.active_sequence.get("Adaptive_Completed", False)
-            and self.table_scene_offset == len(scenes)
+            and self.table_scene_offset <= len(scenes) < self.table_scene_offset + self.settings["max_scene_before_sequence_pause"]
         )
         can_start = active_block_can_start if self.active_phase.phase_type in ("First_Block", "Second_Block") else bool(scenes)
         self.sequence_start_reset_button.configure(state="normal" if can_start else "disabled")
@@ -898,7 +960,7 @@ class App(ctk.CTk, AsyncCTk):
             ("Sleeping", 0): self.staircase_sleeping_df_0,
         }
 
-        for round_data in self.active_phase["Rounds"]:
+        for round_data in self.phase_first_block["Rounds"]:
             state = round_data["State"]
             for scene in round_data["Scenes"]:
                 response = self.response_from_scene(scene)
@@ -909,14 +971,14 @@ class App(ctk.CTk, AsyncCTk):
 
     def rebuild_second_block_staircases_from_scenes(self):
         if not self.create_second_block_staircases():
-            raise RuntimeError("Second Block staircases could not be rebuilt.")
+            return False
 
         staircases_by_state = {
             "Sitting": [self.staircase_sitting_second_rep_1, self.staircase_sitting_second_rep_2],
             "Sleeping": [self.staircase_sleeping_second_rep_1, self.staircase_sleeping_second_rep_2],
         }
 
-        for round_data in self.active_phase["Rounds"]:
+        for round_data in self.phase_second_block["Rounds"]:
             staircases = staircases_by_state[round_data["State"]]
             staircase_index = 0
             for scene in round_data["Scenes"]:
@@ -928,6 +990,7 @@ class App(ctk.CTk, AsyncCTk):
                 if staircase_index >= len(staircases):
                     raise RuntimeError("Second Block contains more completed scenes than its staircases.")
                 staircases[staircase_index].update(response)
+        return True
 
     def rollback_active_block_page(self):
         del self.active_sequence["Scenes"][self.table_scene_offset:]
@@ -1253,7 +1316,7 @@ class App(ctk.CTk, AsyncCTk):
         if self.active_phase.phase_type in ("First_Block", "Second_Block"):
             can_start = (
                 not self.active_sequence.get("Adaptive_Completed", False)
-                and self.table_scene_offset == len(self.active_sequence["Scenes"])
+                and self.table_scene_offset <= len(self.active_sequence["Scenes"]) < self.table_scene_offset + self.settings["max_scene_before_sequence_pause"]
             )
             self.sequence_start_reset_button.configure(state="normal" if can_start else "disabled")
         self.update_phase_buttons_after_sequence()
