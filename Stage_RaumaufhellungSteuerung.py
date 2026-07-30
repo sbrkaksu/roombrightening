@@ -387,7 +387,7 @@ class App(ctk.CTk, AsyncCTk):
                 threshold = result.get("Direct_Factor_threshold")
                 threshold_text = f"{threshold:.4f}".rstrip("0").rstrip(".") if threshold is not None else "None"
                 response_sequence = result.get("Response_Sequence", [])
-                lines.append("Repetition {rep} | Illuminance={illuminance} Lx".format(
+                lines.append("Mixed | Repetition {rep} | Illuminance={illuminance} Lx".format(
                     rep=result.get("Repetition"),
                     illuminance=result.get("Illuminance"),
                 ))
