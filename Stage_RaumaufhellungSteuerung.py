@@ -872,7 +872,7 @@ class App(ctk.CTk, AsyncCTk):
             else:
                 adaptive_stimulus = "Direct Factor"
                 fixed_stimulus = "Illuminance"
-            label = "Round {did} | Trial {pgr} | State: {state} | Adaptive Stimulus: {adaptive_stimulus} | Fixed Stimulus: {fixed_stimulus}".format(
+            label = "Round {did} | Trial {pgr} | Position: {state} | Adaptive Stimulus: {adaptive_stimulus} | Fixed Stimulus: {fixed_stimulus}".format(
                 did=self.active_sequence["ID"],
                 pgr=progress,
                 state=self.active_sequence["State"],
@@ -882,7 +882,7 @@ class App(ctk.CTk, AsyncCTk):
         else:
             progress = self.current_scene_idx + 1 if self.current_scene_idx is not None else 0
             scene_count = len(scenes)
-            label = "Round {did} | Trial {pgr}/{num} | State: {state}".format(
+            label = "Round {did} | Trial {pgr}/{num} | Position: {state}".format(
                 did=self.active_sequence["ID"],
                 pgr=progress,
                 num=scene_count,
