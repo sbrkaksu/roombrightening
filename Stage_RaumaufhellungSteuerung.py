@@ -112,7 +112,7 @@ class App(ctk.CTk, AsyncCTk):
         self.setup_check_window_state()
 
     def setup_window(self):
-        self.title("Study Room Brightening")
+        self.title("Study Light Trespass Into a Room")
         self.geometry("1190x750") 
         self.resizable(False, False)
         self.style = ctk.set_appearance_mode("light") #force to work in light mode
