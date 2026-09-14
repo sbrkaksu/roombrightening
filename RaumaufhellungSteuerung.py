@@ -253,7 +253,7 @@ class App(ctk.CTk, AsyncCTk):
         self.countdown_digits.place(relx=0.88, y=14, anchor="ne")
 
     def setup_qlc_controls(self):
-        self.qlc_init_button = ctk.CTkButton(self, text="QLC+ initialisieren", command=self.init_qlc)
+        self.qlc_init_button = ctk.CTkButton(self, text="Initialize QLC+", command=self.init_qlc)
         self.qlc_init_button.grid(row=1, column=2, padx=10, pady=10, sticky="nw")
 
         self.artnet_interface_helperbutton = ctk.CTkButton(self, command=self.create_artnet_interface)
@@ -1498,7 +1498,7 @@ class App(ctk.CTk, AsyncCTk):
     @async_handler
     async def init_qlc(self):
         if self.load_qlc_project() == True:
-            self.qlc_init_button.configure(text="QLC+ initialisiert", fg_color="green", state="disabled")
+            self.qlc_init_button.configure(text="Initialize QLC+", fg_color="green", state="disabled")
             await asyncio.sleep(0.2) # wait for project to load
             self.qlc_init_channel.set_values([255])
             await asyncio.sleep(0.2)
