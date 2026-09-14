@@ -1,6 +1,3 @@
-# ==========================================
-# 1. ALGORITHM CLASS
-# ==========================================
 class AdaptiveStaircase:
     def __init__(self, state, **kwargs):
 

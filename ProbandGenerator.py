@@ -1,374 +1,153 @@
 import os, sys
-import pprint
+from pprint import PrettyPrinter #used for pretty-printing the participant data structures when saving to file
 import numpy as np
+from Formatter import FormatPrinter
+
+printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)
 
 
-class FormatPrinter(pprint.PrettyPrinter):
-
-    def __init__(self, formats, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.formats = formats
-
-    # overrides the default format method to use the custom formats for E, otherwise falls back to default formatting
-    def format(self, obj, ctx, maxlvl, lvl):
-        if type(obj) in self.formats:
-            return self.formats[type(obj)].format(obj), 1, 0
-        return pprint.PrettyPrinter.format(self, obj, ctx, maxlvl, lvl)
-
-
-printer = FormatPrinter({float: "{:.4e}"}, sort_dicts=False)  #'{:.4e}'.format(3.14159) = '3.1416e+00' - formats E
-
-
-
-# create 128-byte integer for seed, everytime creates different seed to ensure randomness
-seed = int.from_bytes(os.urandom(128), sys.byteorder)
-# create random number generator with seed - same random numbers for same seed
-# different random numbers for different seeds to ensure randomness
-rng = np.random.default_rng(seed)
-
-########################################## Create Scenes ##########################################
-num_spots = 4
-num_E_steps_per_decade = 6
-
-E_decades_Evening = (-1, 0, 1, 2)  # 10^...
-E_decades_Night = (-2, -1, 0, 1)  # 10^...
-
-
-# horizontal stack of logarithmically spaced E values for evening [0.1lx ... 316lx], repeated for each decade,
-E_steps_evening = np.hstack(
-    [
-        np.logspace(0, 1, num=num_E_steps_per_decade + 1)[:-1] * i
-        for i in np.logspace(
-            E_decades_Evening[0], E_decades_Evening[-1], len(E_decades_Evening)
+#generates Participant_Learning_Block.txt for Learning Phase
+def generate_learning_participant():
+    seed = int.from_bytes(os.urandom(128), sys.byteorder)
+    rng = np.random.default_rng(seed)
+    stimuli_learning = [ 0.1, 0.147, 0.215, 0.316, 0.464, 0.681, 
+            1, 1.47, 2.15, 3.16, 4.64, 6.81, 
+            10, 14.7, 21.5, 31.6, 46.4, 68.1, 
+            100, 147, 215, 316]
+    
+    selected_E_values = rng.choice(stimuli_learning, size=12, replace=False)
+    selected_types = rng.permutation([
+        "Direct", "Direct", "Direct", "Direct", "Direct", "Direct",
+        "Diffuse", "Diffuse", "Diffuse", "Diffuse", "Diffuse", "Diffuse",
+    ])
+    scenes = [
+        scene(
+            type=str(scene_type),
+            direct_factor=1 if scene_type == "Direct" else 0,
+            E=float(E),
+            disturbed=None,
+            reaction_time=None,
         )
+        for scene_type, E in zip(selected_types, selected_E_values)
     ]
-).tolist()[:-2]  # remove the last two values (464lx and 681lx)
+    participant = {"ID": -1, "Phase": "Learning Block", "LearnRound": True, "Rounds": [
+        {'ID': -1, "State": "Sitting", "Color": "3000 K", "Scenes" : scenes},
+    ]}
+    with open("Participant_Learning_Block.txt", "w") as file:
+        file.write(printer.pformat(participant))
 
 
-num_E_steps_evening = len(E_steps_evening) #22
-max_E_evening = E_steps_evening[-1]  # 316lx
-E_steps_evening_repeated = np.tile(E_steps_evening, num_spots).tolist()  # repeat [0.1lx ... 316lx] for 4 spots then make list
-
-# horizontal stack of logarithmically spaced E values for night [0.01lx ... 31.6lx], repeated for each decade,
-E_steps_night = np.hstack(
-    [
-        np.logspace(0, 1, num=num_E_steps_per_decade + 1)[:-1] * i
-        for i in np.logspace(
-            E_decades_Night[0], E_decades_Night[-1], len(E_decades_Night)
-        )
-    ]
-).tolist()[:-2]  # remove the last two values (46.4lx and 68.1lx)
+def scene(type, direct_factor, E, disturbed, reaction_time):
+    return {"Type": type, "Direct_Factor": direct_factor, "E": E, "Disturbed": disturbed, "Reaction Time": reaction_time}
+# Generates participant files when this .py file is run
 
 
-num_E_steps_night = len(E_steps_night) #22
-max_E_night = E_steps_night[-1]  # 31.6lx
-E_steps_night_repeated = np.tile(E_steps_night, num_spots).tolist() #repeat [0.01lx ... 31.6lx] for 4 spots then make list
+def generate_participant_first_block(output_file="Participant_First_Block.txt"):
+     
+        participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
+            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
+            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
+        ]}
 
-spots = np.arange(1, num_spots + 1)  # [1,2,3,4]
-spooots_evening = np.repeat(spots, num_E_steps_evening).tolist() # ([1,2,3,4],22) = [1,1,1,...,2,2,2,...,3,3,3,...,4,4,4,...] 
-spooots_night = np.repeat(spots, num_E_steps_night).tolist() # ([1,2,3,4],22) = [1,1,1,...,2,2,2,...,3,3,3,...,4,4,4,...] 
+        with open(output_file, "w") as file:
+            file.write(printer.pformat(participant))
 
-#scenes for 4 spots with every steps for evening
-scenes_spots_evening = [
-    {"ID": i + 1, "Zeit": "Abend", "Spot": s, "Farbe": "W1", "E": e} 
-    for i, (s, e) in enumerate(zip(spooots_evening, E_steps_evening_repeated))
-]
-#{"ID": 1..22, "Zeit": "Abend", "Spot":1, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
-#{"ID": 23..44, "Zeit": "Abend", "Spot":2, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
-#{"ID": 45..66, "Zeit": "Abend", "Spot":3, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
-#{"ID": 67..88, "Zeit": "Abend", "Spot":4, "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
+def generate_participant_first_block_results(staircase_sitting_df_1, staircase_sitting_df_0,
+                                         staircase_sleeping_df_1, staircase_sleeping_df_0,
+                                         output_file="Participant_First_Block_Results.txt"):
+     
+        participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
+            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
+                  { "Repetition": 1,
+                    "Type": staircase_sitting_df_1.type_of_illumination,
+                    "Direct_Factor": staircase_sitting_df_1.direct_factor,  
+                   "Stimulus History": staircase_sitting_df_1.history,
+                   "Response_Sequence": staircase_sitting_df_1.response_sequence_history,
+                   "Reversals": staircase_sitting_df_1.reversal_points,
+                   "E_threshold": staircase_sitting_df_1.get_threshold()},
 
-#scenes for 4 spots with every steps for night
-scenes_spots_night = [
-    {"ID": i + 1 + scenes_spots_evening[-1]["ID"],"Zeit": "Nacht","Spot": s,"Farbe": "W1","E": e,}
-    for i, (s, e) in enumerate(zip(spooots_night, E_steps_night_repeated))
-]
+                  { "Repetition": 1,
+                    "Type": staircase_sitting_df_0.type_of_illumination,
+                    "Direct_Factor": staircase_sitting_df_0.direct_factor,  
+                   "Stimulus History": staircase_sitting_df_0.history,
+                   "Response_Sequence": staircase_sitting_df_0.response_sequence_history,
+                   "Reversals": staircase_sitting_df_0.reversal_points,
+                   "E_threshold": staircase_sitting_df_0.get_threshold()},
+            ]},
+            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
+                  {"Repetition": 1,
+                   "Type": staircase_sleeping_df_1.type_of_illumination, 
+                   "Direct_Factor": staircase_sleeping_df_1.direct_factor,  
+                   "Stimulus History": staircase_sleeping_df_1.history,
+                   "Response_Sequence": staircase_sleeping_df_1.response_sequence_history,
+                   "Reversals": staircase_sleeping_df_1.reversal_points,
+                   "E_threshold": staircase_sleeping_df_1.get_threshold()},
+                    
+                  {"Repetition": 1,
+                   "Type": staircase_sleeping_df_0.type_of_illumination,
+                   "Direct_Factor": staircase_sleeping_df_0.direct_factor,  
+                   "Stimulus History": staircase_sleeping_df_0.history,
+                   "Response_Sequence": staircase_sleeping_df_0.response_sequence_history,
+                   "Reversals": staircase_sleeping_df_0.reversal_points,
+                   "E_threshold": staircase_sleeping_df_0.get_threshold()},
+            ]},
+        ]}
 
-#{"ID": 89..110, "Zeit": "Nacht", "Spot":1, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
-#{"ID": 111..132, "Zeit": "Nacht", "Spot":2, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
-#{"ID": 133..154, "Zeit": "Nacht", "Spot":3, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
-#{"ID": 155..176, "Zeit": "Nacht", "Spot":4, "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
+        with open(output_file, "w") as file:
+            file.write(printer.pformat(participant))
 
-#scenes for diffus with every steps for evening
-scenes_diffuse_evening = [
-    {"ID": i + 1 + scenes_spots_night[-1]["ID"],"Zeit": "Abend","Spot": "diffus","Farbe": "W1","E": e,}
-    for i, e in enumerate(E_steps_evening)
-]
-#{"ID": 177..198, "Zeit": "Abend", "Spot": "diffus", "Farbe": "W1", "E": 0.1lx...316lx} - 22 tane
+def generate_participant_second_block(output_file="Participant_Second_Block.txt"):
+     
+        participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
+            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
+            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
+        ]}
 
+        with open(output_file, "w") as file:
+            file.write(printer.pformat(participant))
 
-#scenes for diffus with every steps for night
-scenes_diffuse_night = [
-    {"ID": i + 1 + scenes_diffuse_evening[-1]["ID"],"Zeit": "Nacht","Spot": "diffus","Farbe": "W1","E": e,}
-    for i, e in enumerate(E_steps_night)
-]
-#{"ID": 199..220, "Zeit": "Nacht", "Spot": "diffus", "Farbe": "W1", "E": 0.01lx...31.6lx} - 22 tane
+def generate_participant_second_block_results(staircase_sitting_rep_1, staircase_sitting_rep_2,
+                                              staircase_sleeping_rep_1, staircase_sleeping_rep_2,
+                                              output_file="Participant_Second_Block_Results.txt"):
+     
+        participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
+            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
+                  {"Repetition": 1,
+                   "Illuminance": staircase_sitting_rep_1.illuminance,
+                   "Stimulus History": staircase_sitting_rep_1.history,
+                   "Response_Sequence": staircase_sitting_rep_1.response_sequence_history,
+                   "Reversals": staircase_sitting_rep_1.reversal_points,
+                   "Direct_Factor_threshold": staircase_sitting_rep_1.get_threshold()},
 
+                  {"Repetition": 2,
+                   "Illuminance": staircase_sitting_rep_2.illuminance,
+                   "Stimulus History": staircase_sitting_rep_2.history,
+                   "Response_Sequence": staircase_sitting_rep_2.response_sequence_history,
+                   "Reversals": staircase_sitting_rep_2.reversal_points,
+                   "Direct_Factor_threshold": staircase_sitting_rep_2.get_threshold()},
+            ]},
+            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
+                  {"Repetition": 1,
+                   "Illuminance": staircase_sleeping_rep_1.illuminance,
+                   "Stimulus History": staircase_sleeping_rep_1.history,
+                   "Response_Sequence": staircase_sleeping_rep_1.response_sequence_history,
+                   "Reversals": staircase_sleeping_rep_1.reversal_points,
+                   "Direct_Factor_threshold": staircase_sleeping_rep_1.get_threshold()},
 
+                  {"Repetition": 2,
+                   "Illuminance": staircase_sleeping_rep_2.illuminance,
+                   "Stimulus History": staircase_sleeping_rep_2.history,
+                   "Response_Sequence": staircase_sleeping_rep_2.response_sequence_history,
+                   "Reversals": staircase_sleeping_rep_2.reversal_points,
+                   "Direct_Factor_threshold": staircase_sleeping_rep_2.get_threshold()},
+            ]},
+        ]}
 
-#################need same IDs for szenen in both lists: generate fein first, grob is subset###############
-
-#[ 0  3  6  9 12 15 18 21] = [0.1lx, 0,316lx .... 316lx], 8 scene for each spot
-# decade da ki stepler 3er 3er atlayarak gidiyor tezde yazildigi gibi
-grob_indices_evening = np.arange(0, len(E_steps_evening), 3)
-
-#32 scenes for evening, for 4 spots
-#[0, 3, 6, 9, 12, 15, 18, 21, 22, 25, 28, 31, 34, 37, 40, 43, 44, 47, 50, 53, 56, 59, 62, 65, 66, 69, 72, 75, 78, 81, 84, 87]
-grob_indices_evening_repeated = np.hstack(
-    [grob_indices_evening + i * (num_E_steps_evening) for i in range(num_spots)]
-).tolist()
-
-#[ 0  3  6  9 12 15 18 21] = [0.01lx, 0,0316lx .... 31,6lx], 8 scenes for each spot
-# decade da ki stepler 3er 3er atlayarak gidiyor tezde yazildigi gibi
-grob_indices_night = np.arange(0, len(E_steps_night), 3) 
-
-#32 scenes for night, for 4 spots
-#[0, 3, 6, 9, 12, 15, 18, 21, 22, 25, 28, 31, 34, 37, 40, 43, 44, 47, 50, 53, 56, 59, 62, 65, 66, 69, 72, 75, 78, 81, 84, 87]
-grob_indices_night_repeated = np.hstack(
-    [grob_indices_night + i * (num_E_steps_night) for i in range(num_spots)]
-).tolist()
-
-##################################### actual scenes in grob block #######################################
-
-#{'ID': 1,4...22 'Zeit': 'Abend', 'Spot': 1 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 1
-#{'ID': 23,26...44 'Zeit': 'Abend', 'Spot': 2 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 2
-#{'ID': 45,48...66 'Zeit': 'Abend', 'Spot': 3 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 3
-#{'ID': 67,70...88 'Zeit': 'Abend', 'Spot': 4 'Farbe': 'W1', 'E': 0.1lx ... 316lx} - 8 scenes for spot 4           
-scenes_spots_evening_grob = [scenes_spots_evening[i] for i in grob_indices_evening_repeated]
-
-
-#{'ID': 89,92...110 'Zeit': 'Nacht', 'Spot': 1 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 1
-#{'ID': 111,114...132 'Zeit': 'Nacht', 'Spot': 2 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 2
-#{'ID': 133,136...154 'Zeit': 'Nacht', 'Spot': 3 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 3
-#{'ID': 155,158...176 'Zeit': 'Nacht', 'Spot': 4 'Farbe': 'W1', 'E': 0.01lx ... 31.6lx} - 8 scenes for spot 4
-scenes_spots_night_grob = [scenes_spots_night[i] for i in grob_indices_night_repeated]
-
-
-#{'ID': 177,180...198 'Zeit': 'Abend', 'Spot': 'diffus', 'Farbe': 'W1', 'E': 0.1...316lx} - 8 scenes for diffus evening
-scenes_diffuse_evening_grob = [scenes_diffuse_evening[i] for i in grob_indices_evening]
-
-#{'ID': 199,202...220 'Zeit': 'Nacht', 'Spot': 'diffus', 'Farbe': 'W1', 'E': 0.01...31.6lx} - 8 scenes for diffus night
-scenes_diffuse_night_grob = [scenes_diffuse_night[i] for i in grob_indices_night]
-
-   
-
-# 8 scenes for diffus evening, 8 scenes for diffus night, 
-# 32 scenes for spots evening, 32 scenes for spots night 
-number_of_repetitions_grob = 1 
-
-# 24 scenes for diffus evening, 24 scenes for diffus night, 
-# 96 scenes for spots evening, 96 scenes for spots night
-number_of_repetitions_fein = 3 
-
-#Based on the results of the grob block, a stimulus range is determined within which all 
-#intermediate levels are then presented in the subsequent fein block.
-#value is derived from the lowest stimulus level that was evaluated as disturbing in the grob block.
-stimulus_range_fein = 4  # 4 below steps + threshold + 3 above steps
-
-#Learning/Trial Run
-E_vals_test = [0.1, 3.1622777, 100] # E levels in Learning/Trial Run
-E_vals_test_repeated = np.tile(E_vals_test, num_spots).tolist()
-spooots_test = np.repeat(spots, len(E_vals_test)).tolist()
-
-######################## Scenes for Learning/Trial Durchgang ########################################### 
-
-#{'ID': -1..-3, 'Zeit': 'Abend', 'Spot': 1, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 1
-#{'ID': -4..-6, 'Zeit': 'Abend', 'Spot': 2, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 2
-#{'ID': -7..-9, 'Zeit': 'Abend', 'Spot': 3, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 3
-#{'ID': -10..-12, 'Zeit': 'Abend', 'Spot': 4, 'Farbe': 'W1', 'E': 0.1...100lx} - 3 scenes for spot 4
-scenes_test = [
-    {"ID": -(i + 1), "Zeit": "Abend", "Spot": s, "Farbe": "W1", "E": e}
-    for i, (s, e) in enumerate(zip(spooots_test, E_vals_test_repeated))
-]
-
-
-#generates ProbandLernen.txt for Learning Phase
-def generate_learn_proband():
-    proband = {"ID": -1, "Abstufung": "lernen"} # Abstufung = Phase
-    durchgang = {"ID": -1, "Diffus": False, "Zeit": "Abend"}
-    durchgang["Szenen"] = rng.permutation(scenes_test).tolist()
-    proband["Durchgange"] = [durchgang]
-    with open("ProbandLernen.txt", "w") as file:
-        file.write(printer.pformat(proband))
-
-# Generates Durchgänge diffus fein
-def generate_durchgange_diffus(proband_id, number_of_repetitions, scenes_evening, scenes_night):
-    durchgange_diffus = []
-    for zeit in ["Abend", "Nacht"] if proband_id & 1 else ["Nacht", "Abend"]:
-        for w in range(1, number_of_repetitions + 1):
-            duchgang_id = 1 + (zeit == "Nacht")  # Durchgang ID 1,2
-            durchgang = {
-                "ID": duchgang_id,
-                "Wiederholung": w,
-                "Diffus": True,
-                "Zeit": zeit,
-            }
-            durchgang["Szenen"] = rng.permutation(
-                scenes_evening if zeit == "Abend" else scenes_night
-            ).tolist()
-            durchgange_diffus.append(durchgang)
-    return durchgange_diffus
-
-# Generates Durchgänge spots fein
-def generate_durchgange_spots(proband_id, number_of_repetitions, scenes_evening, scenes_night):
-    durchgange_spots = []
-    for zeit in ["Abend", "Nacht"] if proband_id & 1 else ["Nacht", "Abend"]:
-        for w in range(1, number_of_repetitions + 1):
-            duchgang_id = 3 + (zeit == "Nacht")  # Durchgang ID 3,4
-            szenen = rng.permutation(
-                scenes_evening if zeit == "Abend" else scenes_night
-            ).tolist()
-            # first half of the scenes
-            durchgang1 = {
-                "ID": duchgang_id,
-                "Wiederholung": w,
-                "Diffus": False,
-                "Zeit": zeit,
-            }
-            durchgang1["Szenen"] = szenen[: len(szenen) // 2]
-            durchgange_spots.append(durchgang1)
-
-            durchgang2 = {
-                "ID": duchgang_id,
-                "Wiederholung": w,
-                "Diffus": False,
-                "Zeit": zeit,
-            }
-            durchgang2["Szenen"] = szenen[len(szenen) // 2 :]
-            durchgange_spots.append(durchgang2)
-    return durchgange_spots
-
-
-# Generates Probandens grob when this .py file is run
-def generate_probanden_grob(nr_probanden):
-    for proband_id in range(1, nr_probanden + 1): 
-        proband = {"ID": proband_id, "Abstufung": "grob", "Lerndurchgang": False}
-        
-        durchgange_spots = generate_durchgange_spots(
-            proband_id, number_of_repetitions_grob, scenes_spots_evening_grob, scenes_spots_night_grob
-        ) #args come from global variables 
-        durchgange_diffus = generate_durchgange_diffus(
-            proband_id, number_of_repetitions_grob, scenes_diffuse_evening_grob, scenes_diffuse_night_grob
-        )#args come from global variables 
-
-        if proband_id & 2:  # start with diffus
-            proband["Durchgange"] = durchgange_spots + durchgange_diffus
-        else:
-            proband["Durchgange"] = durchgange_diffus + durchgange_spots
-        with open("Proband{}_grob.txt".format(proband_id), "w") as file:
-            file.write(printer.pformat(proband))
-
-#fine threshold slice ini olusturuyor. ust ve alt siniri asmayacak sekilde
-#4 lower than threshold + threshold + 3 higher than threshold = 8 scenes for each spot and diffus
-def sliding_window(min_idx, max_idx, middle_idx, window_half_size):
-    num = max_idx - min_idx + 1 #lenght
-    window_size = 2 * window_half_size
-    assert window_size <= num #ensure that window size is not bigger than the number of available indices
-    high_idx = np.minimum(middle_idx + window_half_size, max_idx + 1) #ensure upper limit of the window
-    low_idx = high_idx - window_size #actual lower index
-    low_idx = np.maximum(low_idx, min_idx) #ensure that lower limit is not smaller than the minimum index
-    high_idx = low_idx + window_size #actual upper index
-    return low_idx, high_idx
-
-# finds the index of the E value in E_steps for threshold
-def nearest_E_idx(E_steps, E_val):
-    E_steps = np.asarray(E_steps)
-    return int(np.argmin(np.abs(E_steps - E_val)))
-
-
-def erzeuge_proband_fein(proband_id,stoer_E_spots_abend,stoer_E_spots_nacht,stoer_E_diffus_abend,stoer_E_diffus_nacht,): 
-     # stoer_E_grob is the first illuminance level that was perceived as disturbing
-    proband = {"ID": proband_id, "Abstufung": "fein"}
-
-    # sanetize input: arrays for stoer_E spots and stoer E diffus inputs can be None. Take max E if None
-    stoer_E_spots_abend = (
-        [max_E_evening] * 4 if stoer_E_spots_abend is None
-        else [max_E_evening if e is None else e for e in stoer_E_spots_abend]
-    )
-    stoer_E_spots_nacht = (
-        [max_E_night] * 4 if stoer_E_spots_nacht is None
-        else [max_E_night if e is None else e for e in stoer_E_spots_nacht]
-    )
-    stoer_E_diffus_abend = (
-        max_E_evening if stoer_E_diffus_abend is None else stoer_E_diffus_abend
-    )
-    stoer_E_diffus_nacht = (
-        max_E_night if stoer_E_diffus_nacht is None else stoer_E_diffus_nacht
-    )
-
-    # Create Spot Durchgange
-    scenes_spots_evening_custom = []
-    scenes_spots_night_custom = []
-    for i in range(num_spots):
-        stoer_szene_spots_abend_idx = nearest_E_idx(
-            E_steps_evening, stoer_E_spots_abend[i]
-        )
-        stoer_szene_spots_nacht_idx = nearest_E_idx(
-            E_steps_night, stoer_E_spots_nacht[i]
-        )
-        spot_offset_abend = i * num_E_steps_evening
-        spot_offset_nacht = i * num_E_steps_night
-        spot_abend_low_idx, spot_abend_high_idx = sliding_window(
-            0, num_E_steps_evening - 1, stoer_szene_spots_abend_idx, stimulus_range_fein
-        )
-        scenes_spots_evening_custom.extend(
-            scenes_spots_evening[
-                spot_abend_low_idx
-                + spot_offset_abend : spot_abend_high_idx
-                + spot_offset_abend
-            ]
-        )
-        spot_nacht_low_idx, spot_nacht_high_idx = sliding_window(
-            0, num_E_steps_night - 1, stoer_szene_spots_nacht_idx, stimulus_range_fein
-        )
-        scenes_spots_night_custom.extend(
-            scenes_spots_night[
-                spot_nacht_low_idx
-                + spot_offset_nacht : spot_nacht_high_idx
-                + spot_offset_nacht
-            ]
-        )
-
-    durchgange_spots = generate_durchgange_spots(
-        proband_id, number_of_repetitions_fein, scenes_spots_evening_custom, scenes_spots_night_custom
-    )
-
-    # Create Diffus Durchgange
-    stoer_szene_diffus_abend_idx = nearest_E_idx(
-        E_steps_evening, stoer_E_diffus_abend
-    )
-    stoer_szene_diffus_nacht_idx = nearest_E_idx(E_steps_night, stoer_E_diffus_nacht)
-    diffus_abend_low_idx, diffus_abend_high_idx = sliding_window(
-        0, num_E_steps_evening - 1, stoer_szene_diffus_abend_idx, stimulus_range_fein
-    )
-    scenes_diffuse_evening_custom = scenes_diffuse_evening[
-        diffus_abend_low_idx:diffus_abend_high_idx
-    ]
-    diffus_nacht_low_idx, diffus_nacht_high_idx = sliding_window(
-        0, num_E_steps_night - 1, stoer_szene_diffus_nacht_idx, stimulus_range_fein
-    )
-    scenes_diffuse_night_custom = scenes_diffuse_night[
-        diffus_nacht_low_idx:diffus_nacht_high_idx
-    ]
-
-    durchgange_diffus = generate_durchgange_diffus(
-        proband_id, number_of_repetitions_fein, scenes_diffuse_evening_custom, scenes_diffuse_night_custom
-    )
-
-    if proband_id & 2:  # start with diffus
-        proband["Durchgange"] = durchgange_spots + durchgange_diffus
-    else:
-        proband["Durchgange"] = durchgange_diffus + durchgange_spots
-
-    fname = "Proband{}_fein.txt".format(proband_id)
-    if os.path.exists(fname):
-        print(f"File {fname} already exists. Skipping.")
-        return fname
-    with open(fname, "w") as file:
-        file.write(printer.pformat(proband))
-    return fname
-
+        with open(output_file, "w") as file:
+            file.write(printer.pformat(participant))
 
 if __name__ == "__main__":
-    generate_probanden_grob(nr_probanden=1)
-    generate_learn_proband()
+    generate_learning_participant()
+    generate_participant_first_block()
+    generate_participant_second_block()
+
