@@ -31,7 +31,7 @@ def generate_learning_participant():
         for scene_type, E in zip(selected_types, selected_E_values)
     ]
     participant = {"ID": -1, "Phase": "Learning Block", "LearnRound": True, "Rounds": [
-        {'ID': -1, "State": "Sitting", "Color": "3000 K", "Scenes" : scenes},
+        {'ID': -1, "Position": "Sitting", "Color": "3000 K", "Scenes" : scenes},
     ]}
     with open("Participant_Learning_Block.txt", "w") as file:
         file.write(printer.pformat(participant))
@@ -45,8 +45,8 @@ def scene(type, direct_factor, E, disturbed, reaction_time):
 def generate_participant_first_block(output_file="Participant_First_Block.txt"):
      
         participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
-            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
-            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
+            {'ID': 1, "Position": "Sitting", "Color": "3000 K", "Scenes" : []},
+            {'ID': 2, "Position": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
         with open(output_file, "w") as file:
@@ -57,7 +57,7 @@ def generate_participant_first_block_results(staircase_sitting_df_1, staircase_s
                                          output_file="Participant_First_Block_Results.txt"):
      
         participant = {"ID": 1, "Phase": "First_Block", "LearnRound": False, "Rounds": [
-            {'ID': 1, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
+            {'ID': 1, "Position": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
                   { "Repetition": 1,
                     "Type": staircase_sitting_df_1.type_of_illumination,
                     "Direct_Factor": staircase_sitting_df_1.direct_factor,  
@@ -74,7 +74,7 @@ def generate_participant_first_block_results(staircase_sitting_df_1, staircase_s
                    "Reversals": staircase_sitting_df_0.reversal_points,
                    "E_threshold": staircase_sitting_df_0.get_threshold()},
             ]},
-            {'ID': 2, "State": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
+            {'ID': 2, "Position": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Illuminance", "Results" : [
                   {"Repetition": 1,
                    "Type": staircase_sleeping_df_1.type_of_illumination, 
                    "Direct_Factor": staircase_sleeping_df_1.direct_factor,  
@@ -99,8 +99,8 @@ def generate_participant_first_block_results(staircase_sitting_df_1, staircase_s
 def generate_participant_second_block(output_file="Participant_Second_Block.txt"):
      
         participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
-            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Scenes" : []},
-            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Scenes" : []},
+            {'ID': 3, "Position": "Sitting", "Color": "3000 K", "Scenes" : []},
+            {'ID': 4, "Position": "Sleeping", "Color": "3000 K", "Scenes" : []},
         ]}
 
         with open(output_file, "w") as file:
@@ -111,7 +111,7 @@ def generate_participant_second_block_results(staircase_sitting_rep_1, staircase
                                               output_file="Participant_Second_Block_Results.txt"):
      
         participant = {"ID": 1, "Phase": "Second_Block", "LearnRound": False, "Rounds": [
-            {'ID': 3, "State": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
+            {'ID': 3, "Position": "Sitting", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
                   {"Repetition": 1,
                    "Illuminance": staircase_sitting_rep_1.illuminance,
                    "Stimulus History": staircase_sitting_rep_1.history,
@@ -126,7 +126,7 @@ def generate_participant_second_block_results(staircase_sitting_rep_1, staircase
                    "Reversals": staircase_sitting_rep_2.reversal_points,
                    "Direct_Factor_threshold": staircase_sitting_rep_2.get_threshold()},
             ]},
-            {'ID': 4, "State": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
+            {'ID': 4, "Position": "Sleeping", "Color": "3000 K", "Adaptive_Stimulus": "Direct_Factor", "Results" : [
                   {"Repetition": 1,
                    "Illuminance": staircase_sleeping_rep_1.illuminance,
                    "Stimulus History": staircase_sleeping_rep_1.history,

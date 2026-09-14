@@ -41,6 +41,9 @@ class Phase(dict):
         with open(self.filename, 'r') as f:
             s = f.read()
             super().__init__(literal_eval(s))
+        for round_data in self.get("Rounds", []):
+            if "Position" not in round_data and "State" in round_data:
+                round_data["Position"] = round_data.pop("State")
         self.phase_type = self["Phase"]
         self.seq_num = len(self["Rounds"])
         self.seq_idx = 0
@@ -308,7 +311,7 @@ class App(ctk.CTk, AsyncCTk):
         if self.monitor_I and self.active_scene is not None:
             print(self.monitor_I)
             monitor_I = self.monitor_I
-            if self.active_sequence is not None and self.active_sequence["State"] == "Sitting":
+            if self.active_sequence is not None and self.active_sequence["Position"] == "Sitting":
                 monitor_I = max(0, monitor_I - self.settings["monitor_reading_light_I_offset"])
             direct_factor = self.active_scene["Direct_Factor"]
             factor_direct = self.settings["monitor_E_factor_spot_1"]
@@ -344,7 +347,7 @@ class App(ctk.CTk, AsyncCTk):
     def format_first_block_results_text(self, results_data):
         lines = []
         for round_data in results_data["Rounds"]:
-            lines.append("Round {id} | {state}".format(id=round_data["ID"], state=round_data["State"]))
+            lines.append("Round {id} | {position}".format(id=round_data["ID"], position=round_data["Position"]))
             lines.append("")
             for result in round_data["Results"]:
                 reversals = result.get("Reversals", [])
@@ -382,7 +385,7 @@ class App(ctk.CTk, AsyncCTk):
     def format_second_block_results_text(self, results_data):
         lines = []
         for round_data in results_data["Rounds"]:
-            lines.append("Round {id} | {state}".format(id=round_data["ID"], state=round_data["State"]))
+            lines.append("Round {id} | {position}".format(id=round_data["ID"], position=round_data["Position"]))
             lines.append("")
             for result in round_data["Results"]:
                 reversals = result.get("Reversals", [])
@@ -431,7 +434,7 @@ class App(ctk.CTk, AsyncCTk):
 
         thresholds = {}
         for round_data in results_data["Rounds"]:
-            state = round_data["State"]
+            state = round_data["Position"]
             diffuse_results = [
                 result for result in round_data["Results"]
                 if result.get("Direct_Factor") == 0
@@ -660,37 +663,37 @@ class App(ctk.CTk, AsyncCTk):
     def get_active_first_block_staircases(self):
         staircases = []
 
-        if self.active_sequence["State"] == "Sitting":
+        if self.active_sequence["Position"] == "Sitting":
             staircases = [
                 self.staircase_sitting_df_1,
                 self.staircase_sitting_df_0,
             ]
 
-        elif self.active_sequence["State"] == "Sleeping":
+        elif self.active_sequence["Position"] == "Sleeping":
             staircases = [
                 self.staircase_sleeping_df_1,
                 self.staircase_sleeping_df_0,
             ]
 
         else:
-            print(f"Unsupported First Block state: {self.active_sequence['State']}")
+            print(f"Unsupported First Block position: {self.active_sequence['Position']}")
 
         return staircases
 
     def get_active_second_block_staircases(self):
-        if self.active_sequence["State"] == "Sitting":
+        if self.active_sequence["Position"] == "Sitting":
             return [
                 self.staircase_sitting_second_rep_1,
                 self.staircase_sitting_second_rep_2,
             ]
 
-        if self.active_sequence["State"] == "Sleeping":
+        if self.active_sequence["Position"] == "Sleeping":
             return [
                 self.staircase_sleeping_second_rep_1,
                 self.staircase_sleeping_second_rep_2,
             ]
 
-        print(f"Unsupported Second Block state: {self.active_sequence['State']}")
+        print(f"Unsupported Second Block position: {self.active_sequence['Position']}")
         return []
 
     def get_active_second_block_staircase(self):
@@ -875,7 +878,7 @@ class App(ctk.CTk, AsyncCTk):
             label = "Round {did} | Trial {pgr} | Position: {state} | Adaptive Stimulus: {adaptive_stimulus} | Fixed Stimulus: {fixed_stimulus}".format(
                 did=self.active_sequence["ID"],
                 pgr=progress,
-                state=self.active_sequence["State"],
+                state=self.active_sequence["Position"],
                 adaptive_stimulus=adaptive_stimulus,
                 fixed_stimulus=fixed_stimulus,
             )
@@ -886,7 +889,7 @@ class App(ctk.CTk, AsyncCTk):
                 did=self.active_sequence["ID"],
                 pgr=progress,
                 num=scene_count,
-                state=self.active_sequence["State"],
+                state=self.active_sequence["Position"],
             )
         self.sequence_scene_label.configure(text=label)
         
@@ -961,7 +964,7 @@ class App(ctk.CTk, AsyncCTk):
         }
 
         for round_data in self.phase_first_block["Rounds"]:
-            state = round_data["State"]
+            state = round_data["Position"]
             for scene in round_data["Scenes"]:
                 response = self.response_from_scene(scene)
                 if response is None:
@@ -979,7 +982,7 @@ class App(ctk.CTk, AsyncCTk):
         }
 
         for round_data in self.phase_second_block["Rounds"]:
-            staircases = staircases_by_state[round_data["State"]]
+            staircases = staircases_by_state[round_data["Position"]]
             staircase_index = 0
             for scene in round_data["Scenes"]:
                 response = self.response_from_scene(scene)
@@ -1207,8 +1210,8 @@ class App(ctk.CTk, AsyncCTk):
         current_round = (self.active_phase.phase_type, self.active_sequence["ID"])
         if self.position_checked_round != current_round:
             print("State Position Status: ", self.state_position_status)
-            print("Active Sequence State: ", self.active_sequence["State"])
-            self.state_position_status = self.active_sequence["State"]
+            print("Active Sequence Position: ", self.active_sequence["Position"])
+            self.state_position_status = self.active_sequence["Position"]
             self.position_checked_round = current_round
             self.open_check_window(state=self.state_position_status)
 

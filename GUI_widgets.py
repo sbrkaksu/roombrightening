@@ -1,3 +1,5 @@
+#GUI components for the main application window, including tables, buttons, and pop-up windows.
+
 import customtkinter as ctk
 import numpy as np
 from CTkTable import CTkTable
